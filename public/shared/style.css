@@ -1,0 +1,3685 @@
+/* Manrope: the sitewide display+body typeface (see --font-sans below).
+   Loaded once here since every page already loads this stylesheet. */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* Motion tokens - theme-independent, shared by every animated component.
+   Built-in CSS easings (ease/ease-out/ease-in-out) are too weak to read as
+   intentional; these are the stronger variants. Extend this set rather than
+   hardcoding a new cubic-bezier() inline elsewhere. */
+:root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);        /* entrances/exits */
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);    /* on-screen movement/morphing */
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);     /* iOS-like drawer/panel slide */
+    --duration-fast: 150ms;
+    --duration-base: 200ms;
+    --duration-slow: 300ms;
+
+    /* Typography + radius scale - theme-independent, shared sitewide. */
+    --font-sans: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+}
+
+/* Custom Properties & Theme Token System
+   Dark mode has been removed - the site is light-only now, using the
+   5-gradient palette exactly as given. This block (unconditional :root,
+   plus [data-theme="light"] below for the ~68 component-specific overrides
+   that target it) is the single source of truth; every page still sets
+   data-theme="light" on <html> so those overrides keep firing, but there is
+   no [data-theme="dark"] rule anywhere any more - even a stray dark
+   attribute would just fall back to these same values. */
+:root {
+    /* Gradient 01 from the palette, applied as a full-viewport diagonal
+       wash (matches the header/footer angle) so it reads as a deliberate
+       gradient rather than a near-invisible horizontal tint. */
+    --bg-primary: linear-gradient(135deg, #f2f3f4 0%, #ded1c6 100%);
+    --bg-primary-solid: #eef0f1;
+    --bg-secondary: #f2f3f4;
+    --bg-secondary-alpha: rgba(242, 243, 244, 0.95);
+    --bg-card: #eef0f1;
+    --bg-card-solid: #eef0f1;
+    --bg-card-hover: #e6e9eb;
+    --bg-product-img: #e6e9eb;
+    --text-primary: #17324a;
+    --text-secondary: #3d5875;
+    --text-muted: #5c7186;
+    /* Variable name kept as --accent-cyan (used in ~70 places sitewide) even
+       though the color is now mauve #A77693, not cyan - renaming every
+       usage isn't worth the diff risk. Treat --accent-cyan as "the single
+       site accent," not literally cyan. */
+    --accent-cyan: #a05f80;
+    --accent-cyan-bg: rgba(167, 118, 147, 0.12);
+    --accent-blue: #174871;
+    --border-color: rgba(23, 72, 113, 0.08);
+    --border-color-hover: rgba(23, 72, 113, 0.16);
+    --border-accent: #a05f80;
+    --input-bg: #eef0f1;
+    --input-text: #17324a;
+    --input-border: rgba(23, 72, 113, 0.12);
+    --input-placeholder: #64748b;
+    --modal-bg: #f2f3f4;
+    --modal-overlay: rgba(23, 50, 74, 0.45);
+    --shadow-color: rgba(163, 150, 138, 0.35);
+    /* Gradient 05 - the calmer 2-stop end of the palette, not the full
+       4-stop sweep (Gradient 04). The full sweep ran light-to-dark within
+       one header bar, which made white header/nav text unreadable at the
+       light end and read as jarring rather than calm. This stays a
+       consistent dark band, so white text is legible throughout. */
+    --header-bg: linear-gradient(160deg, #16324f, #0A1F33);
+    --navbar-bg: #f2f3f4;
+    --footer-bg: linear-gradient(135deg, #174871, #0f2d4d);
+    --action-btn-bg: rgba(23, 72, 113, 0.06);
+    --action-btn-hover: rgba(23, 72, 113, 0.1);
+    --badge-bg: rgba(167, 118, 147, 0.15);
+    --badge-text: #7a4a63;
+    --dropdown-bg: #f2f3f4;
+    --dropdown-hover: #e6e9eb;
+
+    /* Neumorphic shadow pair: light source top-left. A raised surface shows
+       both; an inset/pressed surface flips them via `inset`. */
+    --neu-shadow-light: rgba(255, 255, 255, 0.9);
+    --neu-shadow-dark: rgba(163, 150, 138, 0.45);
+    --neu-raised: 7px 7px 14px var(--neu-shadow-dark), -7px -7px 14px var(--neu-shadow-light);
+    --neu-raised-sm: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+    --neu-pressed: inset 4px 4px 8px var(--neu-shadow-dark), inset -4px -4px 8px var(--neu-shadow-light);
+
+    --page-bg-gradient: linear-gradient(135deg, #f2f3f4, #ded1c6);
+    --bg-card-alpha-80: rgba(238, 240, 241, 0.92);
+    --accent-cyan-bg-20: rgba(167, 118, 147, 0.18);
+    --accent-cyan-bg-30: rgba(167, 118, 147, 0.28);
+}
+
+[data-theme="light"] {
+    /* Gradient 01 from the palette, applied as a full-viewport diagonal
+       wash (matches the header/footer angle) so it reads as a deliberate
+       gradient rather than a near-invisible horizontal tint. */
+    --bg-primary: linear-gradient(135deg, #f2f3f4 0%, #ded1c6 100%);
+    --bg-primary-solid: #eef0f1;
+    --bg-secondary: #f2f3f4;
+    --bg-secondary-alpha: rgba(242, 243, 244, 0.95);
+    --bg-card: #eef0f1;
+    --bg-card-solid: #eef0f1;
+    --bg-card-hover: #e6e9eb;
+    --bg-product-img: #e6e9eb;
+    --text-primary: #17324a;
+    --text-secondary: #3d5875;
+    --text-muted: #6b7f92;
+    --accent-cyan: #a05f80;
+    --accent-cyan-bg: rgba(167, 118, 147, 0.12);
+    --accent-blue: #174871;
+    --border-color: rgba(23, 72, 113, 0.08);
+    --border-color-hover: rgba(23, 72, 113, 0.16);
+    --border-accent: #a05f80;
+    --input-bg: #eef0f1;
+    --input-text: #17324a;
+    --input-border: rgba(23, 72, 113, 0.12);
+    --input-placeholder: #94a3b8;
+    --modal-bg: #f2f3f4;
+    --modal-overlay: rgba(23, 50, 74, 0.45);
+    --shadow-color: rgba(163, 150, 138, 0.35);
+    /* Gradient 05 - the calmer 2-stop end of the palette, not the full
+       4-stop sweep (Gradient 04). The full sweep ran light-to-dark within
+       one header bar, which made white header/nav text unreadable at the
+       light end and read as jarring rather than calm. This stays a
+       consistent dark band, so white text is legible throughout. */
+    --header-bg: linear-gradient(160deg, #16324f, #0A1F33);
+    --navbar-bg: #f2f3f4;
+    --footer-bg: linear-gradient(135deg, #174871, #0f2d4d);
+    --action-btn-bg: rgba(23, 72, 113, 0.06);
+    --action-btn-hover: rgba(23, 72, 113, 0.1);
+    --badge-bg: rgba(167, 118, 147, 0.15);
+    --badge-text: #7a4a63;
+    --dropdown-bg: #f2f3f4;
+    --dropdown-hover: #e6e9eb;
+
+    --neu-shadow-light: rgba(255, 255, 255, 0.9);
+    --neu-shadow-dark: rgba(163, 150, 138, 0.45);
+    --neu-raised: 7px 7px 14px var(--neu-shadow-dark), -7px -7px 14px var(--neu-shadow-light);
+    --neu-raised-sm: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+    --neu-pressed: inset 4px 4px 8px var(--neu-shadow-dark), inset -4px -4px 8px var(--neu-shadow-light);
+
+    --page-bg-gradient: linear-gradient(135deg, #f2f3f4, #ded1c6);
+    --bg-card-alpha-80: rgba(238, 240, 241, 0.92);
+    --accent-cyan-bg-20: rgba(167, 118, 147, 0.18);
+    --accent-cyan-bg-30: rgba(167, 118, 147, 0.28);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    /* Oversized background + a slow drifting background-position gives the
+       page gradient gentle, ambient movement instead of sitting static -
+       "constant motion" per the animate skill, so it stays subtle: 20s,
+       ease-in-out + alternate for an organic breathing feel rather than a
+       mechanical loop, gated below for reduced-motion. */
+    background-size: 220% 220%;
+    animation: bgDrift 20s var(--ease-in-out) infinite alternate;
+    min-height: 100vh;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+@keyframes bgDrift {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body { animation: none; background-position: 0% 0%; }
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header Styles */
+.header {
+    background: var(--header-bg);
+    background-size: 220% 220%;
+    animation: bgDrift 20s var(--ease-in-out) infinite alternate;
+    color: white;
+    padding: 20px 0;
+    box-shadow: 0 8px 32px rgba(23, 72, 113, 0.3);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    /* ensure stacking context */
+    z-index: 200;
+    /* higher than .navbar's 100 */
+}
+
+/* Inert on every page except guest/index.php, which is the only place that
+   loads Vanta.js and initializes this into an animated BIRDS background.
+   overflow:hidden lives here (not on .header) so only the canvas itself gets
+   clipped to the header's bounds - putting it on .header instead clipped
+   away anything meant to pop out below the bar, like the notification
+   dropdown and avatar menu. */
+.hero-vanta {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.header .container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+}
+
+/* Desktop/hover-capable layout only (matches the customer sidebar's own
+   collapsed-rail breakpoint, @media hover:hover and pointer:fine in
+   customer/includes/sidebar.php).
+
+   The min-width:768px half of the query is NOT redundant with the hover
+   half. Below 768px includes/mobile_nav.php takes the area over: it sets
+   `#customerSidebar{display:none}` and replaces it with a top bar and a
+   fixed bottom tab bar. But the hover/pointer media features describe the
+   INPUT DEVICE, not the window - a desktop browser narrowed to phone width
+   (and a Windows tablet with a trackpad) still matches hover:hover and
+   pointer:fine. So on exactly the viewports where the rail no longer exists,
+   every body-level child was still reserving 92px for it: the bottom tab
+   bar's five columns were squeezed into the remaining width and shunted
+   right of their own full-bleed background, and each page's centred content
+   sat 46px right of centre. 768px is mobile_nav.php's own 767.98px cutoff,
+   so the reservation now begins exactly where the rail does.
+   The sidebar-clearing offset must live on .header itself (the full-bleed
+   bar), NOT on .container - .container already has its own
+   max-width:1400px;margin:0 auto centering, so padding added there just
+   stacked on top of that auto-margin instead of replacing it, producing a
+   much bigger gap than intended (and one that grew/shrank inconsistently
+   with viewport width instead of tracking the sidebar). Reserving the space
+   on .header lets .container's own auto-margin re-center normally within
+   whatever width is left after that reservation, which is what actually
+   keeps the gap tight and consistent as the sidebar collapses/expands.
+   Scoped to body:has(.customer-sidebar) since .header/.logo/.search-bar are
+   shared with the guest header (public/guest/includes/header.php), which
+   has no sidebar to clear at all. */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+    body:has(.customer-sidebar) .header {
+        padding-left: 92px;
+        transition: padding-left 200ms var(--ease-out, ease);
+    }
+    body:has(.customer-sidebar).customer-sidebar-hover-expanded .header {
+        padding-left: 292px;
+    }
+
+    /* ...and the same reservation for the page BODY, which never had one.
+       The sidebar is position:fixed at left:12px and 68px wide, so it covers
+       everything up to 80px. .container is `max-width:1400px; margin:0 auto;
+       padding:0 20px`, so on a 1280 or 1366 laptop it starts at 20px and on a
+       1440 at 40px - i.e. the page ran *underneath* the rail by 40-60px at
+       every common desktop width, and only cleared it above ~1520px.
+
+       Applied to body's own children rather than to .container, so each page's
+       full-bleed backgrounds still reach the viewport edge and only their
+       content is inset - the same shape as the .header rule above, which lets
+       the inner .container re-centre in whatever width is left.
+
+       Excluded: <header> (handled above) and everything else at body level
+       that is position:fixed - the sidebar's three elements, the cart button,
+       <dialog>, the .modal/.modal-backdrop overlays, and the .site-bg-video /
+       .tw-bg background layers. Padding a fixed element moves its contents
+       rather than making room for it, so a full-screen overlay would have had
+       its centred dialog pushed 46px off-centre and the background video
+       would have been cropped.
+
+       Deliberately does NOT grow to 292px when the rail hover-expands: the
+       header can afford to slide, but shifting the whole page sideways on a
+       stray mouse-over would be far worse than letting the expanded panel
+       float over the content for the second it is open. */
+    body:has(.customer-sidebar) > *:not(header):not(dialog):not(script):not(style):not(link):not(noscript):not(video):not(.customer-sidebar):not(.customer-sidebar-backdrop):not(.customer-menu-toggle):not(.floating-cart-btn):not(.scroll-to-top):not(.modal):not(.modal-backdrop):not(.site-bg-video):not(.site-bg-video-scrim):not(.tw-bg) {
+        padding-left: 92px;
+    }
+    body:has(.customer-sidebar) .header .container {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        grid-template-rows: auto;
+        align-items: center;
+    }
+    body:has(.customer-sidebar) .header .logo { grid-row: 1; grid-column: 2; justify-self: center; align-self: center; }
+    body:has(.customer-sidebar) .header .search-bar { grid-row: 1; grid-column: 1; justify-self: start; align-self: center; margin-left: 0; }
+    body:has(.customer-sidebar) .header .header-actions,
+    body:has(.customer-sidebar) .header #auth-section { grid-row: 1; grid-column: 3; justify-self: end; align-self: center; }
+}
+
+/* Calm, solid wordmark - was a raw blue->red gradient-clipped text effect
+   with a 30px glow, unrelated to the palette and visible on every page;
+   about as "vibrant/painful" as a logo gets. */
+.logo h2 {
+    font-size: 32px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 2px;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    /* vertical alignment */
+    gap: 10px;
+    /* space between icon and text */
+    text-decoration: none;
+    /* remove underline */
+    color: inherit;
+    /* keep same text color */
+}
+
+.logo-img {
+    width: 40px;
+    /* adjust size as needed */
+    height: 40px;
+    border-radius: 8px;
+    /* optional */
+}
+
+.logo-link h2 {
+    margin: 0;
+    /* remove extra spacing */
+    font-size: 1.5rem;
+    /* adjust size */
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, color 0.2s ease;
+    /* smooth effect */
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+    /* smooth scale */
+}
+
+.logo-link h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+/* Hover effect */
+.logo-link:hover {
+    color: var(--accent-cyan);
+}
+
+/* Click (active) effect */
+.logo-link:active {
+    transform: scale(0.95);
+    /* shrink slightly when clicked */
+    color: #8B4C6C;
+    /* brand mauve accent on click, not an unrelated blue */
+}
+
+.logo-link:active .logo-img {
+    transform: scale(0.9);
+    /* shrink logo when clicked */
+}
+
+
+.search-bar {
+    flex: 1;
+    max-width: 500px;
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.search-bar:focus-within {
+    box-shadow: 0 0 0 3px rgba(230, 0, 38, 0.25);
+    transform: translateY(-2px);
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 15px 25px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    background: transparent;
+    color: white;
+}
+
+.search-bar input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Single consistent "live/alert" accent (brand red) instead of the old
+   mauve->navy gradient that shifted to navy->purple on hover - a stray,
+   unrelated hue not in the palette. */
+.search-bar button {
+    padding: 15px 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #E60026;
+    transition: all 0.3s ease;
+}
+
+.search-bar button:hover {
+    background: rgba(230, 0, 38, 0.14);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-direction: row;
+}
+
+.header-actions>div {
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Position container for icon + badge */
+.header-actions .action-item {
+    position: relative;
+}
+
+.header-actions .action-btn {
+    font-size: inherit;
+    cursor: pointer;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+}
+
+.header-actions>div:hover,
+.header-actions .action-btn:hover {
+    background: rgba(3, 61, 63, 0.2);
+    transform: scale(1.1);
+}
+
+/* Avatar dropdown - neumorphic raised card (same shadow/surface system as
+   the rest of the site, e.g. .filters-sidebar) instead of a dark glass
+   panel, so it reads as "part of" the light surface it pops out of rather
+   than an unrelated dark overlay. Locked-palette mauve marks hover instead
+   of the old cyan/navy tokens; brand red (#E60026) marks the danger item
+   instead of a generic off-palette red. */
+.avatar-dropdown {
+    position: relative;
+}
+
+.avatar-dropdown .dropdown-menu {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg, 16px);
+    min-width: 200px;
+    padding: 8px;
+    box-shadow: var(--neu-raised);
+    display: none;
+    z-index: 2000;
+}
+
+.avatar-dropdown .dropdown-menu.show {
+    display: block;
+    animation: fadeIn .15s ease;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm, 8px);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background var(--duration-fast, 150ms) var(--ease-out, ease), color var(--duration-fast, 150ms) var(--ease-out, ease);
+}
+
+.dropdown-item:hover {
+    background: rgba(139, 76, 108, 0.08);
+    color: #8B4C6C;
+}
+
+.dropdown-item.danger:hover {
+    background: rgba(230, 0, 38, 0.08);
+    color: #E60026;
+}
+
+.dropdown-separator {
+    height: 1px;
+    background: var(--border-color);
+    margin: 6px 4px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Native <select> dropdowns, site-wide default (customer + guest pages
+   share this stylesheet). Same neumorphic inset treatment as the admin
+   panel's selects (admin.css) and the same mauve focus/chevron - kept as a
+   plain element selector (lowest specificity) on purpose, so any page that
+   already gives a select its own scoped class (.pf-select-wrap select,
+   .drp-select, #sortSelect, etc.) keeps winning the cascade unchanged; this
+   only reaches selects that don't have custom styling yet. */
+select {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--radius-sm, 8px);
+    box-shadow: var(--neu-pressed);
+    padding: 10px 36px 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B4C6C' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 13px;
+    transition: box-shadow var(--duration-fast, 150ms) var(--ease-out, ease), transform var(--duration-fast, 150ms) var(--ease-out, ease);
+}
+
+select:hover {
+    box-shadow: var(--neu-pressed), 0 0 0 1px rgba(139, 76, 108, 0.25);
+}
+
+select:focus-visible {
+    outline: 2px solid #8B4C6C;
+    outline-offset: 1px;
+}
+
+select:active {
+    transform: scale(0.99);
+}
+
+select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    select { transition-duration: .01ms !important; }
+}
+
+/* Logout button (subtle, on-brand) */
+.logout-btn {
+    margin-left: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #e0e6ed;
+    padding: 10px 14px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: transform .15s ease, box-shadow .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logout-btn:hover {
+    background: rgba(167, 118, 147, 0.10);
+    color: #a77693;
+    border-color: rgba(167, 118, 147, 0.45);
+    box-shadow: 0 6px 18px rgba(167, 118, 147, 0.18);
+    transform: translateY(-1px);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.cart-count {
+    background: linear-gradient(45deg, var(--accent-cyan), var(--accent-blue));
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    border: 2px solid rgba(16, 24, 39, 0.9);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.login-btn {
+    background: linear-gradient(45deg, #a77693, #174871);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.login-btn:hover {
+    background: linear-gradient(45deg, #174871, #8a2be2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 128, 255, 0.4);
+    text-decoration: none;
+}
+
+/* Ensure underline never appears on link states */
+.login-btn:link,
+.login-btn:visited,
+.login-btn:focus,
+.login-btn:active {
+    text-decoration: none;
+}
+
+/* Navigation Styles */
+.navbar {
+    background: var(--navbar-bg);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 35px;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 0;
+    position: relative;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nav-links a::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(45deg, #a77693, #174871);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-links a:hover::before,
+.nav-links a.active::before {
+    width: 100%;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: #a77693;
+}
+
+.nav-links a.rakk {
+    color: #ff6b35;
+    font-weight: bold;
+}
+
+.nav-links a.easyfix {
+    color: #a77693;
+    font-weight: bold;
+}
+
+/* Mobile Navigation */
+.mobile-nav-toggle {
+    display: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e0e6ed;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 12px;
+    transition: all 0.25s ease;
+    z-index: 1001;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(8px);
+}
+
+.mobile-nav-toggle:hover {
+    background: rgba(167, 118, 147, 0.12);
+    color: #a77693;
+    transform: translateY(-1px);
+}
+
+.mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-nav-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.mobile-nav-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: min(88vw, 420px);
+    height: 100%;
+    background: linear-gradient(140deg, rgba(17, 25, 40, 0.96), rgba(29, 41, 57, 0.96));
+    backdrop-filter: blur(22px) saturate(125%);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 1000;
+    transition: right var(--duration-slow, 300ms) var(--ease-drawer);
+    overflow-y: auto;
+    padding: 80px 0 20px;
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.45);
+    border-top-left-radius: 18px;
+    border-bottom-left-radius: 18px;
+}
+
+.mobile-nav-menu.active {
+    right: 0;
+}
+
+.mobile-nav-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mobile-nav-header h3 {
+    color: #e0e6ed;
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0;
+}
+
+/* Optional close control/icon styles inside the menu */
+.mobile-nav-header .fi,
+.mobile-nav-close,
+.mobile-nav-menu .fi.fi-bs-cross {
+    color: #94a3b8;
+    font-size: 20px;
+    padding: 8px;
+    border-radius: 10px;
+    transition: background .2s ease, color .2s ease;
+}
+
+.mobile-nav-header .fi:hover,
+.mobile-nav-close:hover,
+.mobile-nav-menu .fi.fi-bs-cross:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+.mobile-nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mobile-nav-links li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mobile-nav-links a {
+    display: block;
+    padding: 16px 20px;
+    color: #e0e6ed;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.4px;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.mobile-nav-links a:hover,
+.mobile-nav-links a.active {
+    background: rgba(167, 118, 147, 0.12);
+    color: #a77693;
+    border-left-color: #a77693;
+    padding-left: 25px;
+}
+
+.mobile-nav-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.mobile-nav-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Mobile Search */
+.mobile-search-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #e0e6ed;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+.mobile-search-toggle:hover {
+    background: rgba(167, 118, 147, 0.1);
+    color: #a77693;
+}
+
+.mobile-search-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-search-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.mobile-search-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 90%;
+    max-width: 500px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(51, 65, 85, 0.98));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 30px;
+    z-index: 1000;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.mobile-search-container.active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.mobile-search-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.mobile-search-header h3 {
+    color: #e0e6ed;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.mobile-search-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.mobile-search-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.mobile-search-form {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.mobile-search-form:focus-within {
+    box-shadow: 0 0 25px rgba(167, 118, 147, 0.4);
+    border-color: rgba(167, 118, 147, 0.5);
+}
+
+.mobile-search-form input {
+    flex: 1;
+    padding: 15px 20px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    background: transparent;
+    color: #e0e6ed;
+}
+
+.mobile-search-form input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.mobile-search-form button {
+    padding: 15px 20px;
+    background: linear-gradient(45deg, #a77693, #174871);
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.mobile-search-form button:hover {
+    background: linear-gradient(45deg, #174871, #8a2be2);
+}
+
+/* Categories Section */
+.categories {
+    background: var(--bg-card);
+    padding: 50px 0;
+    margin: 30px 0;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    /* Softened - see .filters-sidebar/.product-section for why */
+    box-shadow: 3px 3px 8px rgba(163, 150, 138, 0.22), -3px -3px 8px rgba(255, 255, 255, 0.5);
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 40px;
+}
+
+.category-item {
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    padding: 20px;
+    border-radius: 15px;
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+}
+
+.category-item:hover {
+    transform: translateY(-10px) scale(1.05);
+    background: var(--accent-cyan-bg);
+    box-shadow: 0 20px 40px rgba(167, 118, 147, 0.2);
+}
+
+.category-image {
+    background: linear-gradient(135deg, var(--accent-blue), #0f2d4d);
+    border-radius: 15px;
+    padding: 20px;
+    /* less padding = more room for image */
+    margin-bottom: 20px;
+    height: 150px;
+    /* was 120px, now bigger */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.category-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* keeps details visible */
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(23, 72, 113, 0.35);
+    /* soft glow shadow, on-palette blue instead of the old neon cyan */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* smooth effect */
+}
+
+.category-image img:hover {
+    transform: scale(1.08);
+    /* zoom in a little when hovered */
+    box-shadow: 0 10px 25px rgba(167, 118, 147, 0.5);
+    /* stronger shadow */
+}
+
+.image-placeholder {
+    background: rgba(255, 255, 255, 0.1);
+    color: #a77693;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(167, 118, 147, 0.3);
+}
+
+.category-item h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Products Section */
+.products {
+    padding: 40px 0;
+}
+
+.product-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.product-section {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 35px;
+    border: 1px solid var(--border-color);
+    /* Softer than --neu-raised - same reason as .filters-sidebar: against
+       the customer area's background video the full neumorphic shadow
+       reads as a heavy glow instead of a subtle lift. */
+    box-shadow: 3px 3px 8px rgba(163, 150, 138, 0.22), -3px -3px 8px rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+}
+
+.product-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(163, 150, 138, 0.25);
+}
+
+.desktop-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.laptop-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.section-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.see-more {
+    color: #a77693;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    background: rgba(167, 118, 147, 0.1);
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: 1px solid rgba(167, 118, 147, 0.3);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.see-more:hover {
+    background: rgba(167, 118, 147, 0.2);
+    transform: translateX(5px);
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+.product-card {
+    background: var(--bg-card-hover);
+    border-radius: 15px;
+    padding: 25px;
+    position: relative;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--neu-raised-sm);
+    transition: all 0.4s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-10px);
+    background: var(--bg-card-hover);
+    /* Softened - see .filters-sidebar for why */
+    box-shadow: 4px 4px 10px rgba(163, 150, 138, 0.25), -4px -4px 10px rgba(255, 255, 255, 0.55);
+}
+
+.save-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: linear-gradient(45deg, var(--accent-cyan), var(--accent-blue));
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(255, 0, 128, 0.3);
+}
+
+.brand {
+    text-align: right;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #a77693;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.product-image {
+    background: var(--bg-product-img);
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    /* prevents overflow if image is too big */
+}
+
+.product-image img {
+    max-width: 100%;
+    /* keep inside horizontally */
+    max-height: 100%;
+    /* keep inside vertically */
+    object-fit: contain;
+    /* shows whole image without cropping */
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+    /* subtle shadow */
+}
+
+.product-image img:hover {
+    transform: scale(1.08);
+    box-shadow: 0 10px 25px rgba(167, 118, 147, 0.5);
+}
+
+
+.product-card h3 {
+    font-size: 15px;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.rating {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 15px;
+}
+
+.price {
+    margin: 20px 0;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: var(--text-muted);
+    font-size: 13px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.current-price {
+    font-size: 20px;
+    font-weight: 800;
+    color: #a77693;
+}
+
+.view-product,
+.buy-now {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.view-product {
+    background: linear-gradient(45deg, #1e293b, #334155);
+    color: #e0e6ed;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.buy-now {
+    background: linear-gradient(45deg, #a77693, #174871);
+    color: white;
+}
+
+.view-product:hover {
+    background: linear-gradient(45deg, #334155, #475569);
+    transform: translateY(-2px);
+}
+
+.buy-now:hover {
+    background: linear-gradient(45deg, #174871, #8a2be2);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 128, 255, 0.3);
+}
+
+.installment-badge {
+    background: linear-gradient(45deg, #10b981, #06d6a0);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 10px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    overflow: auto;
+    /* allow scrolling when content is taller than viewport */
+}
+
+/* Scoped to `.modal > .modal-content` (the auth modal - #loginModal.modal,
+   and #ticketModal etc). A bare `.modal-content` selector here also hit the
+   Order Summary / Confirm Delivery / Record Payment dialogs, which use
+   `.modal-overlay > .modal-container > .modal-content` as a flex child -
+   `position:absolute; inset:0` yanked that flex child out of flow and made
+   it cover the whole dialog, overlapping the header and footer. */
+.modal > .modal-content {
+    /* Was margin: 3% auto on a block element - that only centers
+       horizontally; vertically it just sits a fixed 3% down from the top,
+       so on any viewport taller than the dialog it reads as pinned near the
+       top instead of centered. Absolute + inset:0 + margin:auto centers on
+       both axes against .modal's fixed, full-viewport box, and doesn't
+       touch `transform` so it can't fight the entrance animation below
+       (which only animates transform/opacity). */
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    background: var(--modal-bg);
+    padding: 0;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 450px;
+    height: fit-content;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--neu-raised);
+    animation: modalSlide 0.4s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+    max-height: 90vh;
+    /* fit within viewport */
+    overflow: hidden;
+    /* disable scrollbars inside dialog */
+}
+
+@keyframes modalSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-100px) scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.close {
+    position: absolute;
+    right: 25px;
+    top: 20px;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--text-muted);
+    z-index: 1001;
+    transition: all 0.3s ease;
+    background: transparent;
+    /* remove default button background */
+    border: none;
+    /* remove default button border */
+    outline: none;
+    /* remove default outline */
+    box-shadow: none;
+    /* ensure no shadow background */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 0;
+    line-height: 1;
+}
+
+.close:hover {
+    color: #a77693;
+    transform: scale(1.2);
+    background: transparent;
+    /* keep background transparent on hover */
+}
+
+.close:focus,
+.close:active {
+    background: transparent;
+    /* ensure no background on focus/active */
+    outline: none;
+    box-shadow: none;
+}
+
+/* Notification Styles */
+.notification {
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.notification.success {
+    background: rgba(23, 72, 113, 0.2);
+    color: #174871;
+    border-color: #174871;
+}
+
+.notification.error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.notification.info {
+    background: rgba(23, 72, 113, 0.2);
+    color: #174871;
+    border-color: #174871;
+}
+
+.auth-container {
+    padding: 50px 40px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.auth-form p {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 35px;
+    font-size: 15px;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 18px 20px;
+    margin-top: 15px;
+    border: 2px solid var(--input-border);
+    border-radius: 12px;
+    font-size: 15px;
+    background: var(--input-bg);
+    color: var(--input-text);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+.auth-form input::placeholder {
+    color: var(--input-placeholder);
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #a77693;
+    box-shadow: 0 0 20px rgba(167, 118, 147, 0.3);
+    background: var(--input-bg);
+}
+
+/* Floating label fields - the label sits inside the input like a placeholder
+   until the field is focused or filled, then shrinks and floats up onto the
+   border (Material-style). Requires placeholder=" " on the input so
+   :placeholder-shown only matches while it's genuinely empty. */
+.auth-form .form-field {
+    position: relative;
+    margin-top: 15px;
+}
+.auth-form .form-field input {
+    margin-top: 0;
+}
+.auth-form .form-field label {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: var(--input-placeholder);
+    background: transparent;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 11;
+}
+.auth-form .form-field input:focus + label,
+.auth-form .form-field input:not(:placeholder-shown) + label {
+    top: 0;
+    left: 14px;
+    transform: translateY(-50%) scale(0.82);
+    padding: 0 6px;
+    background: var(--input-bg);
+    color: #a77693;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 18px;
+    margin-top: 25px;
+    background: linear-gradient(45deg, #a77693, #174871);
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.auth-btn:hover {
+    background: linear-gradient(45deg, #174871, #8a2be2);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 128, 255, 0.4);
+}
+
+/* Auth footer for forgot password link */
+.auth-footer {
+    text-align: center;
+
+}
+
+.forgotpass {
+    margin-bottom: 10px;
+    color: #a77693;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.forgotpass:hover {
+    color: #174871;
+    text-decoration: underline;
+}
+
+.auth-link {
+    text-align: center;
+    margin: 12px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.auth-link a {
+    color: #a77693;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.auth-link a:hover {
+    color: #174871;
+    text-decoration: underline;
+}
+
+.social-btn {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--input-border);
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.social-btn:hover {
+    border-color: var(--border-color-hover);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+}
+
+.social-btn.facebook:hover {
+    border-color: #4267b2;
+    color: #4267b2;
+}
+
+.social-btn.google:hover {
+    border-color: #db4437;
+    color: #db4437;
+}
+
+/* Input group styles */
+.input-group {
+    position: relative;
+    margin-bottom: 5px;
+}
+
+/* Password field styles */
+.password-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.password-field input {
+    width: 100%;
+    padding-right: 50px;
+}
+
+/* Live color feedback: site accent once the password meets every rule (matches
+   the .auth-form input:focus treatment below), red while it doesn't */
+.password-field input.pw-valid {
+    border-color: var(--accent-cyan) !important;
+    color: var(--accent-cyan);
+    box-shadow: 0 0 20px var(--accent-cyan-bg-30);
+}
+
+.password-field input.pw-invalid {
+    border-color: #f87171 !important;
+    color: #f87171;
+    box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.35);
+}
+
+/* Password toggle button positioned inside the input */
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+
+.password-toggle:hover {
+    color: var(--text-primary);
+}
+
+/* Live password requirements checklist */
+.password-rules {
+    list-style: none;
+    margin: 2px 0 12px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12.5px;
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.password-rules li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f87171;
+    transition: color 0.2s ease;
+}
+
+.password-rules li::before {
+    content: "✕";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.password-rules li.valid {
+    color: var(--accent-cyan);
+}
+
+.password-rules li.valid::before {
+    content: "✓";
+}
+
+/* Mobile-First Responsive Design */
+
+/* Base mobile styles (320px+) */
+@media (max-width: 768px) {
+
+    /* Mobile Navigation */
+    .mobile-nav-toggle {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    /* Header mobile adjustments */
+    .header .container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 0 14px;
+    }
+
+    .logo h2 {
+        font-size: 20px;
+        letter-spacing: 1px;
+    }
+
+    .logo-img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .search-bar {
+        display: none;
+        /* Hide search on mobile, use mobile search instead */
+    }
+
+    .mobile-search-toggle {
+        display: block;
+    }
+
+    .header-actions {
+        gap: 10px;
+    }
+
+    .header-actions>div,
+    .header-actions .action-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        padding: 6px;
+    }
+
+    .login-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+    }
+
+    /* Categories mobile */
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .category-item {
+        padding: 15px;
+    }
+
+    .category-image {
+        height: 120px;
+        padding: 15px;
+    }
+
+    .category-item h3 {
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
+
+    /* Products mobile */
+    .product-sections {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .product-section {
+        padding: 25px 20px;
+    }
+
+    .section-header h2 {
+        font-size: 22px;
+        letter-spacing: 1px;
+    }
+
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .product-card {
+        padding: 20px;
+    }
+
+    .product-image {
+        height: 140px;
+        padding: 20px;
+    }
+
+    .product-card h3 {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .current-price {
+        font-size: 18px;
+    }
+
+    .view-product,
+    .buy-now {
+        padding: 12px;
+        font-size: 13px;
+    }
+
+    /* Modal mobile (auth modal only - see the note on `.modal > .modal-content` above) */
+    .modal > .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        max-height: 90vh;
+    }
+
+    .auth-container {
+        padding: 30px 20px;
+    }
+
+    .auth-form h2 {
+        font-size: 24px;
+    }
+
+    .auth-form input {
+        padding: 15px 18px;
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    .auth-btn {
+        padding: 15px;
+        font-size: 15px;
+    }
+
+    /* Container adjustments */
+    .container {
+        padding: 0 14px;
+    }
+
+    /* Text adjustments for mobile */
+    body {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    /* Button touch targets */
+    button,
+    .btn,
+    .action-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Touch-friendly spacing */
+    .product-actions {
+        gap: 10px;
+    }
+
+    .add-to-cart-btn,
+    .buy-now,
+    .wishlist-action-btn {
+        padding: 12px 8px;
+        font-size: 12px;
+        min-height: 44px;
+    }
+
+    /* Mobile-specific improvements */
+    .header {
+        padding: 15px 0;
+    }
+
+    .navbar {
+        padding: 10px 0;
+    }
+
+    /* Better mobile typography */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        line-height: 1.3;
+    }
+
+    /* Mobile-friendly form elements */
+    input,
+    textarea {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        padding: 12px 15px;
+    }
+
+    /* Selects keep their own right-side padding (not the shared 12px 15px
+       above) so the chevron icon doesn't overlap the selected text. */
+    select {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        padding: 12px 36px 12px 15px;
+    }
+
+    /* Mobile card improvements */
+    .product-card {
+        margin-bottom: 15px;
+    }
+
+    .product-card:hover {
+        transform: none;
+        /* Disable hover effects on mobile */
+    }
+
+    /* Mobile category improvements */
+    .category-item:hover {
+        transform: none;
+        /* Disable hover effects on mobile */
+    }
+
+    /* Mobile modal improvements (auth modal only) */
+    .modal > .modal-content {
+        border-radius: 15px;
+    }
+
+    /* Mobile search improvements */
+    .mobile-search-container {
+        width: 95%;
+        padding: 22px;
+    }
+
+    .mobile-search-form input {
+        font-size: 16px;
+        padding: 12px 15px;
+    }
+
+    .mobile-search-form button {
+        padding: 12px 15px;
+        font-size: 16px;
+    }
+}
+
+/* Small mobile devices (480px and below) */
+@media (max-width: 480px) {
+    .header .container {
+        padding: 0 10px;
+    }
+
+    .logo h2 {
+        font-size: 18px;
+    }
+
+    .logo-img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .category-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .category-item {
+        padding: 12px;
+    }
+
+    .category-image {
+        height: 100px;
+        padding: 12px;
+    }
+
+    .category-item h3 {
+        font-size: 11px;
+    }
+
+    .product-section {
+        padding: 20px 15px;
+    }
+
+    .section-header h2 {
+        font-size: 20px;
+    }
+
+    .product-card {
+        padding: 15px;
+    }
+
+    .product-image {
+        height: 120px;
+        padding: 15px;
+    }
+
+    .modal > .modal-content {
+        width: 98%;
+        margin: 2% auto;
+    }
+
+    .auth-container {
+        padding: 25px 15px;
+    }
+
+    .container {
+        padding: 0 10px;
+    }
+
+    /* Mobile navigation adjustments */
+    .mobile-nav-menu {
+        width: 100%;
+        right: -100%;
+        border-top-left-radius: 16px;
+        border-bottom-left-radius: 16px;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+
+    .mobile-nav-links a {
+        padding: 20px;
+        font-size: 18px;
+    }
+
+    /* Extra small mobile improvements */
+    .mobile-search-container {
+        width: 98%;
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .mobile-search-form input {
+        padding: 10px 12px;
+        font-size: 16px;
+    }
+
+    .mobile-search-form button {
+        padding: 10px 12px;
+        font-size: 16px;
+    }
+
+    /* Ultra-compact mobile layout */
+    .header .container {
+        gap: 8px;
+    }
+
+    .logo h2 {
+        font-size: 16px;
+    }
+
+    .logo-img {
+        width: 24px;
+        height: 24px;
+    }
+
+    .header-actions>div,
+    .header-actions .action-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+        padding: 4px;
+    }
+
+    .login-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Ultra-compact categories */
+    .category-item {
+        padding: 10px;
+    }
+
+    .category-image {
+        height: 80px;
+        padding: 10px;
+    }
+
+    .category-item h3 {
+        font-size: 10px;
+        letter-spacing: 0.3px;
+    }
+
+    /* Ultra-compact products */
+    .product-section {
+        padding: 15px 10px;
+    }
+
+    .section-header h2 {
+        font-size: 18px;
+    }
+
+    .product-card {
+        padding: 12px;
+    }
+
+    .product-image {
+        height: 100px;
+        padding: 12px;
+    }
+
+    .product-card h3 {
+        font-size: 13px;
+    }
+
+    .current-price {
+        font-size: 16px;
+    }
+
+    .view-product,
+    .buy-now {
+        padding: 10px;
+        font-size: 11px;
+    }
+}
+
+/* Tablet landscape (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .category-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
+    }
+
+    .product-sections {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .nav-links {
+        gap: 25px;
+    }
+
+    .nav-links a {
+        font-size: 13px;
+    }
+}
+
+/* Desktop (1025px+) */
+@media (min-width: 1025px) {
+    .mobile-nav-toggle {
+        display: none;
+    }
+
+    .nav-links {
+        display: flex;
+    }
+
+    .search-bar {
+        display: flex;
+    }
+}
+
+/* ===================== */
+/* Additions & Fixes     */
+/* ===================== */
+
+/* Dedup fixes: ensure only one set of logo-link/img rules wins */
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform .2s ease, color .2s ease;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    transition: transform .2s ease;
+}
+
+.logo-link:hover {
+    color: #007BFF;
+}
+
+.logo-link:active {
+    transform: scale(.95);
+    color: #0056b3;
+}
+
+.logo-link:active .logo-img {
+    transform: scale(.9);
+}
+
+/* Focus visibility for accessibility */
+a:focus-visible,
+button:focus-visible,
+.role-button:focus-visible {
+    outline: 2px solid #a77693;
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* Keep cartCount consistent with JS id */
+.cart-count#cartCount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal aria-hidden helper */
+.modal[aria-hidden="true"] {
+    display: none;
+}
+
+/* Optional: reduce heavy blurs on small screens */
+@media (max-width: 768px) {
+
+    .header,
+    .navbar,
+    .modal-content,
+    .product-section,
+    .category-item {
+        backdrop-filter: blur(8px);
+    }
+}
+
+/* OTP input styles (6-box verification) */
+.otp-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 8px 0 2px;
+}
+
+.otp-input {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, .18);
+    background: rgba(255, 255, 255, .05);
+    color: #eaf2ff;
+    text-align: center;
+    font-size: 28px;
+    line-height: 56px;
+    padding: 0;
+    font-weight: 800;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    caret-color: #00aaff;
+    font-variant-numeric: tabular-nums;
+    -webkit-text-security: none;
+    font-family: system-ui, -apple-system, Segoe UI, Arial, Helvetica, sans-serif;
+}
+
+.otp-input::placeholder {
+    color: transparent;
+}
+
+.otp-input:focus {
+    border-color: #00aaff;
+    box-shadow: 0 0 0 3px rgba(0, 170, 255, .15);
+}
+
+@media (max-width:420px) {
+    .otp-input {
+        width: 50px;
+        height: 54px;
+        font-size: 26px;
+        line-height: 54px;
+    }
+}
+
+/* Role selection styles (moved from inline) */
+.role-selection {
+    margin-bottom: 20px;
+}
+
+.role-selection label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.role-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.role-button {
+    background: var(--bg-card-hover);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: .3s;
+    color: var(--text-primary);
+    font: inherit;
+    width: 100%;
+}
+
+.role-button:hover {
+    border-color: rgba(167, 118, 147, .5);
+    background: var(--bg-card);
+}
+
+.role-button.active {
+    border-color: #a77693;
+    background: rgba(167, 118, 147, .1);
+    box-shadow: 0 0 20px rgba(167, 118, 147, .3);
+}
+
+.role-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.role-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: var(--text-primary);
+}
+
+.role-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.admin-request-field {
+    display: none;
+    margin-bottom: 20px;
+}
+
+.admin-request-field.show {
+    display: block;
+    animation: slideDown .3s ease;
+}
+
+.admin-request-field textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 15px;
+    border: 2px solid var(--input-border);
+    border-radius: 12px;
+    background: var(--input-bg);
+    color: var(--input-text);
+    resize: vertical;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.admin-request-field textarea::placeholder {
+    color: var(--input-placeholder);
+}
+
+.admin-request-field textarea:focus {
+    outline: none;
+    border-color: #a77693;
+    box-shadow: 0 0 20px rgba(167, 118, 147, .3);
+    background: var(--input-bg);
+}
+
+.admin-request-field label {
+    display: block;
+    margin-bottom: 10px;
+    color: #a77693;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Toast Notification System (Floating & Glassmorphism) */
+#toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+    max-width: 420px;
+    width: calc(100vw - 48px);
+}
+
+.toast-notification {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(11, 18, 32, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    color: #f1f5f9;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    animation: toastSlideIn var(--duration-slow, 300ms) var(--ease-out) forwards;
+    transition: all 0.25s ease;
+    border-left: 4px solid var(--accent-cyan);
+}
+
+.toast-notification.toast-success {
+    border-left-color: #10b981;
+    background: rgba(6, 30, 20, 0.94);
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.toast-notification.toast-error {
+    border-left-color: #ef4444;
+    background: rgba(30, 10, 15, 0.94);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.toast-notification.toast-warning {
+    border-left-color: #f59e0b;
+    background: rgba(30, 20, 5, 0.94);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
+.toast-notification.toast-leaving {
+    animation: toastSlideOut 0.25s ease forwards;
+}
+
+.toast-message {
+    flex: 1;
+    word-break: break-word;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.toast-close:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.95);
+    }
+}
+
+/* Footer Styles */
+.main-footer {
+    background: #282C34;
+    color: #e0e6ed;
+    margin-top: 80px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Network status indicator (online/offline) */
+.net-status {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 3000;
+    display: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(10px);
+}
+
+.net-status.online {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #06231f;
+    background: linear-gradient(45deg, #22c55e, #a7f3d0);
+}
+
+.net-status.offline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2a0f0f;
+    background: linear-gradient(45deg, #ef4444, #fecaca);
+}
+
+.net-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    padding: 60px 0 40px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-column h3 {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+}
+
+.footer-column p {
+    color: #b0b8c4;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 12px;
+}
+
+.footer-column ul li a {
+    color: #b0b8c4;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.footer-column ul li a:hover {
+    color: #174871;
+}
+
+.contact-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.contact-list i {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.contact-list span {
+    color: #b0b8c4;
+    font-size: 14px;
+}
+
+/* Social links (Facebook/TikTok) - the anchor is the only child of its <li>,
+   so it needs its own flex row for the brand-icon + label to line up the
+   same way the icon+span rows above it do. */
+.contact-list a.social-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #b0b8c4;
+    font-size: 14px;
+}
+.contact-list a.social-link:hover {
+    color: #ffffff;
+}
+.social-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.footer-bottom {
+    padding: 30px 0;
+}
+
+.footer-bottom-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.footer-bottom p {
+    color: #8b949e;
+    font-size: 14px;
+    margin: 0;
+}
+
+.made-with {
+    display: flex;
+    align-items: center;
+    color: #8b949e;
+    font-size: 14px;
+}
+
+.made-with i {
+    animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Footer Responsive Design */
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        padding: 40px 0 30px;
+    }
+
+    .footer-bottom-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .footer-column h3 {
+        font-size: 16px;
+    }
+
+    .footer-column p,
+    .footer-column ul li a,
+    .contact-list span {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-content {
+        padding: 30px 0 20px;
+    }
+
+    .footer-bottom {
+        padding: 20px 0;
+    }
+}
+
+/* =========================
+   Featured Carousel Styles
+   For guest and customer index pages
+========================= */
+.featured-carousel {
+    margin: 30px 0;
+    padding: 0;
+}
+
+.carousel-container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-wrapper {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+}
+
+.carousel-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-slide.active {
+    opacity: 1;
+}
+
+.carousel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+.carousel-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 30px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.carousel-content h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-content p {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.carousel-content .price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #a77693;
+    text-shadow: 0 0 10px rgba(167, 118, 147, 0.5);
+}
+
+.carousel-controls {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+}
+
+.carousel-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    pointer-events: all;
+    backdrop-filter: blur(10px);
+}
+
+.carousel-btn:hover {
+    background: rgba(167, 118, 147, 0.8);
+    transform: scale(1.1);
+}
+
+.carousel-indicators {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    background: #a77693;
+    box-shadow: 0 0 10px rgba(167, 118, 147, 0.5);
+}
+
+.indicator:hover {
+    background: rgba(167, 118, 147, 0.8);
+}
+
+/* =========================
+   Products Listing (Shared)
+   Extracted from guest/products.php for reuse in customer pages
+========================= */
+.breadcrumb {
+    background: var(--bg-card);
+    padding: 15px 0;
+    font-size: 14px;
+}
+
+.breadcrumb a {
+    color: #a77693;
+    text-decoration: none;
+}
+
+.breadcrumb span {
+    margin: 0 10px;
+    color: var(--text-muted);
+}
+
+.products-listing {
+    padding: 40px 0;
+    min-height: 60vh;
+}
+
+.products-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 40px;
+}
+
+.filters-sidebar {
+    background: var(--bg-card);
+    border-radius: 15px;
+    padding: 30px;
+    height: fit-content;
+    border: 1px solid var(--border-color);
+    /* Softer than --neu-raised (7px/14px blur) - against the customer area's
+       background video the full neumorphic shadow reads as a heavy halo
+       instead of a subtle lift, since it's no longer sitting on a flat
+       gradient. */
+    box-shadow: 3px 3px 8px rgba(163, 150, 138, 0.22), -3px -3px 8px rgba(255, 255, 255, 0.5);
+}
+
+.filter-section {
+    margin-bottom: 30px;
+}
+
+/* Category Slots */
+.category-slots .slot-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-slots .slot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.category-slots .slot-label {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.category-slots .slot-qty {
+    background: var(--accent-cyan);
+    color: #ffffff;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+
+.category-slots .slot-group {
+    margin-top: 16px;
+}
+
+.category-slots .slot-group-title {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin: 8px 0;
+}
+
+.filter-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.category-filter {
+    list-style: none;
+}
+
+.category-filter li {
+    margin-bottom: 8px;
+}
+
+.category-filter a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.category-filter a:hover,
+.category-filter a.active {
+    background: rgba(167, 118, 147, 0.1);
+    color: #a77693;
+}
+
+#sortSelect {
+    width: 100%;
+    padding: 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    color: var(--input-text);
+}
+
+.products-main {
+    min-height: 400px;
+}
+
+.products-header {
+    margin-bottom: 30px;
+}
+
+.products-header h1 {
+    color: var(--text-primary);
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.results-count {
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.product-card {
+    background: var(--bg-card);
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--neu-raised-sm);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    /* Softened - see .filters-sidebar for why */
+    box-shadow: 4px 4px 10px rgba(163, 150, 138, 0.25), -4px -4px 10px rgba(255, 255, 255, 0.55);
+    border-color: rgba(167, 118, 147, 0.3);
+}
+
+.product-image {
+    position: relative;
+    height: 200px;
+    background: var(--bg-product-img);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-image img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.product-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.quick-view-btn,
+.wishlist-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.quick-view-btn:hover {
+    background: #a77693;
+    color: white;
+}
+
+.wishlist-btn:hover {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.product-info {
+    padding: 20px;
+}
+
+.product-category {
+    color: #a77693;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.product-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.product-title a:hover {
+    color: #a77693;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 15px;
+}
+
+.product-rating i {
+    color: #fbbf24;
+    font-size: 14px;
+}
+
+.rating-text {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.product-price {
+    margin-bottom: 15px;
+}
+
+.current-price {
+    color: #a77693;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.original-price {
+    color: var(--text-muted);
+    font-size: 14px;
+    text-decoration: line-through;
+    margin-left: 10px;
+}
+
+.product-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.add-to-cart-btn,
+.buy-now-btn,
+.out-of-stock-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.add-to-cart-btn {
+    background: rgba(167, 118, 147, 0.1);
+    color: #a77693;
+    border: 1px solid rgba(167, 118, 147, 0.3);
+    text-decoration: none;
+}
+
+.add-to-cart-btn:hover {
+    background: rgba(167, 118, 147, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Ensure underline never appears even if rendered as <a> */
+.add-to-cart-btn:link,
+.add-to-cart-btn:visited,
+.add-to-cart-btn:focus,
+.add-to-cart-btn:hover,
+.add-to-cart-btn:active {
+    text-decoration: none;
+}
+
+.buy-now-btn {
+    background: linear-gradient(45deg, #a77693, #174871);
+    color: white;
+}
+
+.buy-now-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 128, 255, 0.3);
+}
+
+.out-of-stock-btn {
+    background: var(--bg-card-hover);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.low-stock-warning {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.no-products {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.no-products-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.no-products h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.no-products p {
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #a77693, #174871);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 128, 255, 0.3);
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 40px;
+}
+
+.pagination-btn {
+    padding: 10px 16px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pagination-btn:hover {
+    background: rgba(167, 118, 147, 0.1);
+    color: #a77693;
+    border-color: rgba(167, 118, 147, 0.3);
+}
+
+.pagination-btn.active {
+    background: linear-gradient(45deg, #a77693, #174871);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .products-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .filters-sidebar {
+        order: 2;
+    }
+
+    .products-main {
+        order: 1;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .product-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* ==========================================================================
+   LIGHT MODE COMPONENT OVERRIDES (WCAG AA Compliant & Product Highlight)
+   ========================================================================== */
+
+[data-theme="light"] {
+    color-scheme: light;
+}
+
+[data-theme="light"] .header {
+    background: var(--header-bg);
+    box-shadow: 0 4px 20px rgba(23, 72, 113, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="light"] .search-bar {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .search-bar input {
+    color: #0f172a;
+}
+
+[data-theme="light"] .search-bar input::placeholder {
+    color: #64748b;
+}
+
+[data-theme="light"] .search-bar button {
+    background: transparent;
+    color: #E60026;
+}
+
+[data-theme="light"] .navbar {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .nav-link {
+    color: #334155;
+}
+
+[data-theme="light"] .nav-link:hover,
+[data-theme="light"] .nav-link.active {
+    color: #174871;
+    background: rgba(23, 72, 113, 0.06);
+}
+
+[data-theme="light"] .product-card,
+[data-theme="light"] .category-card,
+[data-theme="light"] .hero,
+[data-theme="light"] .filter-card,
+[data-theme="light"] .checkout-form,
+[data-theme="light"] .summary-card,
+[data-theme="light"] .profile-card,
+[data-theme="light"] .detail-card,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .auth-content,
+[data-theme="light"] .modal-content,
+[data-theme="light"] .form-section {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .checkout-form,
+[data-theme="light"] .form-section {
+    border-radius: var(--radius-md, 12px) !important;
+}
+
+[data-theme="light"] .product-card:hover {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Product image container - soft neutral light-gray background so black/dark hardware GPUs, cases, peripherals pop out */
+[data-theme="light"] .product-image,
+[data-theme="light"] .category-image,
+[data-theme="light"] .item-image {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .product-card h3,
+[data-theme="light"] .product-title,
+[data-theme="light"] .product-price,
+[data-theme="light"] .section-title,
+[data-theme="light"] .modal-content h1,
+[data-theme="light"] .modal-content h2,
+[data-theme="light"] .modal-content h3,
+[data-theme="light"] .form-section h3,
+[data-theme="light"] .addr-name,
+[data-theme="light"] .method-name,
+[data-theme="light"] table td,
+[data-theme="light"] table th {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .product-category,
+[data-theme="light"] .product-description,
+[data-theme="light"] .method-desc,
+[data-theme="light"] .addr-text,
+[data-theme="light"] .rating {
+    color: #475569 !important;
+}
+
+[data-theme="light"] .input-group input,
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group textarea,
+[data-theme="light"] .auth-input {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* Selects split out from the shared input/textarea override above - the
+   neumorphic base rule (plain `select` selector, earlier in this file)
+   already gives these the inset shadow + mauve chevron treatment; this
+   just keeps that look consistent under the light theme instead of
+   flattening it back to a plain white box with a border. */
+[data-theme="light"] .form-group select {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+}
+
+[data-theme="light"] .input-group input::placeholder,
+[data-theme="light"] .form-group input::placeholder,
+[data-theme="light"] .form-group textarea::placeholder,
+[data-theme="light"] .auth-input::placeholder {
+    color: #94a3b8 !important;
+}
+
+[data-theme="light"] .service-option {
+    border: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    border-radius: var(--radius-md, 12px) !important;
+}
+
+[data-theme="light"] .service-option.active,
+[data-theme="light"] .service-option:hover {
+    border-color: #174871 !important;
+    background: rgba(23, 72, 113, 0.04) !important;
+}
+
+[data-theme="light"] .delivery-address-display {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .footer {
+    background: #1e293b !important;
+    color: #f1f5f9 !important;
+    border-top: 1px solid #334155 !important;
+}
+
+[data-theme="light"] .footer a {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .footer a:hover {
+    color: #38bdf8 !important;
+}
+
+[data-theme="light"] .pagination-btn {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .pagination-btn:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #174871 !important;
+}
+
+[data-theme="light"] .pagination-btn.active {
+    background: linear-gradient(45deg, #a05f80, #174871) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+[data-theme="light"] .cart-item,
+[data-theme="light"] .order-item,
+[data-theme="light"] .wishlist-item {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+}
+/* =====================================================================
+   Auth handoff — the bridge between the login modal and verify_login_code.php
+   ---------------------------------------------------------------------
+   Clicking Login on a customer account does not finish the login: it mails a
+   6-digit code and sends the browser to verify_login_code.php. The old handler
+   waited 1.2s, called closeModal(), *then* set location.href — so the modal
+   lifted off and the landing page (hero, carousel, Vanta canvas) sat there
+   fully exposed for the whole navigation gap. That is the ~1s "landing page
+   flash" between two screens the person never asked to see.
+
+   The fix is a cross-fade with no gap in it: this overlay paints the exact
+   ground verify_login_code.php paints (same radial gradient, same
+   background-attachment: fixed, so the geometry lines up pixel-for-pixel),
+   fades up over the modal, and only then navigates. The browser keeps the old
+   document on screen until the new one paints, so the overlay covers the
+   entire gap and the destination page fades its card in on an identical
+   background. Nothing of the landing page is ever visible.
+
+   Palette values are duplicated from verify_login_code.php's own block rather
+   than linked — see that file's note on why it copies .tw-home's palette
+   instead of pulling in 100KB of techworld-anim.css. If one moves, move both.
+   ================================================================== */
+.auth-handoff {
+    position: fixed;
+    inset: 0;
+    z-index: 1000001; /* over .modal (1000) and #toast-container (999999) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%);
+    background-attachment: fixed;
+    color: #e8eef7;
+    font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    opacity: 0;
+    transition: opacity .3s ease;
+}
+
+.auth-handoff.is-in { opacity: 1; }
+
+.auth-handoff__card {
+    max-width: 340px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .34s ease .06s, transform .34s cubic-bezier(.22, .61, .36, 1) .06s;
+}
+
+.auth-handoff.is-in .auth-handoff__card { opacity: 1; transform: none; }
+
+/* The envelope mark. Two rings expanding out of it carry the "it is on its
+   way" idea that a spinner cannot — a spinner says "wait", this says "sent". */
+.auth-handoff__mark {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #060d18;
+    background: linear-gradient(135deg, #67e8f9, #4f9ed6);
+    box-shadow: 0 10px 30px rgba(103, 232, 249, .22);
+}
+
+.auth-handoff__mark::before,
+.auth-handoff__mark::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(103, 232, 249, .5);
+    animation: authHandoffPing 2.2s cubic-bezier(.2, .6, .35, 1) infinite;
+}
+
+.auth-handoff__mark::after { animation-delay: 1.1s; }
+
+@keyframes authHandoffPing {
+    0%   { transform: scale(1);   opacity: .7; }
+    70%  { transform: scale(1.9); opacity: 0; }
+    100% { transform: scale(1.9); opacity: 0; }
+}
+
+.auth-handoff__title {
+    margin: 0 0 7px;
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    color: #e8eef7;
+}
+
+.auth-handoff__sub {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #a9bcd4;
+}
+
+.auth-handoff__email {
+    display: block;
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #67e8f9;
+    overflow-wrap: anywhere;
+}
+
+/* Indeterminate rail. Width is fixed and the fill sweeps, so it never implies
+   a percentage it does not know. */
+.auth-handoff__bar {
+    width: 132px;
+    height: 3px;
+    margin: 20px auto 0;
+    border-radius: 999px;
+    background: rgba(120, 170, 230, .16);
+    overflow: hidden;
+}
+
+.auth-handoff__bar i {
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(103, 232, 249, 0), #67e8f9, rgba(103, 232, 249, 0));
+    animation: authHandoffSweep 1.15s ease-in-out infinite;
+}
+
+@keyframes authHandoffSweep {
+    0%   { transform: translateX(-110%); }
+    100% { transform: translateX(345%); }
+}
+
+/* Reduced motion keeps the cover — the flash is the bug, the movement is the
+   garnish — and drops every loop and slide. */
+@media (prefers-reduced-motion: reduce) {
+    .auth-handoff { transition: none; }
+    .auth-handoff__card { transition: none; opacity: 1; transform: none; }
+    .auth-handoff__mark::before,
+    .auth-handoff__mark::after { animation: none; opacity: 0; }
+    .auth-handoff__bar i { animation: none; width: 100%; }
+}

@@ -1,0 +1,13 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" rx="12" fill="url(#placeholderGradient)"/>
+  <rect x="40" y="60" width="120" height="80" rx="8" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <circle cx="100" cy="100" r="20" fill="rgba(255,255,255,0.2)"/>
+  <path d="M90 90l20 20M110 90l-20 20" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
+  <text x="100" y="170" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">PRODUCT IMAGE</text>
+  <defs>
+    <linearGradient id="placeholderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a5568;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d3748;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

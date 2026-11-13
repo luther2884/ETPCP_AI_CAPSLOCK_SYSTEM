@@ -1,0 +1,266 @@
+/* ===========================================================================
+   admin-queue.css - the light queue layout shared by the two admin order
+   pages: Home_Delivery_Orders.php and store_pickup_orders.php.
+
+   Extracted verbatim from Home_Delivery_Orders.php's inline <style> on
+   2026-09-26, when the pickup queue was brought onto the same design. The
+   rules are unchanged from that block - only their location moved - so the
+   delivery page renders exactly as it did.
+
+   Scope: every rule is prefixed .hdoq (or html body.admin main.hdoq). Both
+   pages carry class="container hdoq" on <main>. Nothing here can reach any
+   other admin page, including the .hdo-* rules in admin.css that
+   store_pickup_orders.php and Home_Delivery_Orders.php both still use for
+   the parts this file does not override.
+
+   The rider strip and chip (.hdoq-alert, .hdoq-chip) are delivery-only -
+   store pickup has no riders - and are simply unused there.
+   ======================================================================== */
+.hdoq{
+  --c-ground:#f2f5fa; --c-surface:#ffffff; --c-surface-2:#f7f9fc;
+  --c-line:#dbe3ee;   --c-line-2:#eaeff6; --c-line-ctl:#7e90a9;
+  --c-ink:#0f1a2c;    --c-ink-2:#5d6f86;  --c-ink-3:#46586f;
+  --c-accent:#c23a63;
+  --c-warn-bg:#fdf3e0; --c-warn:#8a5a00; --c-warn-line:#ecd9ab;
+  --c-ok-bg:#e7f6ef;   --c-ok:#0f6b4a;   --c-ok-line:#b9e3d0;
+  --c-dan-bg:#fdecf1;  --c-dan:#a8264d;  --c-dan-line:#f2c4d3;
+  --c-font:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --c-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+}
+/* Scoped to this <main>, so the navy sidebar and admin header keep their own
+   grounds. Also overrides the page's old max-width:min(1400px,96vw). */
+html body.admin main.hdoq{
+  background:var(--c-ground); min-height:100vh; max-width:none;
+  padding:32px clamp(16px,3vw,36px) 60px;
+  font-family:var(--c-font); color:var(--c-ink);
+}
+.hdoq-wrap{max-width:1240px;margin:0 auto;}
+
+/* --- header -------------------------------------------------------------- */
+.hdoq-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:18px;}
+.hdoq-head-l{display:flex;align-items:flex-start;gap:12px;min-width:0;}
+.hdoq-back{flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;margin-top:2px;border:1px solid var(--c-line);border-radius:9px;background:var(--c-surface);color:var(--c-ink-3);text-decoration:none;transition:background .15s ease,border-color .15s ease,color .15s ease;}
+.hdoq-back svg{width:18px;height:18px;}
+.hdoq-back:hover{background:var(--c-surface-2);border-color:var(--c-accent);color:var(--c-accent);}
+.hdoq-back:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px;}
+.hdoq-eyebrow{font-family:var(--c-mono);font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--c-ink-2);margin-bottom:7px;}
+.hdoq-head h1{margin:0;font-family:var(--c-font);font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--c-ink);}
+.hdoq-head-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.hdoq-ghost{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border:1px solid var(--c-line);border-radius:10px;background:var(--c-surface);color:var(--c-ink);cursor:pointer;text-decoration:none;font-family:var(--c-font);font-size:13px;font-weight:600;white-space:nowrap;transition:background .15s ease,border-color .15s ease,color .15s ease;}
+.hdoq-ghost:hover{background:var(--c-surface-2);border-color:var(--c-accent);color:var(--c-accent);}
+.hdoq-ghost:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px;}
+/* The calm half of the rider readout. The old page showed "N riders on duty
+   and free" at all times; the warn strip only covers the stalled case, so
+   without this chip that number would have been lost entirely. */
+.hdoq-chip{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border-radius:999px;
+  border:1px solid var(--c-ok-line);background:var(--c-ok-bg);color:var(--c-ok);
+  font-family:var(--c-font);font-size:11px;font-weight:600;white-space:nowrap;}
+.hdoq-chip .hdoq-chip-dot{flex:none;width:5px;height:5px;border-radius:50%;background:currentColor;}
+/* Nobody on duty but nothing waiting either: worth saying, not worth alarming. */
+.hdoq-chip.is-none{border-color:var(--c-line);background:var(--c-surface-2);color:var(--c-ink-3);}
+
+/* --- rider alert --------------------------------------------------------- */
+.hdoq-alert{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin:0 0 18px;padding:12px 16px;border-radius:12px;
+  background:var(--c-warn-bg);border:1px solid var(--c-warn-line);color:var(--c-warn);
+  font-family:var(--c-font);font-size:13px;font-weight:600;}
+.hdoq-alert-l{display:flex;align-items:center;gap:10px;min-width:0;}
+.hdoq-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--c-warn);animation:hdoq-pulse 1.8s ease-in-out infinite;}
+@keyframes hdoq-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.35)}}
+@media (prefers-reduced-motion:reduce){ .hdoq-dot{animation:none;} }
+
+/* --- status tabs --------------------------------------------------------- */
+.hdoq-tabs{display:flex;gap:3px;padding:3px;background:var(--c-ground);border-radius:9px;flex-wrap:wrap;}
+.hdoq-tab{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border:0;border-radius:7px;background:none;cursor:pointer;font-family:var(--c-font);font-size:13px;font-weight:600;color:var(--c-ink-3);transition:background .15s ease,color .15s ease,box-shadow .15s ease;}
+.hdoq-tab:hover{color:var(--c-ink);}
+.hdoq-tab:focus-visible{outline:2px solid var(--c-accent);outline-offset:1px;}
+.hdoq-tab[aria-selected="true"]{background:var(--c-surface);color:var(--c-ink);box-shadow:0 1px 3px rgba(15,26,44,.12);}
+.hdoq-tab-n{font-family:var(--c-mono);font-size:11px;font-weight:700;color:var(--c-ink-2);}
+.hdoq-tab[aria-selected="true"] .hdoq-tab-n{color:var(--c-accent);}
+/* The real <select> stays in the DOM and keeps its id, name and onchange, so
+   the existing filter logic and the noscript path are untouched. */
+.hdoq-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+.hdoq-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+
+/* --- list card ----------------------------------------------------------- */
+.hdoq .hdo-card{background:var(--c-surface);border:1px solid var(--c-line);border-radius:14px;box-shadow:0 6px 18px rgba(15,26,44,.05);overflow:hidden;}
+.hdoq .hdo-table-wrap{overflow-x:auto;}
+/* The <table> is laid out as a grid so the minmax() tracks below can be
+   expressed; explicit ARIA roles in the markup keep the table semantics that
+   display:grid would otherwise drop. */
+/* min-width is the row's own content minimum, not a round number: the seven
+   tracks are 994px, the six 16px gaps are 96px and the row padding is 32px,
+   which is 1122. Setting it lower (1020 was tried) makes the table block
+   narrower than the rows inside it, so when the wrapper scrolls, the header
+   band and the row dividers stop short of the last column. */
+.hdoq .hdo-table{display:block;min-width:1122px;width:100%;border-collapse:collapse;background:none;}
+.hdoq .hdo-table thead,.hdoq .hdo-table tbody{display:block;}
+.hdoq .hdo-table tr{
+  display:grid;
+  grid-template-columns:minmax(150px,1.1fr) minmax(180px,1.3fr) minmax(220px,2fr) minmax(110px,.8fr) minmax(120px,.9fr) minmax(118px,.8fr) 96px;
+  gap:16px;align-items:center;}
+.hdoq .hdo-table thead tr{padding:9px 16px;background:var(--c-surface-2);border-bottom:1px solid var(--c-line-2);}
+.hdoq .hdo-table th{padding:0;border:0;text-align:left;background:none;
+  font-family:var(--c-mono);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--c-ink-2);}
+.hdoq .hdo-table th.num,.hdoq .hdo-table td.num{text-align:right;}
+.hdoq .hdo-table tbody tr{padding:12px 16px;border-bottom:1px solid var(--c-line-2);}
+.hdoq .hdo-table tbody tr:last-child{border-bottom:0;}
+.hdoq .hdo-table td{padding:0;border:0;min-width:0;background:none;}
+.hdoq .hdo-table td::before{content:none;}   /* kills admin.css's <900px stacked reflow */
+/* THE OVERLAP BUG. admin.css:720 carries `.hdo-col-action{width:1%}` - the
+   old table trick for "shrink this column to its content". Once the row
+   became display:grid that percentage resolves against the GRID AREA, so the
+   actions cell collapsed to about 1px inside its own track. Its content is
+   white-space:nowrap and .hdo-actions is justify-content:flex-end, so Details
+   and the ... button overflowed LEFTWARDS out of that 1px box and painted on
+   top of the Status cell ("Prepar[Details]"), leaving the rest of the track
+   visibly empty. Nothing here overrode it, because no .hdoq rule mentioned
+   .hdo-col-action at all.
+   The cell owns its 96px track outright now: static, no percentage width. */
+.hdoq .hdo-table td.hdo-col-action{
+  width:auto;min-width:0;position:static;margin:0;float:none;
+  display:flex;align-items:center;justify-content:flex-end;gap:4px;}
+/* Status must not spill into it either. */
+.hdoq .hdo-table td[data-label="Status"]{min-width:0;overflow:hidden;}
+.hdoq .hdo-table td[data-label="Status"] .hdo-badge{max-width:100%;white-space:nowrap;}
+/* admin.css:687 makes thead th position:sticky with z-index:1. There is no
+   vertical scroll container here, so it buys nothing and only creates a
+   stacking context over the rows. */
+.hdoq .hdo-table thead th{position:static;z-index:auto;}
+
+.hdoq .hdo-row{cursor:pointer;transition:background .12s ease;}
+.hdoq .hdo-row:hover{background:var(--c-surface-2);}
+.hdoq .hdo-row:focus-visible{outline:2px solid var(--c-accent);outline-offset:-2px;}
+
+.hdoq .hdo-cell-media{display:flex;align-items:center;gap:10px;min-width:0;}
+.hdoq .hdo-cell-text{display:flex;flex-direction:column;min-width:0;}
+.hdoq .hdo-strong{font-family:var(--c-font);font-size:13px;font-weight:600;color:var(--c-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdoq .hdo-sub{font-family:var(--c-font);font-size:11.5px;color:var(--c-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdoq .hdo-mono{font-family:var(--c-mono);font-size:12px;font-weight:700;letter-spacing:.02em;}
+.hdoq .hdo-amount{font-family:var(--c-mono);font-size:13px;font-weight:700;white-space:nowrap;}
+/* Product images have white grounds, so the tile is a light well, not a crop. */
+.hdoq .hdo-thumb{flex:none;width:36px;height:36px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--c-surface-2);border:1px solid var(--c-line-2);color:var(--c-ink-2);font-size:15px;}
+.hdoq .hdo-thumb img{width:100%;height:100%;object-fit:contain;}
+.hdoq .hdo-avatar{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--c-mono);font-size:10.5px;font-weight:700;}
+
+/* --- pills --------------------------------------------------------------- */
+.hdoq .hdo-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;border:1px solid transparent;font-family:var(--c-font);font-size:11px;font-weight:600;white-space:nowrap;}
+.hdoq .hdo-pill-dot{flex:none;width:5px;height:5px;border-radius:50%;background:currentColor;}
+.hdoq .hdo-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;border:1px solid transparent;color:inherit;font-family:var(--c-font);font-size:11px;font-weight:600;white-space:nowrap;}
+
+/* --- actions ------------------------------------------------------------- */
+.hdoq .hdo-actions{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;}
+.hdoq .hdo-details-btn{padding:4px 6px;border:0;border-radius:6px;background:none;box-shadow:none;cursor:pointer;
+  font-family:var(--c-font);font-size:12.5px;font-weight:600;color:var(--c-accent);}
+.hdoq .hdo-details-btn:hover{filter:none;text-decoration:underline;background:none;}
+.hdoq .hdo-details-btn:active{transform:none;box-shadow:none;}
+.hdoq .hdo-details-btn:focus-visible{outline:2px solid var(--c-accent);outline-offset:1px;}
+.hdoq .hdo-more-btn{flex:none;width:28px;height:28px;border:1px solid var(--c-line);border-radius:8px;background:var(--c-surface);color:var(--c-ink-3);cursor:pointer;line-height:1;}
+.hdoq .hdo-more-btn:hover{background:var(--c-surface-2);border-color:var(--c-accent);color:var(--c-accent);}
+.hdoq .hdo-more-btn:focus-visible{outline:2px solid var(--c-accent);outline-offset:1px;}
+.hdoq .hdo-menu{background:var(--c-surface);border:1px solid var(--c-line);border-radius:10px;box-shadow:0 10px 26px rgba(15,26,44,.12);}
+.hdoq .hdo-menu > *{font-family:var(--c-font);font-size:13px;color:var(--c-ink);background:none;border-radius:6px;text-decoration:none;}
+.hdoq .hdo-menu > *:hover{background:var(--c-surface-2);color:var(--c-accent);}
+
+/* --- empty / footer / pager ---------------------------------------------- */
+.hdoq-empty{padding:48px 24px;text-align:center;}
+.hdoq-empty h3{margin:0 0 6px;font-size:15px;font-weight:700;color:var(--c-ink);}
+.hdoq-empty p{margin:0;font-size:13.5px;color:var(--c-ink-2);}
+.hdoq-empty a{color:var(--c-accent);}
+.hdoq-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--c-line-2);background:var(--c-surface-2);}
+.hdoq-foot-n{font-family:var(--c-mono);font-size:11px;letter-spacing:.06em;color:var(--c-ink-2);}
+.hdoq .pickup-pager{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:16px;}
+.hdoq .pickup-page{min-width:32px;height:32px;padding:0 9px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--c-line-ctl);border-radius:8px;background:var(--c-surface);color:var(--c-ink);
+  box-shadow:none;text-decoration:none;font-family:var(--c-mono);font-size:12px;font-weight:600;}
+.hdoq .pickup-page:hover{filter:none;background:var(--c-surface-2);border-color:var(--c-accent);color:var(--c-accent);}
+.hdoq .pickup-page:active{transform:none;box-shadow:none;}
+.hdoq .pickup-page.is-current{background:var(--c-accent);border-color:var(--c-accent);color:#fff;box-shadow:none;}
+.hdoq .pickup-page.is-disabled{opacity:.4;pointer-events:none;}
+.hdoq .pickup-page:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px;}
+.hdoq .pickup-page-gap{color:var(--c-ink-2);padding:0 2px;font-family:var(--c-mono);}
+
+.hdoq .notification-banner{border-radius:12px;margin-bottom:18px;}
+/* --- below 640px: stacked cards, not a 1020px scroller -------------------
+   640px and up keeps the horizontal scroll. Below it a 1020px-wide table is
+   unusable on a 390px phone, so each row becomes its own card and the
+   data-label attributes (kept on every <td> for exactly this) come back as
+   the field labels. This is admin.css's own reflow idea, restyled to the new
+   tokens and moved down from its 900px breakpoint - between 640 and 900 the
+   scroller is the better read, because the columns still line up. */
+@media (max-width:639px){
+  .hdoq .hdo-table{min-width:0;}
+  .hdoq .hdo-table thead{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);}
+  .hdoq .hdo-table tbody{display:flex;flex-direction:column;gap:10px;padding:10px;}
+  .hdoq .hdo-table tbody tr{
+    display:block;padding:4px 12px;border:1px solid var(--c-line-2);border-radius:12px;
+    background:var(--c-surface);}
+  .hdoq .hdo-table tbody tr:last-child{border-bottom:1px solid var(--c-line-2);}
+  .hdoq .hdo-table td{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:8px 0;border-bottom:1px solid var(--c-line-2);text-align:left;}
+  .hdoq .hdo-table td:last-child{border-bottom:0;}
+  .hdoq .hdo-table td::before{
+    content:attr(data-label);flex:0 0 auto;
+    font-family:var(--c-mono);font-size:9px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--c-ink-2);}
+  /* Value side right-aligned against its label. */
+  .hdoq .hdo-table td > *{margin-left:auto;text-align:right;}
+  .hdoq .hdo-table td.num{text-align:right;}
+  .hdoq .hdo-cell-media{justify-content:flex-end;}
+  .hdoq .hdo-cell-text{align-items:flex-end;text-align:right;}
+  .hdoq .hdo-actions{justify-content:flex-end;}
+  /* width:1% would squeeze the row of buttons here too. justify-content is
+     restated because the desktop rule for this cell is (0,4,1) and would
+     otherwise keep flex-end here, bunching the "Actions" label against the
+     buttons instead of pushing them apart like every other stacked row. */
+  .hdoq .hdo-table td.hdo-col-action{width:auto;display:flex;justify-content:space-between;}
+  /* The label would otherwise sit above a 36px thumb and look detached. */
+  .hdoq .hdo-table td[data-label="Items"],
+  .hdoq .hdo-table td[data-label="Customer"]{align-items:center;}
+}
+
+@media (prefers-reduced-motion:reduce){ .hdoq *{transition-duration:.01ms !important;} }
+
+/* --- store pickup queue only --------------------------------------------- */
+/* This sheet is shared with Home_Delivery_Orders.php, which still has a real
+   "..." menu (four actions). The pickup queue dropped its menu - both its
+   items led into the modal that Details already opens - so the last column is
+   one button wide there. Scoped to .hdoq-pickup so the delivery queue's
+   two-control cell is untouched.
+
+   The 96px track itself is deliberately left alone: the table's min-width
+   (1122px) is the sum of the seven tracks, and narrowing one here would make
+   the header band stop short of the last column on a scrolled table. The
+   padding is what moves the button - without it, losing the 28px menu button
+   and its 4px gap would snap Details hard against the row's right edge. */
+.hdoq-pickup .hdo-table td.hdo-col-action{padding-right:14px;}
+
+/* Details reads as a BUTTON here, not as link text. The shared rule above
+   strips it to bare accent words (background:none, border:0, underline on
+   hover) - that worked when a bordered "..." button sat beside it and carried
+   the affordance for the pair. Alone in the column, bare words next to a row
+   that is itself clickable give no sign they are the control, so the chrome
+   comes back: a surface fill, a real border, and a hover that fills instead
+   of underlining. Selector carries .hdoq so it outranks the base
+   `.hdoq .hdo-details-btn` (0,2,0) regardless of file order. */
+.hdoq.hdoq-pickup .hdo-details-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:5px 12px;border:1px solid var(--c-line);border-radius:8px;
+  background:var(--c-surface);box-shadow:0 1px 2px rgba(15,26,44,.05);
+  font-family:var(--c-font);font-size:12px;font-weight:600;
+  color:var(--c-accent);white-space:nowrap;cursor:pointer;
+  transition:background .12s ease,border-color .12s ease,color .12s ease;}
+.hdoq.hdoq-pickup .hdo-details-btn:hover{
+  background:var(--c-accent);border-color:var(--c-accent);color:#fff;
+  text-decoration:none;filter:none;}
+.hdoq.hdoq-pickup .hdo-details-btn:active{transform:translateY(1px);box-shadow:none;}
+.hdoq.hdoq-pickup .hdo-details-btn:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){
+  .hdoq.hdoq-pickup .hdo-details-btn{transition:none;}
+  .hdoq.hdoq-pickup .hdo-details-btn:active{transform:none;}
+}
+@media (max-width:639px){
+  /* Stacked rows put the label on the left and the value on the right; the
+     desktop offset would pull this one row's button out of that alignment. */
+  .hdoq-pickup .hdo-table td.hdo-col-action{padding-right:0;}
+}

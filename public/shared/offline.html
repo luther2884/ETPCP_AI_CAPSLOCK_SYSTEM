@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechWorld - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e0e6ed;
+        }
+
+        .offline-container {
+            text-align: center;
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 60px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            color: #00f5ff;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #00f5ff, #0080ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #94a3b8;
+        }
+
+        .retry-btn {
+            background: linear-gradient(45deg, #00f5ff, #0080ff);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .retry-btn:hover {
+            background: linear-gradient(45deg, #0080ff, #8a2be2);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 128, 255, 0.3);
+        }
+
+        .offline-features {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-list {
+            list-style: none;
+            text-align: left;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            color: #94a3b8;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: #00f5ff;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .online {
+            background: #10b981;
+        }
+
+        .offline {
+            background: #ef4444;
+        }
+
+        .connection-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📶</div>
+        
+        <h1>You're Offline</h1>
+        
+        <p>It looks like you've lost your internet connection. Don't worry - TechWorld works offline too!</p>
+        
+        <button class="retry-btn" onclick="location.reload()">Try Again</button>
+        <button class="retry-btn" onclick="goHome()">Go Home</button>
+        
+        <div class="connection-status">
+            <span class="status-indicator offline"></span>
+            <span id="connectionStatus">Currently offline</span>
+        </div>
+        
+        <div class="offline-features">
+            <h3>What you can still do offline:</h3>
+            <ul class="feature-list">
+                <li>Browse cached products</li>
+                <li>View your cart (if previously loaded)</li>
+                <li>Access your profile information</li>
+                <li>Read product details from cache</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Monitor connection status
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            const indicator = document.querySelector('.status-indicator');
+            
+            if (navigator.onLine) {
+                statusElement.textContent = 'Back online!';
+                indicator.className = 'status-indicator online';
+                
+                // Auto-refresh after 2 seconds when back online
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                statusElement.textContent = 'Currently offline';
+                indicator.className = 'status-indicator offline';
+            }
+        }
+
+        // Listen for online/offline events
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+
+        // Check initial status
+        updateConnectionStatus();
+
+        function goHome() {
+            window.location.href = '/index.php';
+        }
+
+        // Service worker update check
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(function(registration) {
+                registration.addEventListener('updatefound', function() {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New content is available
+                            if (confirm('New version available! Reload to update?')) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            });
+        }
+    </script>
+</body>
+</html>

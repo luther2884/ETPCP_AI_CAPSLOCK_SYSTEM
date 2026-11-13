@@ -1,0 +1,234 @@
+/* techworld-driver-fix.css — corrections on top of techworld-driver.css
+   ------------------------------------------------------------------
+   Load LAST, immediately after techworld-driver.css. CSS only, no
+   markup changes.
+
+   SELECTOR MAP applied (same resolution as techworld-driver.css):
+     .orders-panel table / .orders-card table -> .orders-table table
+     .orders-panel / .orders-card / .tw-panel -> .admin-table-wrap
+     .panel-head h2      -> .admin-table-wrap > div:first-child > h3
+     .page-header        -> .dashboard-welcome
+     .driver-main/.tw-main -> .admin-dashboard
+     .order-id/.tracking/.customer-name/.customer-email/.amount/.order-date
+                         -> unchanged: the redesign put these real classes
+                            back on the markup, so the original names work
+     .status-badge/.badge -> .admin-dashboard .admin-badge
+     .stat-value         -> .stat-number
+     .filter-tab         -> .orders-filter-btn
+     select              -> .orders-sort-wrap select
+     .btn-action         -> .admin-dashboard td[data-label="Actions"] button
+     .view-proof         -> td[data-label="Proof"] button
+     .gps-notice         -> .gps-notice (a real class as of the redesign)
+     .site-footer        -> .admin-footer
+   STILL INERT (no such element): .customer-cell/.customer-info,
+     .hero/.page-hero/.header-spacer, .order-time, .btn-primary.
+
+   Fixes six things the live page showed:
+     1  Order # / Customer columns collapsed to one character per line
+     2  avatar stacked above the customer name instead of beside it
+     3  ~350px of dead space above "Delivery Report"
+     4  mono font leaking onto body copy, dates and the footer
+     5  grid lines too bright, and a white native scrollbar on the panel
+     6  the blurry text-shadow on the H1
+   ------------------------------------------------------------------ */
+
+/* ---- 1. Table geometry — the main fix --------------------------------
+   The old rule let the table exceed the panel, so the browser shrank the
+   two text columns to their narrowest possible width (one glyph) while
+   PHOTOS kept a huge empty track. Fixed layout + declared widths +
+   nowrap on the identifiers stops all of it.
+
+   SCOPED TO >=768px on purpose. Below that the page's own stylesheet turns
+   table/tbody/tr/td into blocks and stacks each order as a card; an
+   unscoped `display:table !important` here would half-undo that and leave a
+   display:table element with block children. The column widths and the
+   nowrap are meaningless in card form anyway.
+
+   Column order after the redesign - Payment folded into Status, so this is
+   7 columns, not 8:
+     1 Order #  2 Customer  3 Amount  4 Status
+     5 Proof    6 Delivered 7 Actions
+   There is an 8th <td> in every body row (.orders-view-details-cell, the
+   mobile "View Details" button); it is display:none above 767px, so it is
+   out of the table box tree here and shifts no nth-child. */
+@media (min-width: 768px) {
+  html body.tw-driver .orders-table table {
+    table-layout: fixed !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    display: table !important;      /* undoes the display:block scroll hack */
+    overflow: visible !important;
+  }
+  /* Order # is widest: it carries the invoice number and the full tracking
+     code, neither of which may be truncated. Sums to 100. */
+  html body.tw-driver .orders-table table th:nth-child(1),
+  html body.tw-driver .orders-table table td:nth-child(1) { width: 19%; }   /* Order # */
+  html body.tw-driver .orders-table table th:nth-child(2),
+  html body.tw-driver .orders-table table td:nth-child(2) { width: 21%; }   /* Customer */
+  html body.tw-driver .orders-table table th:nth-child(3),
+  html body.tw-driver .orders-table table td:nth-child(3) { width: 10%; text-align: right; }
+  html body.tw-driver .orders-table table th:nth-child(4),
+  html body.tw-driver .orders-table table td:nth-child(4) { width: 13%; }   /* Status */
+  html body.tw-driver .orders-table table th:nth-child(5),
+  html body.tw-driver .orders-table table td:nth-child(5) { width: 10%; }   /* Proof */
+  html body.tw-driver .orders-table table th:nth-child(6),
+  html body.tw-driver .orders-table table td:nth-child(6) { width: 12%; }   /* Delivered */
+  html body.tw-driver .orders-table table th:nth-child(7),
+  html body.tw-driver .orders-table table td:nth-child(7) { width: 15%; }   /* Actions */
+
+  /* identifiers must never wrap mid-string */
+  html body.tw-driver .orders-table table th,
+  html body.tw-driver .orders-table table td { white-space: nowrap; vertical-align: middle; }
+  /* nothing may bleed out of its track and land on the next column - that is
+     what put "VIEW PROOF" on top of the date before the split */
+  html body.tw-driver .orders-table table td { overflow: hidden; }
+  html body.tw-driver .order-id,
+  html body.tw-driver .order-tracking,
+  html body.tw-driver .tracking,
+  html body.tw-driver .amount,
+  html body.tw-driver .order-date {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+  /* the tracking code is shown in full - no ellipsis, that is what the 19%
+     track is for */
+  html body.tw-driver .order-tracking,
+  html body.tw-driver .tracking { overflow: visible; text-overflow: clip; max-width: none; }
+  /* Status stacks two chips, so it is the one cell that keeps its height */
+  html body.tw-driver .orders-table table td:nth-child(4) { white-space: normal; }
+  /* header cells were wrapping "ORDER #" onto two lines */
+  html body.tw-driver .orders-table table th { padding: 12px 14px !important; }
+  html body.tw-driver .orders-table table td { padding: 14px !important; }
+}
+
+/* ---- 2. Customer cell: avatar beside the name ------------------------- */
+html body.tw-driver .orders-table table td:nth-child(2) {
+  white-space: normal;               /* the name may wrap; the id may not */
+}
+html body.tw-driver .orders-table table td:nth-child(2) > * {
+  vertical-align: middle;
+}
+/* if the avatar + name sit in a wrapper, make it a real row */
+html body.tw-driver .customer-cell,
+html body.tw-driver .customer-info {
+  display: flex !important; align-items: center; gap: 10px; min-width: 0;
+}
+html body.tw-driver .tw-avatar { vertical-align: middle; margin-right: 8px; }
+html body.tw-driver .customer-name {
+  display: block; vertical-align: middle;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* the email was wrapping into four lines — one line, ellipsis, full value
+   still on hover via the title attribute if you set one */
+html body.tw-driver .customer-email {
+  display: block; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 10.5px !important;
+}
+
+/* ---- 3. Kill the dead space above the title -------------------------- */
+html body.tw-driver .admin-dashboard,
+html body.tw-driver main {
+  padding-top: 26px !important;
+  min-height: 0 !important;
+}
+html body.tw-driver .dashboard-welcome {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  min-height: 0 !important;
+}
+/* an emptied hero/spacer wrapper keeping its old height */
+html body.tw-driver .hero,
+html body.tw-driver .page-hero,
+html body.tw-driver .header-spacer { min-height: 0 !important; height: auto !important; padding: 0 !important; }
+
+/* ---- 4. Rein the mono font back in -----------------------------------
+   Mono belongs on labels, IDs, money and timestamps — not on prose,
+   buttons or the footer. Those go back to Figtree. */
+html body.tw-driver,
+html body.tw-driver p,
+html body.tw-driver h1,
+html body.tw-driver h2,
+html body.tw-driver h3,
+html body.tw-driver .customer-name,
+html body.tw-driver .customer-email,
+html body.tw-driver .stat-card .stat-sub,
+html body.tw-driver footer,
+html body.tw-driver .admin-footer {
+  font-family: Figtree, system-ui, sans-serif !important;
+}
+html body.tw-driver .order-id,
+html body.tw-driver .order-tracking,
+html body.tw-driver .tracking,
+html body.tw-driver .amount,
+html body.tw-driver .order-date,
+html body.tw-driver .order-time,
+html body.tw-driver .orders-table table th,
+html body.tw-driver .admin-dashboard .admin-badge,
+html body.tw-driver .tw-chip-note,
+html body.tw-driver .tw-action-note,
+html body.tw-driver .stat-card .stat-number,
+html body.tw-driver .stat-card .stat-label,
+html body.tw-driver .stat-card .stat-flag,
+html body.tw-driver .orders-filter-btn,
+html body.tw-driver .orders-sort-wrap select,
+html body.tw-driver .admin-dashboard td[data-label="Actions"] button,
+html body.tw-driver .btn-primary,
+html body.tw-driver .panel-foot,
+html body.tw-driver .view-proof {
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace !important;
+}
+/* panel title: mono is right here, but it was tracked out too far */
+html body.tw-driver .admin-table-wrap > div:first-child > h3 {
+  font-family: "JetBrains Mono", ui-monospace, monospace !important;
+  letter-spacing: .16em !important; font-size: 10.5px !important;
+}
+/* the H1 picked up a blurry shadow from an old rule */
+html body.tw-driver h1 { text-shadow: none !important; }
+
+/* ---- 5. Background + chrome ------------------------------------------ */
+/* the grid was reading as a bright cage; halve it */
+html body.tw-driver::before {
+  background-image:
+    linear-gradient(to right, rgba(120,170,230,.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120,170,230,.03) 1px, transparent 1px) !important;
+}
+/* white native scrollbar under the panel */
+html body.tw-driver .admin-table-wrap { overflow: hidden !important; }
+html body.tw-driver *::-webkit-scrollbar { height: 8px; width: 8px; }
+html body.tw-driver *::-webkit-scrollbar-track { background: rgba(8,16,29,.6); }
+html body.tw-driver *::-webkit-scrollbar-thumb { background: rgba(120,170,230,.28); border-radius: 999px; }
+html body.tw-driver { scrollbar-color: rgba(120,170,230,.28) rgba(8,16,29,.6); }
+
+/* The notice has a real class as of the redesign and the .gps-notice block
+   in techworld-driver.css now lands, so this only tightens the type. */
+html body.tw-driver .gps-notice {
+  font-size: 9.5px !important;
+  font-family: var(--tw-mono) !important;
+}
+
+/* stat cards: number and hairline were touching */
+html body.tw-driver .stat-card .stat-bar { margin-top: 12px !important; }
+/* the card is column-reverse, so the bar (first in the DOM) paints last -
+   margin-top is still the physical gap between the number and the bar */
+html body.tw-driver .stat-card { padding: 15px 17px !important; }
+
+/* ---- 6. Row actions --------------------------------------------------
+   Every row still reads "✓ COMPLETED" next to a COMPLETED chip. Same
+   word twice in one row. Ghost it down so the chip carries the state. */
+html body.tw-driver .admin-dashboard td[data-label="Actions"] button {
+  font-size: 8px !important; letter-spacing: .1em;
+  color: #8fa6c4 !important; opacity: .85;
+  padding: 8px 11px !important;
+}
+html body.tw-driver .admin-dashboard tr.is-open td[data-label="Actions"] button:not(.btn-receipt) { opacity: 1; color: #fff !important; }
+
+/* ---- 7. Narrow screens ----------------------------------------------- */
+/* Lower bound added: below 768px the page renders order cards, not a table,
+   so forcing min-width:900px there would put the phone view back on a
+   horizontal scrollbar. */
+@media (min-width: 768px) and (max-width: 1100px) {
+  html body.tw-driver .admin-table-wrap { overflow-x: auto !important; }
+  html body.tw-driver .orders-table table { table-layout: auto !important; min-width: 900px !important; }
+}

@@ -1,0 +1,1481 @@
+/* customer-dark.css
+   Re-themes the customer area to the landing page's dark ground.
+
+   Linked from public/authenticated/customer/includes/header.php, after
+   style.css so it wins on source order where specificity ties.
+
+   WHY THIS FILE EXISTS RATHER THAN A data-theme SWITCH
+   style.css has no usable dark theme - exactly one [data-theme="dark"] rule
+   against thirty [data-theme="light"] blocks - so there is nothing to switch
+   to. It also cannot simply stop setting data-theme="light": that attribute is
+   applied inline in <head> for anti-FOUC, and dropping it would flash the
+   default palette on every page load.
+
+   So the work happens in two layers:
+     1. token redefinition, which recolours everything that reads its colours
+        through var() - the large majority of components;
+     2. explicit counters for the 19 [data-theme="light"] blocks in style.css
+        that hard-code light surfaces and dark text with !important. Those beat
+        any amount of specificity on their own, so the counters below have to be
+        !important too, and carry enough specificity to outrank them.
+
+   SCOPE GUARD
+   Every rule is wrapped in body.
+   Two pages already paint their own ground and must not be touched:
+   the customer landing page (.tw-home, via techworld-anim.css) and the AI
+   Builder (.aib-wrap, which sets its own body background). Both include this
+   same header, so without the guard this file would fight them. */
+
+body {
+  /* --- surfaces --- */
+  --bg-primary: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%);
+  --bg-primary-solid: #0a1424;
+  --bg-secondary: #0b1626;
+  --bg-secondary-alpha: rgba(11, 22, 38, 0.95);
+  --bg-card: rgba(255, 255, 255, 0.06);
+  --bg-card-solid: #0c1a2c;
+  --bg-card-hover: rgba(103, 232, 249, 0.10);
+  --bg-card-alpha-80: rgba(10, 20, 34, 0.88);
+  --bg-product-img: rgba(255, 255, 255, 0.06);
+  /* .account-page paints min-height:100vh with this one, so it covers the
+     body entirely - leaving it light kept every account page light no
+     matter what the body background said. */
+  --page-bg-gradient: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%);
+
+  /* --- text --- */
+  --text-primary: #e8eef7;
+  --text-secondary: #a9bcd4;
+  --text-muted: #7f95b3;
+
+  /* --- accents, matched to the landing palette --- */
+  --accent-cyan: #67e8f9;
+  --accent-cyan-bg: rgba(103, 232, 249, 0.12);
+  --accent-blue: #7f6ae0;
+  --border-accent: #e0567a;
+
+  /* --- lines --- */
+  --border-color: rgba(120, 170, 230, 0.18);
+  --border-color-hover: rgba(120, 170, 230, 0.32);
+
+  /* --- form controls --- */
+  --input-bg: rgba(8, 16, 29, 0.72);
+  --input-text: #e8eef7;
+  --input-border: rgba(120, 170, 230, 0.18);
+  --input-placeholder: #7f95b3;
+
+  /* --- overlays --- */
+  --modal-bg: #0f1e33;
+  --modal-overlay: rgba(3, 8, 16, 0.6);
+  --shadow-color: rgba(0, 0, 0, 0.45);
+
+  /* --- neumorphic shadows ---
+     style.css builds these from a near-white highlight (rgba(255,255,255,.9)
+     at 14px blur), which is correct on the light neumorphic ground it was
+     designed for and badly wrong here: every .card, .stat-card and toolbar in
+     the dark customer area picked up a white bloom around its top-left corner
+     that lit the panel up and drowned whatever sat beside it - the settings
+     page worst of all, being nothing but stacked cards.
+
+     Recast for a dark ground: a genuine drop shadow underneath, and a 1px cool
+     inner highlight along the top edge instead of a halo. Same tokens, so
+     every component that reads them is corrected at once. */
+  --neu-shadow-dark: rgba(3, 8, 16, 0.55);
+  --neu-shadow-light: rgba(120, 170, 230, 0.07);
+  --neu-raised: 0 10px 26px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light);
+  --neu-raised-sm: 0 6px 16px var(--neu-shadow-dark), inset 0 1px 0 var(--neu-shadow-light);
+  --neu-pressed: inset 0 2px 8px rgba(3, 8, 16, 0.6), inset 0 1px 0 rgba(120, 170, 230, 0.05);
+
+  /* The page ground itself: the same radial the landing pages paint through
+     body:has(.tw-home), fixed so it does not scroll away on long pages. */
+  background: var(--bg-primary) !important;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Counters for style.css's [data-theme="light"] !important blocks.
+
+   Grouped by what each block forces. :is() keeps the 57 selectors readable;
+   its specificity is that of its most specific argument, so each rule lands at
+   (0,3,1) against those blocks' (0,2,0) - and both being !important, the
+   higher specificity wins.
+   ----------------------------------------------------------------------- */
+
+/* Card and panel surfaces forced to #ffffff / #f8fafc / #f1f5f9. */
+[data-theme="light"] body :is(
+  .product-card, .category-card, .stat-card, .summary-card, .detail-card,
+  .filter-card, .profile-card, .form-section, .checkout-form, .cart-item,
+  .order-item, .wishlist-item, .service-option, .delivery-address-display,
+  .auth-content, .hero
+) {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 8px 24px var(--shadow-color) !important;
+}
+[data-theme="light"] body :is(
+  .product-card:hover, .service-option:hover, .service-option.active
+) {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--border-color-hover) !important;
+}
+
+/* Image wells - light grey plates behind product shots. */
+[data-theme="light"] body :is(
+  .product-image, .category-image, .item-image
+) {
+  background: var(--bg-product-img) !important;
+}
+
+/* Text forced to #0f172a / #475569 / #174871. */
+[data-theme="light"] body :is(
+  .product-card h3, .product-title, .product-price, .section-title,
+  .form-section h3, .addr-name, .method-name, .rating
+) {
+  color: var(--text-primary) !important;
+}
+[data-theme="light"] body :is(
+  .product-category, .product-description, .method-desc, .addr-text
+) {
+  color: var(--text-secondary) !important;
+}
+
+/* Tables. */
+[data-theme="light"] body :is(table td, table th) {
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Form controls, forced to white fills with dark text and light placeholders. */
+[data-theme="light"] body :is(
+  .form-group input, .form-group select, .form-group textarea,
+  .input-group input, .auth-input
+) {
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border: 1px solid var(--input-border) !important;
+}
+[data-theme="light"] body :is(
+  .form-group input, .form-group textarea, .input-group input, .auth-input
+)::placeholder {
+  color: var(--input-placeholder) !important;
+}
+
+/* Pagination. */
+[data-theme="light"] body .pagination-btn {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+[data-theme="light"] body :is(
+  .pagination-btn:hover, .pagination-btn.active
+) {
+  background: linear-gradient(120deg, #e0567a, #c2185b) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* Footer. The .tw-home ~ .main-footer treatment in customer-home.css only
+   reaches the two landing pages; this covers the footer everywhere else in
+   the customer area. */
+[data-theme="light"] body .footer {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+[data-theme="light"] body .footer a { color: var(--text-secondary) !important; }
+[data-theme="light"] body .footer a:hover { color: var(--accent-cyan) !important; }
+
+/* Modal surfaces. The equivalent fix in techworld-anim.css is scoped to
+   body:has(.tw-home), so it only reaches the two landing pages - every other
+   page in the customer area needs the same counters here. Same cause: the
+   [data-theme="light"] block forces #ffffff and #0f172a with !important. */
+[data-theme="light"] body .modal-content {
+  background: var(--modal-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="light"] body :is(
+  .modal-content h1, .modal-content h2, .modal-content h3
+) {
+  color: var(--text-primary) !important;
+}
+[data-theme="light"] body .modal-content .auth-container {
+  background: var(--bg-card-alpha-80);
+}
+
+/* ==========================================================================
+   Products listing, styled to the approved mockup.
+
+   Scoped with body:has(.products-listing) so it reaches only this page. The
+   token block and counters above already give it the dark ground; everything
+   here is the mockup's own treatment on top.
+
+   Almost no new markup was needed - the page already ships .product-category
+   as a kicker, .stock-low/.stock-available as the count pill, .pf-section-*
+   for the sidebar and .pagination-btn for the pager. Only the eyebrow above
+   the title is new.
+   ========================================================================== */
+
+/* --- header ------------------------------------------------------------- */
+/* The shared .breadcrumb paints a full-width --bg-card band (a translucent
+   white strip), which over this page's dark radial ground read as a stray
+   light bar sitting on top of the layout. Here it's an unpainted trail
+   instead: mono/uppercase like every other eyebrow on the page, closed by the
+   same fading hairline the section rules use. */
+body:has(.products-listing) .breadcrumb {
+  background: transparent;
+  padding: 22px 0 0;
+}
+body:has(.products-listing) .breadcrumb .container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-bottom: 14px;
+  /* Fades out to the right rather than stopping dead - matches the page's
+     other dividers. */
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, rgba(120,170,230,.22), rgba(120,170,230,0)) 1;
+}
+/* Light-on-dark, which is the way round the rest of this page works: the
+   strip sits on the page's own dark ground, so pale ink is what actually
+   reads. #cedded is a step brighter than --text-secondary (~11:1 on the
+   ground) - comfortable rather than the full white of a heading, which at
+   uppercase mono would glare. The soft shadow keeps it legible if anything
+   bright ever passes behind the strip. */
+body:has(.products-listing) .breadcrumb a,
+body:has(.products-listing) .breadcrumb span {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  /* 11px of tracked-out mono was too fine to read against the ground - up to
+     14px, with the tracking eased back so the extra size buys legibility
+     rather than more gaps between letters. */
+  font-size: 14px;
+  letter-spacing: .12em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #cedded;
+  text-shadow: 0 1px 2px rgba(3, 8, 16, .45);
+  text-decoration: none;
+}
+/* The base sheet spaces these with margins; the flex gap above does it now. */
+body:has(.products-listing) .breadcrumb span { margin: 0; }
+/* Separators recede so the crumbs themselves carry the line. */
+body:has(.products-listing) .breadcrumb .container > span { color: rgba(206, 221, 237, .38); font-weight: 400; text-shadow: none; }
+body:has(.products-listing) .breadcrumb a {
+  transition: color .18s ease;
+}
+body:has(.products-listing) .breadcrumb a:hover,
+body:has(.products-listing) .breadcrumb a:focus-visible {
+  color: var(--accent-cyan);
+}
+/* Current page carries the trail: the page's own pink accent - the same hue
+   as the .pf-eyebrow above the title - and the only crumb with real weight on
+   it. Matches whichever element ends the trail - an <a>
+   when no category is chosen, a plain <span> once one is (the old rule only
+   covered the first case, so a filtered page had no current-page marker). */
+body:has(.products-listing) .breadcrumb .container > :last-child {
+  color: #ff9ab5;
+  font-weight: 800;
+}
+
+.pf-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: #ff9ab5;
+  margin-bottom: 10px;
+}
+.pf-eyebrow span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #e0567a;
+  flex: none;
+}
+
+body:has(.products-listing) .products-header { align-items: flex-end; }
+body:has(.products-listing) .products-header h1 {
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1.05;
+  color: #fff;
+}
+body:has(.products-listing) .results-count {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* --- sidebar ------------------------------------------------------------ */
+body:has(.products-listing) .filter-section {
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+}
+/* Readable headings, not mono micro-caps. These three labels - Price Range,
+   Sort By, Categories - are the only way to tell what each control does, and
+   10px JetBrains Mono at .22em tracking in --text-muted was the smallest and
+   dimmest type on the page: a caption treatment doing a heading's job.
+
+   Figtree at 15px/700 in --text-primary is the page's own heading voice, and
+   --text-primary resolves per theme (#e8eef7 dark / #16233a light), so one
+   declaration covers both. text-transform is reset explicitly because the
+   markup already reads "Price Range" - shouting it in caps was costing the
+   word shapes that make a label scannable at a glance.
+
+   The second copy of this rule near the end of this file carries !important
+   and is the one that actually lands; both are kept in step. */
+/* ---- Why these inks are literals and not var(--text-*) --------------------
+   This file declares its dark palette on bare `body` (top of file, 0,0,1).
+   style.css declares a LIGHT palette twice: once on :root and again on
+   `[data-theme="light"]` (0,1,0) - and main.js:23 stamps data-theme="light"
+   on <html> AND <body> unconditionally on every page (dark mode was removed
+   from that switch; the real theme now rides html[data-mode]). So on this
+   page `[data-theme="light"]` beats this file's `body` on specificity and
+   var(--text-primary) resolves to style.css's #17324a - a dark navy - while
+   the panel underneath is still this file's dark ground. Dark ink on a dark
+   panel, which is exactly what it looked like.
+
+   That trap is why the rest of this file paints in literals (#ff9ab5, #fff,
+   rgba(8,16,29,.72)) rather than tokens. The sidebar ink joins them. Light
+   mode is answered where every other light override for this page lives -
+   html[data-mode="light"] in theme-light.css - not by a token that something
+   else can flip underneath.
+   ------------------------------------------------------------------------- */
+body:has(.products-listing) .pf-section-title {
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  text-transform: none;
+  color: #e8eef7;
+}
+/* The active category reads as a filled pill, as in the mockup. */
+body:has(.products-listing) .category-filter a.active {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .22), rgba(194, 24, 91, .18));
+  border: 1px solid rgba(224, 86, 122, .45);
+  border-radius: 12px;
+  color: #fff;
+}
+body:has(.products-listing) .pf-section-body input[type="number"],
+body:has(.products-listing) .pf-section-body input[type="text"] {
+  background: rgba(8, 16, 29, .72) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: 10px !important;
+  /* Literal for the same reason as .pf-price-row input below. */
+  color: #e8eef7 !important;
+}
+
+/* --- product cards ------------------------------------------------------ */
+/* Radius is set with the rest of the card frame at the end of this file.
+   `overflow: hidden` used to live here too and had to go: at (0,2,1) it beat
+   both products pages' own `.products-grid .product-card { overflow: visible }`
+   (0,2,0), so the electric hover ring - a hollow border at inset:-2px - was
+   being clipped away on both. The image's own border-radius does the corner
+   clipping instead, so nothing needs the card to clip. */
+/* The well's fill is set to the landing's flat 6% white at the end of this
+   file; this rule keeps only the divider, which the landing card does not
+   need because its well is inset inside 18px of padding rather than running
+   full-bleed to the card edge as it does here. */
+body:has(.products-listing) .product-image {
+  /* Was var(--border-color) = rgba(120,170,230,.18) - a cool periwinkle-blue
+     line. Against the dark well it read as a bright/"light" stroke rather
+     than a quiet divider, especially under white-background product photos.
+     A dark, near-black stroke instead - it separates the well from the
+     details below without drawing the eye. */
+  border-bottom: 1px solid rgba(3, 8, 16, .5);
+}
+/* .product-category is already the card's kicker - the mockup sets it in
+   spaced mono caps above the name. */
+body:has(.products-listing) .product-category {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 9.5px !important;
+  /* Tracking is reset to the landing's .14em at the end of this file. */
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-muted) !important;
+}
+body:has(.products-listing) .product-title a {
+  color: #fff !important;
+  font-weight: 700;
+}
+/* Colour is set with the rest of the card at the end of this file - it is
+   #a77693 now, the landing's own price colour, not this #ff5c8a. */
+body:has(.products-listing) .product-price,
+body:has(.products-listing) .product-price .current-price {
+  font-weight: 800;
+}
+body:has(.products-listing) .product-price .original-price {
+  color: var(--text-muted) !important;
+  font-weight: 500;
+}
+/* The stock count sits as a small pill beside the price. */
+body:has(.products-listing) .stock-indicator,
+body:has(.products-listing) .stock-available,
+body:has(.products-listing) .stock-low {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 9.5px;
+  letter-spacing: .12em;
+  padding: 5px 9px;
+  border-radius: 999px;
+}
+body:has(.products-listing) .stock-available {
+  background: rgba(52, 211, 153, .14);
+  color: #9df3d0;
+  border: 1px solid rgba(52, 211, 153, .4);
+}
+body:has(.products-listing) .stock-low {
+  background: rgba(251, 191, 36, .16);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, .45);
+}
+
+/* --- card actions: outline + gradient pair ------------------------------ */
+body:has(.products-listing) .product-actions { display: flex; gap: 8px; }
+body:has(.products-listing) .add-to-cart-btn {
+  flex: 1;
+  background: transparent !important;
+  border: 1px solid rgba(224, 86, 122, .4) !important;
+  color: #f3b3c4 !important;
+  border-radius: 11px !important;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+body:has(.products-listing) .add-to-cart-btn:hover {
+  background: rgba(224, 86, 122, .18) !important;
+}
+body:has(.products-listing) .buy-now-btn {
+  flex: 1;
+  background: linear-gradient(120deg, #e0567a, #c2185b) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 11px !important;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* --- apply-filters CTA --------------------------------------------------- */
+body:has(.products-listing) .filter-section button[type="submit"],
+body:has(.products-listing) .apply-filters-btn {
+  background: linear-gradient(120deg, #e0567a, #c2185b) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   The two pages that paint their own ground.
+
+   This file used to exclude them with
+   body:not(:has(.tw-home)):not(:has(.aib-wrap)) on every rule. That guard did
+   not match - the theme silently failed everywhere while the later
+   body:has(.products-listing) rules worked, which is how the products page
+   ended up half-styled on a light background. The scope is now a plain body,
+   and the two exceptions are re-asserted here instead.
+
+   It has to happen in THIS file rather than relying on load order: on the
+   customer landing page, header.php (and so this stylesheet) is included in
+   the body, after that page's own <head> links techworld-anim.css - so the
+   dark theme would otherwise win over the landing ground.
+   ========================================================================== */
+body:has(.tw-home) {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) !important;
+}
+body:has(.aib-wrap) {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) !important;
+}
+
+/* --- products page: pieces the first pass missed --------------------------
+   Written against the page's real rendered markup rather than inferred from
+   the mockup. Two selectors in the block above were wrong and are corrected
+   there: the active filter is an <a class="active"> inside .category-filter,
+   not .pf-cat-label.active, and the compare price is .original-price. */
+
+/* Sidebar shell and the checkbox rows.
+
+   Literal inks, not var(--text-*): on this page those tokens resolve to
+   style.css's LIGHT palette (dark navy) even though the panel is dark - the
+   full explanation is in the note above .pf-section-title further down this
+   file. These three carried !important, so they were the rules actually
+   painting the category names dark-on-dark; the page's own inline block
+   never got a say. */
+body:has(.products-listing) .filters-sidebar { color: #a9bcd4; }
+body:has(.products-listing) .pf-section-head {
+  background: transparent !important;
+  color: #e8eef7 !important;
+}
+body:has(.products-listing) .pf-cat-label {
+  /* #e8eef7, not the old secondary slate: the category list is the panel's
+     main read, and it now matches the headings above it. */
+  color: #e8eef7 !important;
+  border-radius: 10px;
+  transition: background .2s ease, color .2s ease;
+}
+body:has(.products-listing) .pf-cat-label:hover {
+  background: rgba(103, 232, 249, .08) !important;
+  color: #fff !important;
+}
+/* accent-color only tints the CHECKED fill - the idle box stays whatever
+   light/white square the browser natively draws, regardless of accent-color.
+   Against this panel's dark surface that is ~19 bright squares running down
+   the category list, reading far louder than everything around them.
+   Rebuilt with appearance:none so the idle state is a subtle bordered box
+   instead of the native control chrome; accent-color stays as a harmless
+   fallback for any engine that ignores appearance:none on checkboxes.
+   theme-light.css reverts this back to the native checkbox, so only dark
+   mode (this file's default, unconditional treatment) changes. */
+body:has(.products-listing) .pf-cat-label input[type="checkbox"] {
+  accent-color: #e0567a;
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  /* Pinned in every dimension a flex row can otherwise squeeze: .pf-cat-label
+     is display:flex, and a sized replaced-ish control still defaults to
+     flex-shrink:1/flex-grow:1 with min-width:auto, so a longer category name
+     ("Keyboards & Combos", "CCTV & Security") competing for the same row
+     width was letting the box shrink or grow a hair relative to short ones
+     ("Storage", "Memory") - a few rows shrink to fit, most don't, and the
+     inconsistency reads as "not all the same size". Fixed width/height plus
+     flex-shrink/grow:0 and matching min/max bounds make it a hard 16x16 in
+     every row regardless of the label text next to it. */
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  max-width: 16px;
+  max-height: 16px;
+  flex: 0 0 16px;
+  border: 1.5px solid rgba(120, 170, 230, 0.35);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .04);
+  position: relative;
+  transition: background .15s ease, border-color .15s ease;
+}
+body:has(.products-listing) .pf-cat-label input[type="checkbox"]:checked {
+  background: #e0567a;
+  border-color: #e0567a;
+}
+body:has(.products-listing) .pf-cat-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+body:has(.products-listing) .pf-cat-label input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+/* "All Products". Literal for the same token reason as .pf-cat-label above -
+   var(--text-secondary) resolves to style.css's #3d5875 here. */
+body:has(.products-listing) .category-filter a {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: #e8eef7;
+  text-decoration: none;
+}
+body:has(.products-listing) .pf-select-wrap select {
+  background: rgba(8, 16, 29, .72) !important;
+  border: 1px solid var(--input-border) !important;
+  /* Literal - var(--input-text) is style.css's #17324a on this page. This
+     rule also matches #sortSelect, so leaving it tokenised meant the sort
+     control was dark-on-dark from here even once its own rule was fixed. */
+  color: #e8eef7 !important;
+  border-radius: 10px !important;
+}
+
+/* Star rating: gold stars, muted count, as in the mockup. */
+body:has(.products-listing) .product-rating i { color: #f5c451; }
+body:has(.products-listing) .rating-text {
+  color: var(--text-muted) !important;
+  font-size: 12px;
+}
+
+/* Price and stock share one row, price left and pill right. */
+body:has(.products-listing) .price-stock-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+body:has(.products-listing) .product-price .original-price {
+  display: block;
+  font-size: 13px;
+  text-decoration: line-through;
+}
+
+/* The quick-view overlay sits on a dark card now. */
+body:has(.products-listing) .product-overlay { background: rgba(6, 13, 24, .45) !important; }
+body:has(.products-listing) .quick-view-btn {
+  background: rgba(8, 16, 29, .8) !important;
+  border: 1px solid var(--border-color) !important;
+  color: #fff !important;
+}
+
+/* Pager. */
+body:has(.products-listing) .pagination { gap: 8px; }
+
+/* ==========================================================================
+   The full homepage ground, not just its radial.
+
+   Two things kept these pages looking different from the landing pages.
+
+   First, .account-page paints `background: var(--page-bg-gradient)` at
+   min-height:100vh in the page's own <style>, which is included AFTER this
+   file - so it covers the body entirely. Overriding the token fixes the
+   colour, but the rule below states it outright as well so the ground no
+   longer depends on that token resolving.
+
+   Second, the landing pages' ground is not only a radial. techworld-anim.css
+   paints the body radial and then layers a fixed .tw-bg grid and two drifting
+   blobs over it, as real elements. No other page has those elements, so even
+   with the right colour these pages were a flat gradient next to a textured
+   one. body::before and body::after were both unused, so they carry the same
+   two layers here - same 120px grid, same pan, same pink and cyan blobs in
+   the same corners.
+   ========================================================================== */
+body .account-page,
+body .products-listing,
+/* Notifications, Cart and Order Tracking paint their own section grounds from
+   var(--page-bg-gradient) in each page's own <style>, which is linked after
+   this file - so they depended on that token resolving and on nothing later
+   overriding it. Named here alongside .account-page (the orders page) so all
+   of them are painted by one identical declaration. */
+body .notifications-page,
+body .cart-page,
+body .track-order-page,
+/* The receipt page. The receipt itself stays white paper; only the page
+   around it takes the ground. */
+body .invoice-page {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) !important;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(120, 170, 230, .12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 170, 230, .12) 1px, transparent 1px);
+  background-size: 120px 120px;
+  opacity: .5;
+  animation: cd-grid-pan 26s linear infinite;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background-image:
+    radial-gradient(46vw 46vw at 8% 4%, rgba(224, 86, 122, .30), rgba(224, 86, 122, 0) 70%),
+    radial-gradient(42vw 42vw at 96% 92%, rgba(103, 232, 249, .24), rgba(103, 232, 249, 0) 70%);
+  background-repeat: no-repeat, no-repeat;
+}
+@keyframes cd-grid-pan {
+  to { background-position: 120px 120px, 120px 120px; }
+}
+/* The page's own content has to sit above those two layers. */
+body > *:not(script):not(style) { position: relative; z-index: 1; }
+
+/* The landing pages and the AI Builder draw their own versions of all this,
+   so theirs are switched off here to avoid doubling up. */
+body:has(.tw-home)::before,
+body:has(.tw-home)::after,
+body:has(.aib-wrap)::before,
+body:has(.aib-wrap)::after { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none !important; }
+}
+
+/* --- account pages: page title block --------------------------------------
+   .account-header is styled in each page's own <style> (orders.php, profile,
+   etc.), which is linked AFTER this file - but those rules are only
+   `.account-header h1` / `.account-header p`, so the extra `.account-page`
+   here outranks them without needing !important.
+
+   The colours they ask for are --text-primary / --text-muted. Muted is
+   #7f95b3, which over the animated grid-and-blob ground is too low-contrast
+   for a subtitle to read at 16px; the title fared little better against the
+   pink blob in the top-left corner. Both are lifted here, and given the same
+   soft shadow the breadcrumb uses so they hold up wherever the blobs drift. */
+body .account-page .account-header h1 {
+  color: #f0f6ff;
+  text-shadow: 0 2px 10px rgba(3, 8, 16, .55);
+  letter-spacing: -.01em;
+}
+body .account-page .account-header p {
+  color: #b9cbe2;
+  text-shadow: 0 1px 3px rgba(3, 8, 16, .5);
+}
+
+/* --- account pages: cards -------------------------------------------------
+   --bg-card is rgba(255,255,255,.06) - a wash that was only readable because
+   the white neu glow was lighting it. With that gone it needs a surface of its
+   own: the same translucent navy panel the orders table and product cards use,
+   over the page's animated ground. */
+body .account-page .card {
+  background: rgba(11, 22, 38, 0.78);
+  border-color: var(--border-color);
+}
+body .account-page .address-row,
+body .account-page .order-item {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* --- orders page: the "No orders yet" card --------------------------------
+   Same #fff4ef the footer and the profile cards use. The page's own <style>
+   gives it --bg-card-alpha-80 and dark-panel ink; the extra .account-page
+   here outranks that without !important. */
+body .account-page .empty-card {
+  background: #fff4ef;
+  border: 1px solid rgba(23, 72, 113, 0.14);
+  box-shadow: 0 18px 40px rgba(3, 8, 16, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+body .account-page .empty-card h2 { color: #17324a; }
+body .account-page .empty-card p { color: #55677c; }
+body .account-page .empty-card .empty-icon i { color: #c2a98f; }
+body .account-page .empty-card .btn-primary {
+  background: linear-gradient(45deg, #a05f80, #174871);
+  color: #fff;
+}
+
+/* --- settings page: cream cards -------------------------------------------
+   The settings page is the one place that reads as paper rather than panel.
+   Scoped to .settings-layout so the rest of the account area keeps the navy
+   card above.
+
+   Everything inside inherits ink meant for a dark panel (--text-primary is
+   #e8eef7, the accents are neon), so all of it is restated here in the light
+   palette style.css already uses for its light theme - navy #17324a text,
+   mauve #a05f80 accent - rather than a second set of one-off colours. */
+body .account-page .settings-layout .card {
+  background: #f4efe6;
+  border: 1px solid rgba(23, 72, 113, 0.14);
+  /* The inset highlight in --neu-raised is a cool blue - invisible on cream.
+     Warm it and keep the drop shadow so the card still lifts off the ground. */
+  box-shadow: 0 10px 26px rgba(3, 8, 16, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* headings and hints */
+body .account-page .settings-layout .card-header h2 { color: #17324a; }
+body .account-page .settings-layout .hint,
+body .account-page .settings-layout .card-header .hint { color: #55677c; }
+
+/* address rows: a warmer step down from the card so nested blocks separate */
+body .account-page .settings-layout .address-row {
+  background: #ebe4d7;
+  border-color: rgba(23, 72, 113, 0.12);
+}
+body .account-page .settings-layout .address-row-info strong { color: #17324a; }
+body .account-page .settings-layout .address-row-info p { color: #55677c; }
+body .account-page .settings-layout .address-label {
+  background: rgba(160, 95, 128, 0.14);
+  color: #8c4f6e;
+}
+body .account-page .settings-layout .badge-default {
+  background: rgba(21, 128, 61, 0.14);
+  color: #15803d;
+}
+
+/* preferences rows */
+body .account-page .settings-layout .preferences-row { border-bottom-color: rgba(23, 72, 113, 0.12); }
+body .account-page .settings-layout .preferences-row strong { color: #17324a; }
+
+/* controls: the neon gradient and muted-blue outline both vanish on cream */
+body .account-page .settings-layout .btn-primary {
+  background: linear-gradient(45deg, #a05f80, #174871);
+  color: #fff;
+}
+body .account-page .settings-layout .btn-outline {
+  color: #3d5875;
+  border-color: rgba(23, 72, 113, 0.28);
+}
+body .account-page .settings-layout .btn-outline:hover:not(:disabled) {
+  color: #17324a;
+  border-color: rgba(23, 72, 113, 0.5);
+}
+body .account-page .settings-layout .btn-danger {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.35);
+}
+body .account-page .settings-layout .btn-danger:hover { border-color: rgba(185, 28, 28, 0.6); }
+
+/* --- profile page: warm vanilla ------------------------------------------
+   Same move as the settings cards above, in the #fff4ef warm vanilla the
+   dashboard and footer use. Scoped to
+   .profile-layout so both the .profile-main cards and the .profile-card aside
+   in that grid change together,
+   and so the modals (which sit outside it, over a black backdrop) stay dark.
+
+   Everything inside was coloured for a dark panel - --text-primary is
+   #e8eef7, the accents are neon cyan and violet - so it is all restated in
+   the light palette style.css already ships: navy #17324a ink, mauve #a05f80
+   accent. */
+body .account-page .profile-layout .card,
+body .account-page .profile-layout .profile-card {
+  background: #fff4ef;
+  border: 1px solid rgba(23, 72, 113, 0.14);
+  /* --neu-raised's inset highlight is a cool blue, invisible on vanilla. */
+  box-shadow: 0 10px 26px rgba(3, 8, 16, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* headings and hints */
+body .account-page .profile-layout .card-header h2 { color: #17324a; }
+body .account-page .profile-layout .hint,
+body .account-page .profile-layout .card-header .hint { color: #55677c; }
+
+/* activity tiles: a deeper vanilla so they read as insets in the card */
+body .account-page .profile-layout .stat-card {
+  background: #fae7dd;
+  border-color: rgba(23, 72, 113, 0.12);
+}
+body .account-page .profile-layout .stat-card:hover {
+  border-color: rgba(160, 95, 128, 0.45);
+  box-shadow: 0 10px 25px rgba(23, 72, 113, 0.12);
+}
+body .account-page .profile-layout .stat-value { color: #17324a; }
+body .account-page .profile-layout .stat-label { color: #55677c; }
+body .account-page .profile-layout .stat-card .stat-value i { color: #8c4f6e; }
+
+/* store credit balance - the markup sets this colour inline, so !important is
+   the only way to reach it without editing the page. */
+body .account-page .profile-layout #storeCredit .card-header > span { color: #8c4f6e !important; }
+
+/* identity card */
+body .account-page .profile-layout .avatar-lg {
+  background: linear-gradient(135deg, #a05f80, #174871);
+  border-color: rgba(23, 72, 113, 0.12);
+}
+body .account-page .profile-layout .profile-card .name { color: #17324a; }
+body .account-page .profile-layout .profile-card .email { color: #55677c; }
+body .account-page .profile-layout .profile-card .since { color: #8c4f6e; }
+body .account-page .profile-layout .profile-card .divider { background: rgba(23, 72, 113, 0.14); }
+body .account-page .profile-layout .quick-info .label { color: #55677c; }
+body .account-page .profile-layout .quick-info .value { color: #17324a; }
+body .account-page .profile-layout .quick-info .value.status-active { color: #15803d; }
+body .account-page .profile-layout .quick-info .value.status-inactive { color: #b91c1c; }
+
+/* controls */
+body .account-page .profile-layout .btn-primary {
+  background: linear-gradient(45deg, #a05f80, #174871);
+  color: #fff;
+}
+body .account-page .profile-layout .btn-outline {
+  color: #3d5875;
+  border-color: rgba(23, 72, 113, 0.28);
+}
+body .account-page .profile-layout .btn-outline:hover {
+  color: #17324a;
+  border-color: rgba(23, 72, 113, 0.5);
+}
+body .account-page .profile-layout .btn-danger {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.35);
+}
+
+/* --- cart page ------------------------------------------------------------
+   A "warm vanilla" light-card treatment for the cart used to live here:
+   #fff4ef panels, #fae7dd rows and #17324a ink, which read correctly against
+   each other. It was removed because the cart is no longer a light card.
+
+   cart.php's own <style> paints the panels with the landing page's dark
+   navy --cx-panel and marks those backgrounds !important, so the surfaces
+   came out dark. The ink here carried no !important but did carry higher
+   specificity (`body .cart-page .item-name a` beats `.item-name a`), so the
+   text stayed #17324a. The result on screen was #17324a ink on a #0b1626
+   panel - about 1.3:1, illegible - and #55677c prices at roughly 2.2:1.
+
+   Every selector this block styled already has a dark-ground rule in
+   cart.php (white headings, --cx-ink-faint prices, --cx-green stock), so
+   deleting it lets those land instead of being out-specified. Restyle the
+   cart there, not here; re-adding page-scoped ink at this specificity will
+   reintroduce the same clash. */
+
+/* --- dashboard ------------------------------------------------------------
+   Nothing for the dashboard's cards lives here. That page loads
+   techworld-dashboard.css and then techworld-dashboard-bg.css, the latter
+   being the last stylesheet in the document and forcing the card surfaces
+   with !important - so this file cannot reach them, and an earlier attempt
+   from here was dead code. Both sheets now paint the same #fff4ef card, and
+   they are where any further dashboard card change belongs.
+
+   The footer below is the exception: no dashboard sheet touches it. */
+
+/* --- footer: warm vanilla -------------------------------------------------
+   The shared footer is #282C34 with #b0b8c4 text. The :has() list is every
+   page that now carries vanilla cards - each of these pages wraps itself in
+   its own section class rather than a shared one - so the footer matches
+   them, while the landing and product pages keep the dark footer. Drop the
+   prefix to take it site-wide. */
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .main-footer {
+  background: #fff4ef;
+  color: #3d5875;
+  border-top: 1px solid rgba(23, 72, 113, 0.14);
+}
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-content { border-bottom-color: rgba(23, 72, 113, 0.12); }
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-column h3 { color: #17324a; }
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-column p,
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-column ul li a,
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .contact-list span,
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .contact-list a.social-link { color: #55677c; }
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-column ul li a:hover,
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .contact-list a.social-link:hover { color: #8c4f6e; }
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-bottom p,
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-bottom .footer-address,
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .made-with { color: #6b7c8f; }
+/* The brand marks are flat dark SVGs on a dark footer; on vanilla they need
+   no inversion, but the store-hours grey reads washed out - darken it. */
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-bottom .contact-list i,
+body:has(.account-page, .dashboard-container, .cart-page, .notifications-page, .track-order-page, .aib-wrap) .footer-column .contact-list i[style*="6b7280"] { color: #55677c !important; }
+
+/* --- products page: badges and the clear link ----------------------------
+   The badge classes themselves already exist in techworld-anim.css, but that
+   stylesheet is only linked on the two landing pages - so the products page
+   needs its own copy of the three it uses. Same values, so a card badge looks
+   identical wherever it appears. */
+body:has(.products-listing) .product-image { position: relative; }
+body:has(.products-listing) .tw-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  padding: 5px 9px;
+  border-radius: 999px;
+}
+body:has(.products-listing) .tw-badge--new {
+  background: rgba(103, 232, 249, .14); color: #a5eefb;
+  border: 1px solid rgba(103, 232, 249, .4);
+}
+body:has(.products-listing) .tw-badge--value {
+  background: rgba(224, 86, 122, .20); color: #ffc2d3;
+  border: 1px solid rgba(224, 86, 122, .55);
+}
+body:has(.products-listing) .tw-badge--stock {
+  background: rgba(52, 211, 153, .14); color: #9df3d0;
+  border: 1px solid rgba(52, 211, 153, .4);
+}
+
+/* "Clear" is a control, not a caption - 10px mono caps made the one link that
+   undoes a filter the hardest thing in the panel to find. Same Figtree the
+   section headings now use, a size that reads, and the accent pink kept
+   (#ff9ab5 is 8.6:1 on this panel) plus an underline so it still announces
+   itself as a link at the smaller weight. */
+body:has(.products-listing) .pf-clear {
+  display: inline-block;
+  margin: 0 0 8px;
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-transform: none;
+  color: #ff9ab5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+body:has(.products-listing) .pf-clear:hover { color: #fff; }
+
+/* --- products page: price range, stock pill, image well ------------------- */
+
+/* 1. Price range inputs and the apply button. */
+body:has(.products-listing) .pf-price-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+/* MIN / MAX. Mono is right for a number you read back, but 11px with .1em
+   tracking is a caption size on a field people have to type a price into, and
+   the MIN/MAX placeholders were being drawn at it too. 15px with normal
+   tracking, and the padding grown to keep the box proportioned around it. */
+body:has(.products-listing) .pf-price-row input {
+  width: 100%;
+  /* min-width:0 so a long value cannot push the 1fr track wider than the
+     250px sidebar column - an input's intrinsic minimum otherwise wins over
+     the track and the second field gets shoved out of the panel. */
+  min-width: 0;
+  padding: 11px 10px;
+  background: rgba(8, 16, 29, .72) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: 10px !important;
+  /* --input-text is style.css's #17324a here, not this file's #e8eef7. */
+  color: #e8eef7 !important;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: normal;
+}
+/* Chrome/Edge draw spin buttons on input[type=number] and they take ~17px off
+   a field that is only ~71px wide here (250px column, 30px + 20px of nesting
+   padding, two columns and an 8px gap). At the old 11px there was slack for
+   them; at a readable 15px there is not, and nobody steps a price range up by
+   ones anyway - the field is typed into. Firefox gets the same via
+   appearance, which also stops it reserving the arrows' width. */
+body:has(.products-listing) .pf-price-row input::-webkit-outer-spin-button,
+body:has(.products-listing) .pf-price-row input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+body:has(.products-listing) .pf-price-row input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+/* MIN / MAX are the placeholders - they are the fields' only labels - so they
+   get a real ink rather than a placeholder grey. #a9bcd4 is 7.1:1 on this
+   well; the var(--text-secondary) this used to read resolved to style.css's
+   #3d5875 (1.4:1 on the well), which is why they vanished. */
+body:has(.products-listing) .pf-price-row input::placeholder {
+  color: #a9bcd4;
+  opacity: 1; /* Firefox dims placeholders to .54 by default. */
+  letter-spacing: .06em;
+}
+/* The panel's primary button was its smallest type: 10.5px mono caps at .16em.
+   Figtree in sentence case - the button says "Apply Filters", which is what
+   the markup says and what the eye can take in without spelling it out.
+   13px/700 rather than the 15px the rest of the panel reads at: it is a
+   full-width filled block, so it carries weight from its fill and does not
+   need the type size too - at 15px it was the loudest thing in the column. */
+body:has(.products-listing) .pf-apply {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #e0567a, #c2185b);
+  color: #fff;
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  letter-spacing: .01em;
+  text-transform: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .3s, box-shadow .3s;
+}
+body:has(.products-listing) .pf-apply:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(224, 86, 122, .4);
+}
+
+/* 2. Stock pill in the mockup's green, for both states. This reverses the
+      amber low-stock treatment added earlier - that was a deliberate warning
+      colour, changed here because the mockup shows green and the user asked
+      to match it. */
+body:has(.products-listing) .stock-low {
+  background: rgba(52, 211, 153, .14);
+  color: #9df3d0;
+  border: 1px solid rgba(52, 211, 153, .4);
+}
+
+/* 3. The diagonal weave that used to be here is gone - see the image-well
+      note at the end of this file. It stood in for the mockup's empty
+      plates, but the landing's wells are a flat 6% white and these hold the
+      same real photography, so they match that instead. */
+
+/* --- guest products listing ----------------------------------------------
+   Same page, different markup in two places, so the existing rules above do
+   not reach it: its sidebar headings are plain <h3> rather than
+   .pf-section-title, and its category list is single-select links rather than
+   checkbox rows. These add those two cases; everything else - cards, badges,
+   price inputs, buttons, breadcrumb, ground - is already keyed to
+   .products-listing, which this page's wrapper carries too. */
+body:has(.products-listing) .filter-section h3 {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+body:has(.products-listing) .pf-price-form { margin: 0; }
+
+/* ==========================================================================
+   Products pages -> the landing card, exactly.
+
+   The two grounds already matched; the things standing on them did not. The
+   cards and the filter sidebar still carried light-theme leftovers that the
+   landing page has none of. Every value below is what the landing card
+   actually computes to, which takes three sheets to read off:
+
+     customer-home.css   .th-product-card        surface, electric ring
+     techworld-anim.css  .tw-home .th-product-*  border, radius, hover
+     style.css           .current-price          price colour
+
+   SPECIFICITY NOTE
+   These pages include header.php - and so this file - inside <body>, BEFORE
+   their own <style> block. A bare `.product-card` written here would lose to
+   that block on source order. The body:has(.products-listing) prefix used
+   throughout this file outranks it, which is why the fixes live here rather
+   than in either page. Where the page block marks a property !important,
+   the rule below has to as well.
+   ========================================================================== */
+
+/* --- card surface, border and lift ---------------------------------------
+   The page block sets its --eb-* ring a shade cooler than the landing's and
+   pairs them with two light-theme shadows - rgba(23,50,74,.09) is a navy
+   tint drawn for a white page. Both are replaced with the landing's own. */
+body:has(.products-listing) .products-grid .product-card {
+  --eb: #9c7a90;
+  --eb-light: #b593a7;
+  --eb-dim: rgba(179, 123, 152, 0.28);
+  --eb-glow: rgba(139, 76, 108, 0.26);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)) !important;
+  border: 1px solid rgba(120, 170, 230, 0.12) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25),
+              0 0 12px -10px var(--eb-glow) !important;
+}
+body:has(.products-listing) .products-grid .product-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(224, 86, 122, 0.5) !important;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55) !important;
+}
+/* The crackle ring sits at inset:-2px, so its radius has to be the card's
+   plus 2 to stay parallel to the corner. The landing leaves this at 18px
+   against a 20px card, which clips the ring at each corner - corrected here
+   rather than copied. */
+body:has(.products-listing) .products-grid .product-card::after {
+  border-color: var(--eb-light);
+  border-radius: 22px;
+}
+/* Card radius moved 15 -> 20, so the image top corners follow it, less the
+   1px border. */
+body:has(.products-listing) .product-card .product-image {
+  border-radius: 19px 19px 0 0;
+}
+
+/* --- image well ----------------------------------------------------------
+   Reverses the diagonal weave added earlier. That pattern stood in for the
+   mockup's empty plates; the landing's own wells are a flat 6% white, and
+   these hold the same real photography, so they now match it. */
+body:has(.products-listing) .product-image {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  background-image: none !important;
+}
+
+/* --- price ---------------------------------------------------------------
+   The landing's price is style.css's own .current-price, #a77693; this page
+   was overriding it to #ff5c8a. Colour only - the 24px size and the
+   .small/.xs/.xxs auto-shrink steps belong to this page and are left alone. */
+body:has(.products-listing) .product-price,
+body:has(.products-listing) .product-price .current-price {
+  color: #a77693 !important;
+}
+
+/* --- kicker --------------------------------------------------------------
+   .14em, the value techworld-anim.css sets on the landing's .tw-card__kind.
+   This file had .2em, from the mono base before that override existed. */
+body:has(.products-listing) .product-category {
+  letter-spacing: .14em;
+}
+
+/* --- stock pill ----------------------------------------------------------
+   Kept as a pill: the landing drops its own only because its card carries
+   the same number in a mono line, which this markup has no equivalent of.
+   What goes is the chrome around it - a 2px transparent border, a 15px black
+   drop shadow, an inset highlight and a text shadow, all sized for the old
+   light theme. The green fill set earlier is untouched. */
+body:has(.products-listing) .stock-indicator {
+  border-width: 1px;
+  box-shadow: none;
+  text-shadow: none;
+  min-height: 0;
+}
+body:has(.products-listing) .stock-indicator::after { display: none; }
+
+/* --- action buttons ------------------------------------------------------
+   The pair already reads as the landing's .tw-btn-outline / .tw-btn-buy, but
+   three things underneath were never overridden: a cyan glow beneath the
+   outline button, a navy glow beneath the buy button, and - most visibly - a
+   buy-now :hover repainting the pink gradient violet-to-navy. The landing
+   keeps its gradient on hover and lifts on a pink shadow instead. */
+body:has(.products-listing) .add-to-cart-btn,
+body:has(.products-listing) .buy-now-btn { box-shadow: none !important; }
+body:has(.products-listing) .add-to-cart-btn:hover {
+  background: rgba(224, 86, 122, .18) !important;
+  color: #f3b3c4 !important;
+}
+body:has(.products-listing) .buy-now-btn:hover {
+  background: linear-gradient(120deg, #e0567a, #c2185b) !important;
+  box-shadow: 0 14px 30px rgba(224, 86, 122, .45) !important;
+}
+/* The out-of-stock card renders a single wishlist button in place of the
+   pair - same outline treatment as add-to-cart. */
+body:has(.products-listing) .wishlist-action-btn {
+  background: transparent !important;
+  border: 1px solid rgba(224, 86, 122, .4) !important;
+  color: #f3b3c4 !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+body:has(.products-listing) .wishlist-action-btn:hover {
+  background: rgba(224, 86, 122, .18) !important;
+  color: #f3b3c4 !important;
+}
+
+/* --- filter sidebar ------------------------------------------------------
+   style.css gives .filters-sidebar a neumorphic pair whose second half is
+   -3px -3px 8px rgba(255,255,255,.5) - a white glow off the top-left,
+   written for a light page. Neither products page overrode box-shadow, so
+   both were painting it onto the dark ground. The panel takes the card's own
+   surface instead, so sidebar and cards read as one material. */
+body:has(.products-listing) .filters-sidebar {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)) !important;
+  border: 1px solid rgba(120, 170, 230, 0.12) !important;
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Section headings. This was mono caps to match the guest page's <h3>, but
+   matching a typeface is not worth a label nobody can read - see the fuller
+   note on the first copy of this rule above. Kept !important because the
+   font-size it is answering was !important. */
+body:has(.products-listing) .pf-section-title {
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px !important;
+  font-weight: 700;
+  letter-spacing: .01em;
+  text-transform: none;
+  /* Literal, not var(--text-primary) - see the cascade note on the first copy
+     of this rule. The token resolves to style.css's dark navy here. */
+  color: #e8eef7 !important;
+}
+
+/* The accent here was mauve #a77693 while the checkbox accent-color, the
+   Clear link and both card buttons were already pink. Pink is the page's
+   accent, so the count badge and the active row join it. */
+body:has(.products-listing) .pf-badge {
+  background: #e0567a;
+  color: #fff;
+}
+body:has(.products-listing) .pf-cat-label.active {
+  background: rgba(224, 86, 122, .12) !important;
+  color: #ff9ab5 !important;
+}
+
+/* #sortSelect is an id (1,0,0), so this file's .pf-select-wrap select rule
+   never reached it - the control kept box-shadow: var(--neu-pressed), the
+   light theme's inset pair, on a dark panel. */
+body:has(.products-listing) #sortSelect {
+  background-color: rgba(8, 16, 29, .72);
+  border: 1px solid rgba(120, 170, 230, 0.18);
+  box-shadow: none;
+  /* "Newest" / "Price: High to Low" were dark navy on this dark well, for the
+     same token reason as the headings - literal, and !important because the
+     page's own inline #sortSelect rule (an ID, 1,0,0) outranks this. */
+  color: #e8eef7 !important;
+}
+body:has(.products-listing) #sortSelect option {
+  background-color: #0c1a2c;
+  color: #e8eef7;
+}
+
+/* --- search suggestions --------------------------------------------------
+   Boxes and chips built on rgba(23,72,113,*), the pre-redesign navy, which
+   is in neither the landing palette nor this file's tokens. Moved onto the
+   cyan already used for every other informational surface here. */
+body:has(.products-listing) .search-suggestion {
+  background: rgba(103, 232, 249, .08) !important;
+  border-color: rgba(103, 232, 249, .28) !important;
+}
+body:has(.products-listing) .suggestion-btn {
+  background: rgba(103, 232, 249, .10) !important;
+  border-color: rgba(103, 232, 249, .30) !important;
+  color: var(--accent-cyan) !important;
+}
+body:has(.products-listing) .suggestion-btn:hover {
+  background: rgba(103, 232, 249, .18) !important;
+  border-color: rgba(103, 232, 249, .5) !important;
+}
+body:has(.products-listing) .suggestion-count {
+  background: rgba(103, 232, 249, .16) !important;
+  color: var(--accent-cyan) !important;
+}
+
+
+/* ==========================================================================
+   SHARED LANDING-LANGUAGE PRIMITIVES (.cx-*)
+
+   The customer area is being brought onto the landing page's visual language
+   one page at a time (products listing, orders, cart, tracking, settings,
+   support, profile). Every one of those pages wants the same handful of
+   pieces - the mono eyebrow, the traveling-light divider, the panel surface,
+   the pill button, the mono chip - so they live here once instead of being
+   retyped into each page's own <style> block.
+
+   Every value is copied from the landing palette in techworld-anim.css, so
+   these and the homepage stay one system. The tokens are declared on `body`
+   (not :root) to sit alongside the re-theme block at the top of this file.
+
+   Pages opt in by using the class; nothing here applies on its own, so adding
+   this block changed no existing page.
+   ========================================================================== */
+body {
+  --cx-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --cx-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --cx-line: rgba(120, 170, 230, .14);
+  --cx-line-hi: rgba(120, 170, 230, .32);
+  --cx-panel: linear-gradient(180deg, rgba(20, 36, 60, .85), rgba(12, 23, 39, .85));
+  --cx-panel-soft: rgba(255, 255, 255, .035);
+  --cx-ink: #ffffff;
+  --cx-ink-dim: #b9cbe2;
+  /* Measured against the panel these actually sit on - rgba(12,23,39,.85)
+     over the ground, and the .035 white wash a row adds on top of it.
+     The landing page's own faint tones (#7f95b3, #6d83a1) came in at 5.5:1
+     and 4.3:1 there, which is fine for the 15px body copy the homepage uses
+     them for but not for what they carry here: 9-10px uppercase mono, tracked
+     out to .2em. Small, letterspaced caps need more contrast than their size
+     suggests, not less, so both are lifted to the landing's #a9bcd4 /
+     #9db1cb - 8.6:1 and 7.7:1 on a row - and the label stays a step under the
+     faint tone so the hierarchy still reads. */
+  --cx-ink-faint: #a9bcd4;
+  --cx-ink-label: #9db1cb;
+  --cx-pink: #e0567a;
+  --cx-pink-lt: #ff9ab5;
+  --cx-cyan: #67e8f9;
+  --cx-violet: #7f6ae0;
+  --cx-green: #4ade80;
+  --cx-amber: #fcd34d;
+  --cx-ease: cubic-bezier(.2, .85, .2, 1);
+}
+
+/* --- eyebrow: mono, tracked out, pink dot ------------------------------- */
+.cx-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--cx-mono);
+  font-size: 10.5px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--cx-pink-lt);
+  margin-bottom: 12px;
+}
+.cx-eyebrow span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cx-pink);
+  flex: none;
+}
+
+/* --- page title: Figtree 900, gradient accent word ---------------------- */
+.cx-title {
+  margin: 0;
+  font-family: var(--cx-font);
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(3, 8, 16, .55);
+}
+.cx-title em {
+  font-style: normal;
+  background: linear-gradient(100deg, var(--cx-pink-lt), var(--cx-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.cx-lede {
+  margin: 10px 0 0;
+  color: var(--cx-ink-dim);
+  font-size: 15px;
+  line-height: 1.6;
+  text-shadow: 0 1px 3px rgba(3, 8, 16, .5);
+}
+
+/* --- the landing page's traveling-light divider, element for element ---- */
+.cx-rule {
+  position: relative;
+  height: 1px;
+  margin: 22px 0 26px;
+  background: rgba(120, 170, 230, .16);
+  overflow: hidden;
+}
+.cx-rule i {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--cx-cyan), transparent);
+  animation: cx-sweep 3.6s ease-in-out infinite;
+}
+@keyframes cx-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* --- mono chip: a small stated fact (counts, totals, meta) -------------- */
+.cx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--cx-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .04);
+  font-family: var(--cx-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--cx-ink-faint);
+  white-space: nowrap;
+}
+.cx-chip strong {
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .04em;
+}
+.cx-chip i { font-size: 12px; color: var(--cx-cyan); }
+
+/* --- mono field label, for stacked/narrow layouts ----------------------- */
+.cx-k {
+  font-family: var(--cx-mono);
+  font-size: 9px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--cx-ink-label);
+}
+
+/* --- entrance: used by list rows and stat tiles ------------------------- */
+@keyframes cx-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-rule i { animation: none; }
+}

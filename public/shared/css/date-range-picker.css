@@ -1,0 +1,301 @@
+/* date-range-picker.css — reusable two-pane date range picker.
+   Uses only the app's existing shared design tokens (defined in
+   public/shared/style.css, loaded on every customer/admin/super-admin page)
+   so it automatically matches whichever role's theme is active with zero
+   role-specific branching: --accent-cyan (primary/accent), --bg-card/
+   --bg-card-hover (surface/hover surface), --border-color, --text-primary/
+   --text-secondary/--text-muted, --radius-sm/md/lg, --neu-raised-sm/
+   --neu-pressed, --accent-cyan-bg (tinted accent for the range band). */
+
+.drp {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-sans, inherit);
+}
+
+/* ---------- Trigger ---------- */
+.drp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--neu-raised-sm);
+  transition: box-shadow 150ms var(--ease-out, ease), border-color 150ms ease;
+}
+.drp-trigger:hover { box-shadow: var(--neu-raised); }
+.drp-trigger i { color: var(--accent-cyan); font-size: 15px; }
+.drp-trigger:focus-visible,
+.drp.is-open .drp-trigger {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px var(--accent-cyan-bg-20, var(--accent-cyan-bg));
+}
+
+/* ---------- Quick-range chip row ---------- */
+.drp-chips {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  box-shadow: var(--neu-pressed);
+  width: fit-content;
+}
+.drp-chip {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.drp-chip:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.drp-chip.is-active { background: var(--accent-cyan); color: #fff; }
+
+/* ---------- Popover ---------- */
+.drp-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 400;
+  display: none;
+  background: var(--bg-card-solid, var(--bg-card));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px var(--shadow-color);
+  overflow: hidden;
+}
+.drp.is-open .drp-popover { display: block; }
+/* While open the picker has to out-rank whatever follows it in the page. On
+   sales_report.php the four summary cards sit directly under the filter card
+   and were painting over the popover. Raising .drp itself - it is already
+   position:relative - lifts the trigger AND the popover as one unit, so the
+   picker wins wherever it is used, instead of relying on the popover alone
+   beating every later sibling. */
+.drp.is-open { z-index: 500; }
+
+.drp-popover-body { display: flex; }
+
+/* Left preset sidebar */
+.drp-presets {
+  width: 168px;
+  flex-shrink: 0;
+  padding: 10px;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.drp-preset {
+  text-align: left;
+  padding: 9px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.drp-preset:hover,
+.drp-preset:focus-visible { background: var(--bg-card-hover); color: var(--text-primary); outline: none; }
+.drp-preset.is-active { background: var(--accent-cyan-bg); color: var(--accent-cyan); }
+
+/* Right calendar pane */
+.drp-calendars {
+  display: flex;
+  padding: 16px 18px 0;
+  gap: 24px;
+}
+.drp-month {
+  width: 240px;
+}
+.drp-month-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.drp-month-head strong { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+.drp-nav {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.drp-nav:hover { background: var(--accent-cyan-bg); color: var(--accent-cyan); }
+.drp-nav:disabled { opacity: 0.35; cursor: default; background: var(--bg-card-hover); color: var(--text-secondary); }
+.drp-month:first-child .drp-nav-next,
+.drp-month:last-child .drp-nav-prev { visibility: hidden; }
+
+.drp-weekdays, .drp-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.drp-weekdays span {
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding-bottom: 6px;
+  text-transform: uppercase;
+}
+.drp-day {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 0;
+}
+.drp-day:hover:not(:disabled) { background: var(--bg-card-hover); border-radius: 50%; }
+.drp-day:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
+.drp-day.is-muted { color: var(--text-muted); opacity: 0.55; }
+.drp-day:disabled { color: var(--text-muted); opacity: 0.3; cursor: default; }
+
+/* Today marker - distinct from selection, a subtle ring */
+.drp-day.is-today::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1.5px solid var(--accent-cyan);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Data/activity indicator dot */
+.drp-day.has-data::before {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+}
+.drp-day.is-start.has-data::before,
+.drp-day.is-end.has-data::before,
+.drp-day.is-in-range.has-data::before { background: #fff; opacity: 0.85; }
+
+/* Range highlight band - continuous light tinted background across the
+   whole row, with the start/end days as filled accent circles on top. */
+.drp-day.is-in-range { background: var(--accent-cyan-bg); border-radius: 0; }
+.drp-day.is-range-start { border-radius: 50% 0 0 50%; }
+.drp-day.is-range-end { border-radius: 0 50% 50% 0; }
+.drp-day.is-start,
+.drp-day.is-end {
+  background: var(--accent-cyan);
+  color: #fff;
+  border-radius: 50%;
+  font-weight: 700;
+}
+.drp-day.is-start.is-end { border-radius: 50%; }
+
+/* ---------- Manual entry: Year/Month/Day selects, nothing typed ---------- */
+.drp-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+}
+.drp-manual-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drp-manual-label {
+  width: 38px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.drp-select {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--input-bg, var(--bg-card));
+  color: var(--input-text, var(--text-primary));
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: auto;
+}
+.drp-select:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px var(--accent-cyan-bg-20, var(--accent-cyan-bg));
+}
+.drp-select.drp-select-month { flex: 1.4; }
+
+/* ---------- Footer ---------- */
+.drp-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border-color);
+}
+.drp-btn {
+  padding: 9px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 150ms ease, box-shadow 150ms ease;
+}
+.drp-btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+.drp-btn-cancel:hover { background: var(--bg-card-hover); }
+.drp-btn-apply {
+  background: var(--accent-cyan);
+  border: 1px solid transparent;
+  color: #fff;
+  box-shadow: var(--neu-raised-sm);
+}
+.drp-btn-apply:hover { filter: brightness(1.08); }
+
+@media (max-width: 640px) {
+  .drp-popover { left: 50%; transform: translateX(-50%); width: 94vw; max-width: 420px; }
+  .drp-popover-body { flex-direction: column; }
+  .drp-presets { width: 100%; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border-color); }
+  .drp-calendars { flex-direction: column; padding: 16px; }
+  .drp-month { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drp-trigger, .drp-chip, .drp-preset, .drp-nav, .drp-day, .drp-btn { transition-duration: 0.01ms !important; }
+}

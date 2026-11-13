@@ -1,0 +1,254 @@
+/* delivery-note.css - printable Delivery Note.
+   ------------------------------------------------------------------
+   Used only by admin/delivery_note_print.php. Screen styling exists so the
+   page is legible before printing; @media print is where the real work is.
+
+   The accent is TechWorld's own (--admin-accent #a77693 / --admin-primary
+   #174871), not the orange in the reference template. Both live in the two
+   variables below, so re-branding is a one-line change.
+   ------------------------------------------------------------------ */
+
+:root {
+  --dn-accent: #a77693;        /* table header, rules */
+  --dn-accent-ink: #ffffff;
+  --dn-deep: #174871;          /* document title, business name */
+  --dn-band: #f6eef2;          /* Balance Due band */
+  --dn-ink: #000000;
+  --dn-muted: #777777;
+  --dn-line: #e6e6e6;
+}
+
+/* ---- screen ---------------------------------------------------------- */
+body.dn-body {
+  margin: 0;
+  background: #58606b;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--dn-ink);
+}
+
+.dn-toolbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 20px;
+  background: #1f2937; color: #e5e7eb;
+  font-size: 14px;
+}
+.dn-toolbar button, .dn-toolbar a {
+  border: 0; border-radius: 6px; cursor: pointer;
+  padding: 9px 16px; font-size: 13px; font-weight: 700;
+  text-decoration: none;
+}
+.dn-toolbar .dn-print { background: var(--dn-accent); color: #fff; }
+.dn-toolbar .dn-back  { background: #374151; color: #e5e7eb; }
+.dn-toolbar .dn-note  { margin-left: auto; color: #9ca3af; font-weight: 400; }
+
+/* One sheet, shown as a page on screen. */
+.dn-doc {
+  width: 186mm;                /* A4 210mm less 12mm margins each side */
+  margin: 18px auto;
+  padding: 12mm;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+  font-size: 9pt;
+  line-height: 1.45;
+}
+
+/* ---- header ---------------------------------------------------------- */
+.dn-head { display: flex; align-items: flex-start; gap: 16px; }
+.dn-logo { width: 64px; height: 64px; object-fit: contain; flex: none; }
+.dn-logo-text {
+  width: 64px; height: 64px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 11pt; color: var(--dn-deep);
+  border: 1px solid var(--dn-line); text-align: center; line-height: 1.1;
+}
+.dn-head-right { margin-left: auto; text-align: right; }
+.dn-title {
+  margin: 0 0 4px; font-size: 22pt; font-weight: 700;
+  color: var(--dn-deep); letter-spacing: -.01em; line-height: 1;
+}
+.dn-meta { display: grid; grid-template-columns: auto auto; gap: 1px 10px; justify-content: end; }
+.dn-meta dt { color: var(--dn-muted); font-size: 8pt; text-align: right; }
+.dn-meta dd { margin: 0; font-size: 8.5pt; font-weight: 700; text-align: right; }
+
+/* ---- parties --------------------------------------------------------- */
+.dn-parties {
+  display: flex; gap: 24px; justify-content: space-between;
+  margin-top: 10mm;
+}
+.dn-party { max-width: 48%; }
+.dn-party.dn-right { text-align: right; margin-left: auto; }
+.dn-party h2 {
+  margin: 0 0 3px; font-size: 8pt; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--dn-muted);
+}
+.dn-party .dn-name {
+  font-size: 12pt; font-weight: 700; text-transform: uppercase;
+  color: var(--dn-deep); line-height: 1.2; margin-bottom: 2px;
+}
+.dn-party p { margin: 0; font-size: 8.5pt; }
+.dn-ship { margin-top: 6mm; text-align: right; }
+
+/* ---- items ----------------------------------------------------------- */
+.dn-items { width: 100%; border-collapse: collapse; margin-top: 8mm; }
+.dn-items thead th {
+  background: var(--dn-accent); color: var(--dn-accent-ink);
+  font-size: 7pt; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 7px 8px; border: 0;
+}
+.dn-items tbody td {
+  font-size: 8pt; padding: 8px; border: 0;
+  border-bottom: 1px solid var(--dn-line); vertical-align: top;
+}
+.dn-items .dn-desc { width: 38%; }
+.dn-items .dn-sub { display: block; color: var(--dn-muted); font-size: 7pt; margin-top: 1px; }
+.dn-r { text-align: right; }
+.dn-c { text-align: center; }
+
+/* ---- payment + totals ------------------------------------------------ */
+.dn-lower { display: flex; gap: 24px; margin-top: 8mm; align-items: flex-start; }
+.dn-pay { flex: 1 1 50%; }
+.dn-pay h2 {
+  margin: 0 0 3px; font-size: 8pt; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--dn-muted);
+}
+.dn-pay p { margin: 0; font-size: 8.5pt; }
+
+.dn-totals { flex: 0 0 72mm; border-collapse: collapse; }
+.dn-totals th, .dn-totals td { font-size: 8.5pt; padding: 4px 8px; }
+.dn-totals th { text-align: left; font-weight: 400; color: #333; }
+.dn-totals td { text-align: right; font-variant-numeric: tabular-nums; }
+.dn-totals .dn-strong th, .dn-totals .dn-strong td { font-weight: 700; }
+.dn-totals .dn-due th, .dn-totals .dn-due td {
+  background: var(--dn-band); font-weight: 700; font-size: 9.5pt;
+  padding-top: 8px; padding-bottom: 8px;
+  border-top: 1px solid var(--dn-accent);
+}
+
+/* ---- notes + signatures --------------------------------------------- */
+.dn-notes { margin-top: 8mm; }
+.dn-notes h2 {
+  margin: 0 0 3px; font-size: 8pt; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--dn-muted);
+}
+.dn-notes p { margin: 0; min-height: 20mm; font-size: 8.5pt; white-space: pre-wrap; }
+
+/* ---- rider navigation ------------------------------------------------
+   The delivery note's one operational block: who to hand the goods to,
+   where, and whatever the customer typed about finding the place. Boxed and
+   ruled rather than set as running text, because it is read standing up,
+   outdoors, in a hurry - the rest of the sheet is read at a desk. */
+.dn-nav { border: 1pt solid var(--dn-rule, #333); padding: 4mm; }
+.dn-nav h2 { margin-bottom: 3mm; color: inherit; }
+.dn-nav-grid {
+  display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 4mm;
+  padding-bottom: 3mm; margin-bottom: 3mm;
+  border-bottom: .5pt solid var(--dn-rule, #999);
+}
+.dn-nav-cell { min-width: 0; }
+.dn-nav-label {
+  display: block; font-size: 7pt; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--dn-muted); margin-bottom: 1mm;
+}
+/* Overrides the 20mm floor .dn-notes p carries: that exists to leave writing
+   room in the old free-text block, and here it would space three short
+   address lines a finger apart. */
+.dn-nav-cell p { min-height: 0; margin: 0 0 1mm; font-size: 9pt; line-height: 1.35; }
+/* .dn-notes p sets white-space:pre-wrap so a hand-typed note keeps its line
+   breaks. Everything else in this block is template text whose source is
+   indented for readability, and pre-wrap was printing that indentation onto
+   the sheet - a wrapped sentence came out stepped in by three spaces. */
+.dn-nav-cell p, .dn-nav-none { white-space: normal; }
+/* The customer's own words. pre-wrap is kept HERE on purpose - if they typed
+   the tower on one line and the unit on the next, that is how it should read -
+   which is also why the PHP escapes it without nl2br: the two together would
+   double every line break. */
+.dn-nav-note .dn-nav-text {
+  min-height: 12mm; font-size: 10pt; line-height: 1.45; font-weight: 600;
+  white-space: pre-wrap;
+}
+/* The one thing on this sheet a rider may have to act on at the door, so it
+   is the largest text in the block - not the smallest, which is where notes
+   usually end up. */
+.dn-nav-none { min-height: 0; font-size: 8.5pt; font-style: italic; color: var(--dn-muted); }
+
+.dn-signs { display: flex; gap: 40px; margin-top: 10mm; }
+.dn-sign { flex: 1; text-align: center; }
+.dn-sign .dn-rule { border-top: 1px solid #333; margin-top: 16mm; padding-top: 4px; }
+.dn-sign .dn-who { font-size: 9pt; font-weight: 700; text-transform: uppercase; }
+.dn-sign .dn-role { font-size: 7.5pt; color: var(--dn-muted); }
+
+.dn-empty {
+  max-width: 600px; margin: 40px auto; padding: 24px;
+  background: #fff; border-radius: 8px; font-size: 14px;
+}
+
+/* ---- list view (several orders as one table) -------------------------- */
+.dn-doc--table { width: 272mm; }        /* A4 landscape less 12mm margins */
+
+.dn-list { width: 100%; border-collapse: collapse; margin-top: 8mm; }
+.dn-list thead th {
+  background: var(--dn-accent); color: var(--dn-accent-ink);
+  font-size: 7pt; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; padding: 7px 8px; text-align: left; border: 0;
+}
+.dn-list tbody td {
+  font-size: 8pt; padding: 7px 8px; vertical-align: top;
+  border-bottom: 1px solid var(--dn-line);
+  overflow-wrap: break-word;
+}
+.dn-list tbody tr:nth-child(even) td { background: #fafafa; }
+.dn-list .dn-sub { display: block; color: var(--dn-muted); font-size: 7pt; margin-top: 1px; }
+.dn-list .dn-item-line { display: block; }
+.dn-list tfoot th {
+  font-size: 8.5pt; padding: 8px; border-top: 2px solid var(--dn-accent);
+  background: var(--dn-band); text-align: left;
+}
+.dn-list tfoot th.dn-r { text-align: right; }
+.dn-list tfoot th.dn-c { text-align: center; }
+/* Fixed widths: without them one long address starves the money columns. */
+.dn-w-doc  { width: 13%; }
+.dn-w-date { width:  8%; }
+.dn-w-cust { width: 16%; }
+.dn-w-ship { width: 20%; }
+.dn-w-items{ width: 21%; }
+.dn-w-qty  { width:  4%; }
+.dn-w-amt  { width:  6%; font-variant-numeric: tabular-nums; }
+
+/* ---- print ----------------------------------------------------------- */
+@media print {
+  /* The per-order note is portrait. The list view has nine columns and needs
+     the width, so it claims a named page that is landscape - a named @page is
+     the only way to have two orientations in one document. */
+  @page { size: A4 portrait; margin: 12mm; }
+  @page dn-landscape { size: A4 landscape; margin: 12mm; }
+  .dn-doc--table { page: dn-landscape; }
+
+  /* The accent header and the Balance Due band are information, not
+     decoration - without this most browsers drop both to white. */
+  html, body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .dn-toolbar { display: none !important; }
+
+  .dn-doc {
+    width: auto; margin: 0; padding: 0;
+    box-shadow: none; background: #fff;
+    page-break-after: always;
+  }
+  .dn-doc:last-of-type { page-break-after: auto; }
+
+  /* The list is one continuous table - it must never break per order. */
+  .dn-doc--table { width: auto; page-break-after: auto; }
+  .dn-list thead { display: table-header-group; }
+  .dn-list tr { page-break-inside: avoid; }
+  .dn-list tfoot { display: table-footer-group; }
+
+  /* Header repeats when a long order runs onto a second sheet. */
+  .dn-items thead { display: table-header-group; }
+  .dn-items tr { page-break-inside: avoid; }
+  /* Money and who signed for it must never be split from each other. */
+  .dn-lower, .dn-totals, .dn-signs, .dn-notes, .dn-nav { page-break-inside: avoid; }
+}

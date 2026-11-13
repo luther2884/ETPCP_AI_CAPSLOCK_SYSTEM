@@ -1,0 +1,152 @@
+/* techworld-dashboard-bg.css — background layers + fixes
+   ------------------------------------------------------------------
+   Load AFTER techworld-dashboard.css (and after every other stylesheet
+   header.php pulls in). This sheet only does what the first one couldn't:
+   paint the animated background, and fix what the live page revealed.
+
+     <link rel="stylesheet" href="<same path>/techworld-dashboard-bg.css">
+
+   Nothing here needs markup changes.
+   ------------------------------------------------------------------ */
+
+/* ---- 1. The ground ----------------------------------------------------
+   The washed pink field in the current build is another sheet's body
+   background showing through the transparent wrappers. This replaces it
+   outright: dark radial base, fixed so it doesn't scroll away. */
+html body.tw-dash {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) var(--tw-bg, #060d18) !important;
+  background-attachment: fixed !important;
+  color: var(--twd-ink, #e8eef7) !important;
+  position: relative;
+}
+
+/* ---- 2. Grid + aurora -------------------------------------------------
+   Two fixed pseudo-layers on <body>, behind everything, click-through.
+   Layer A: the 120px grid, drifting diagonally.
+   Layer B: two blurred colour blooms, breathing on opposite cycles. */
+html body.tw-dash::before,
+html body.tw-dash::after {
+  content: "";
+  position: fixed;
+  inset: -20vh -20vw;
+  pointer-events: none;
+  z-index: 0;
+}
+html body.tw-dash::before {
+  background-image: linear-gradient(to right, rgba(120,170,230,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120,170,230,.055) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px;
+  animation: tw-dashGrid 26s linear infinite;
+}
+html body.tw-dash::after {
+  background-image: radial-gradient(38vw 38vw at 74% 8%, rgba(224,86,122,.20), transparent 62%),
+    radial-gradient(34vw 34vw at 8% 88%, rgba(56,189,248,.13), transparent 65%);
+  background-repeat: no-repeat;
+  filter: blur(30px);
+  animation: tw-dashAurora 24s ease-in-out infinite;
+}
+@keyframes tw-dashGrid {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 120px 120px, 120px 120px; }
+}
+@keyframes tw-dashAurora {
+  0%, 100% { transform: translate3d(-1.5%, -1%, 0) scale(1); }
+  50%      { transform: translate3d(2%, 1.5%, 0) scale(1.12); }
+}
+
+/* Everything real must sit above the two layers - but that lift is already
+   done, correctly, by customer-dark.css's `body > *:not(script):not(style)`
+   rule, which every customer page loads.
+   
+   This sheet used to repeat it as `html body.tw-dash > *...`. That selector
+   scores (0,1,4), which outranks the (0,1,0) class rules that pin the
+   floating cart button, the sidebar, its toggle and its backdrop to
+   `position: fixed`. Forcing those back to `position: relative` dropped them
+   into normal flow: the cart landed top-left at its place in the markup
+   instead of bottom-right, and the sidebar and backdrop became in-flow
+   blocks that pushed the page content down. The weaker copy in
+   customer-dark.css lifts the static children just the same and loses to the
+   fixed elements, which is the behaviour that was wanted. */
+html body.tw-dash .customer-sidebar { z-index: 3; }
+
+/* ---- 3. Content column ------------------------------------------------
+   Full-bleed content is why the cards feel stretched and the header
+   floats. Cap it and give the rail room. */
+html body.tw-dash .dashboard-main {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px clamp(18px, 4vw, 48px) 90px !important;
+}
+
+/* ---- 4. The clipped ₱426,403.04 --------------------------------------
+   The value was sized for a short number and the flex row wouldn't let
+   the card give it room. Fluid size + a shrinkable track fixes it. */
+html body.tw-dash .stat-card { min-width: 0; overflow: visible; }
+html body.tw-dash .stat-info { min-width: 0; flex: 1 1 auto; }
+html body.tw-dash .stat-value {
+  font-size: clamp(19px, 1.75vw, 28px) !important;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+html body.tw-dash .stat-label { font-size: 9px !important; letter-spacing: .18em; }
+/* icon tile: keep it, but it must not steal width from the number */
+html body.tw-dash .stat-icon { flex: 0 0 34px; width: 34px; height: 34px; }
+
+/* ---- 5. Contrast repairs the screenshot showed ------------------------ */
+/* "View All" was pink-on-pink at ~1.4:1 — unreadable. */
+html body.tw-dash .section-header a,
+html body.tw-dash .view-all {
+  color: var(--tw-pink-lt, #ff9ab5) !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  opacity: 1 !important;
+}
+html body.tw-dash .section-header a:hover,
+html body.tw-dash .view-all:hover { color: var(--tw-cyan, #67e8f9) !important; }
+
+/* section headings were nearly invisible against the panel */
+html body.tw-dash .section-header h2,
+html body.tw-dash .dashboard-main h2 {
+  color: var(--tw-ink-mute, #9db1cb) !important;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
+  font-weight: 400; margin: 34px 0 14px;
+}
+
+/* the subline under the welcome */
+html body.tw-dash .dashboard-main > p,
+html body.tw-dash .welcome-sub { color: var(--tw-ink-dim, #a9bcd4) !important; font-size: 15px; }
+
+/* ---- 6. Panels need a floor under them --------------------------------
+   With the ground dark, the panels needed to be opaque enough to separate
+   from the aurora. They are warm vanilla now, the same card treatment the
+   profile page uses - opaque by definition, so no backdrop blur is needed. */
+html body.tw-dash .stat-card,
+html body.tw-dash .action-card,
+html body.tw-dash .orders-table,
+html body.tw-dash .empty-state,
+html body.tw-dash .notification-item {
+  background: var(--twd-cream, #fff4ef) !important;
+  border: 1px solid rgba(var(--twd-blue-rgb, 23, 72, 113),.14) !important;
+  box-shadow: 0 18px 40px rgba(var(--twd-shadow-rgb, 3, 8, 16),.45), inset 0 1px 0 rgba(var(--twd-hilite-rgb, 255, 255, 255),.85) !important;
+}
+html body.tw-dash .orders-table table tbody tr:hover td { background: rgba(var(--twd-blue-rgb, 23, 72, 113),.04) !important; }
+html body.tw-dash .orders-table table td { color: var(--twd-ink-slate, #55677c) !important; }
+html body.tw-dash .orders-table table th { background: var(--twd-cream-2, #fae7dd) !important; color: var(--twd-ink-mute, #6b7c8f) !important; }
+
+/* ---- 7. Quick actions: icons were doing nothing at 18px in a corner --- */
+html body.tw-dash .action-card { display: flex; flex-direction: column; gap: 6px; padding: 16px !important; }
+html body.tw-dash .action-card svg,
+html body.tw-dash .action-card i { color: var(--twd-ink-mauve, #8c4f6e) !important; margin-bottom: 4px; }
+html body.tw-dash .action-card svg { width: 20px; height: 20px; }
+html body.tw-dash .action-card h3,
+html body.tw-dash .action-card .qa-title { font-size: 14px !important; font-weight: 700; color: var(--twd-ink-dark, #17324a) !important; margin: 0; }
+html body.tw-dash .action-card p { font-size: 12px !important; color: var(--twd-ink-slate, #55677c) !important; margin: 0; line-height: 1.4; }
+
+@media (prefers-reduced-motion: reduce) {
+  html body.tw-dash::before,
+  html body.tw-dash::after { animation: none; }
+}

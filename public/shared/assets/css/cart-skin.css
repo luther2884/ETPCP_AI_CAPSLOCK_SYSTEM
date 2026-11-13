@@ -1,0 +1,1078 @@
+/* ============================================================================
+   cart-skin.css — customer Shopping Cart, dark-glass pass
+   ----------------------------------------------------------------------------
+   Linked LAST on public/authenticated/customer/cart.php: after style.css,
+   customer-dark.css and the uicons sheets that includes/header.php pulls in,
+   and after that page's own <style> block — so it wins on source order
+   wherever specificity ties.
+
+   SCOPE: every rule is prefixed `body.ckx`. That class is new and is added to
+   the page's own <body> tag. Dropping it reverts the page exactly.
+
+   TOKENS: copied verbatim from public/shared/assets/css/techworld-anim.css
+   (section 1, `.tw-home`). No new hues.
+
+   PRESENTATION ONLY. No PHP, query, route or handler change. Several rules
+   exist specifically to avoid disturbing what the page's own JS reads — those
+   are marked `/* JS: … *​/` and must not be "tidied" without checking the
+   script at the bottom of cart.php.
+   ========================================================================= */
+
+body.ckx {
+  /* --- landing-page tokens, verbatim from techworld-anim.css -------------- */
+  --ck-ink: #e8eef7;
+  --ck-ink-dim: #a9bcd4;
+  --ck-ink-faint: #7f95b3;
+  --ck-ink-mute: #9db1cb;
+
+  --ck-pink: #e0567a;
+  --ck-pink-lt: #ff9ab5;
+  --ck-cyan: #67e8f9;
+  --ck-violet: #7f6ae0;
+  --ck-green-lt: #9df3d0;
+
+  --ck-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --ck-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+  --ck-ease: cubic-bezier(.2, .85, .2, 1);
+
+  /* --- the recipes this redesign was specified in ------------------------- */
+  --ck-panel: linear-gradient(180deg, rgba(20, 36, 60, .88), rgba(11, 22, 38, .94));
+  --ck-line: rgba(120, 170, 230, .16);
+  --ck-line-soft: rgba(120, 170, 230, .14);
+  --ck-line-hair: rgba(120, 170, 230, .07);
+  --ck-shadow: 0 18px 42px rgba(3, 8, 16, .45);
+  --ck-sunken: rgba(8, 16, 29, .55);
+
+  --ck-title: #f2f6fc;
+  --ck-body: #a9bcd4;
+  --ck-caption: #8fa6c4;
+  --ck-muted: #7f95b3;
+}
+
+/* ----------------------------------------------------------------------------
+   1. The ground
+   ------------------------------------------------------------------------- */
+/* !important: customer-dark.css paints this page's body for the light theme
+   and style.css animates it (bgDrift); both use !important. The site
+   background video that used to sit over this is suppressed in PHP - see the
+   $suppressSiteBgVideo note in cart.php; CSS cannot cover it, because a body
+   background paints at the canvas level behind negative z-index elements. */
+body.ckx {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) #060d18 !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  color: var(--ck-ink);
+  font-family: var(--ck-font);
+  animation: none !important;
+}
+
+body.ckx::before,
+body.ckx::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+/* 1a. 120px grid of two 1px lines, drifting 0 -> 120px, 26s linear. */
+body.ckx::before {
+  background-image:
+    linear-gradient(to right, rgba(120, 170, 230, .05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 170, 230, .05) 1px, transparent 1px);
+  background-size: 120px 120px;
+  animation: ck-grid 26s linear infinite;
+  will-change: background-position;
+}
+@keyframes ck-grid {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 120px, 0 120px; }
+}
+/* 1b. Two blurred blooms — pink upper right, cyan lower left. */
+body.ckx::after {
+  background-image:
+    radial-gradient(42vw 42vw at 82% 6%, rgba(224, 86, 122, .20), rgba(224, 86, 122, 0) 68%),
+    radial-gradient(38vw 38vw at 12% 88%, rgba(56, 189, 248, .13), rgba(56, 189, 248, 0) 68%);
+  background-repeat: no-repeat;
+  filter: blur(30px);
+  animation: ck-bloom 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes ck-bloom {
+  from { transform: scale(1); }
+  to   { transform: scale(1.12); }
+}
+
+/* The lift that puts body's children above these layers is NOT written here.
+   customer-dark.css already carries
+     body > *:not(script):not(style) { position: relative; z-index: 1 }
+   at (0,0,1), and that weakness is the point: it must lose to the (0,1,0)
+   class rules pinning .customer-sidebar, its backdrop, its toggle and the
+   floating cart button to `position: fixed`. A stronger copy here drops all
+   four into normal flow — the sidebar becomes an in-flow block that pushes the
+   page below the fold and the cart button jumps to the top-left. Only the
+   rail's z-index is restated, which changes no positioning. */
+body.ckx .customer-sidebar,
+body.ckx .customer-sidebar-backdrop,
+body.ckx .customer-menu-toggle { z-index: 3; }
+
+/* ----------------------------------------------------------------------------
+   2. Container. The single big white card (.cart-items) goes transparent —
+      the bundles become the cards.
+   ------------------------------------------------------------------------- */
+body.ckx .cart-page {
+  padding: 0 !important;
+  min-height: 0;              /* kills the tall empty block before the footer */
+  background: transparent !important;
+  overflow-x: clip;
+}
+body.ckx .cart-page > .container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px clamp(16px, 3.5vw, 44px) 80px;
+}
+body.ckx .cart-items,
+body.ckx .cart-summary,
+body.ckx .wishlist-panel {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+body.ckx *,
+body.ckx *::before,
+body.ckx *::after { box-sizing: border-box; }
+
+body.ckx {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 170, 230, .28) rgba(8, 16, 29, .6);
+}
+body.ckx ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.ckx ::-webkit-scrollbar-track { background: rgba(8, 16, 29, .6); }
+body.ckx ::-webkit-scrollbar-thumb { background: rgba(120, 170, 230, .28); border-radius: 999px; }
+body.ckx ::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, .42); }
+
+body.ckx :focus-visible {
+  outline: 2px solid rgba(103, 232, 249, .75);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------------------
+   3. Header
+   ------------------------------------------------------------------------- */
+body.ckx .cart-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  text-align: left !important;
+  margin: 0 0 20px !important;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(120, 170, 230, .12);
+}
+body.ckx .ck-head-main { flex: 1 1 420px; min-width: 0; }
+body.ckx .ck-eyebrow {
+  margin: 0 0 13px;
+  font-family: var(--ck-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ck-muted);
+}
+body.ckx .cart-header h1 {
+  margin: 0 !important;
+  font-family: var(--ck-font);
+  font-size: clamp(28px, 3.3vw, 44px);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+  color: var(--ck-ink) !important;
+}
+body.ckx .cart-header p {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 12px 0 0;
+  font-family: var(--ck-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ck-muted) !important;
+}
+body.ckx .cart-header p strong { color: inherit; font-weight: 700; }
+body.ckx .ck-meta-amt { color: var(--ck-pink-lt) !important; }
+body.ckx .ck-meta-link {
+  color: var(--ck-pink-lt) !important;
+  text-decoration: none;
+  transition: color .2s var(--ck-ease);
+}
+body.ckx .ck-meta-link:hover { color: var(--ck-cyan) !important; }
+
+body.ckx .ck-btn-ghost {
+  flex: none;
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: rgba(20, 36, 60, .7);
+  border: 1px solid rgba(120, 170, 230, .24);
+  color: #cfe0f5;
+  font-family: var(--ck-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .25s var(--ck-ease), transform .25s var(--ck-ease);
+}
+body.ckx .ck-btn-ghost:hover {
+  background: rgba(103, 232, 249, .12);
+  transform: translateY(-2px);
+}
+
+/* ----------------------------------------------------------------------------
+   4. Toolbar — the old .cart-items-header
+   ------------------------------------------------------------------------- */
+body.ckx .cart-items-header {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0 0 14px !important;
+  padding: 13px 16px !important;
+  border-radius: 16px;
+  background: rgba(20, 36, 60, .85);
+  border: 1px solid var(--ck-line-soft) !important;
+}
+/* "Items in your cart (N)" is now said by the header's meta line. */
+body.ckx .cart-items-header > h2 { display: none !important; }
+body.ckx .cart-items-actions {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: space-between;
+}
+body.ckx .ck-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+body.ckx .ck-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.ckx .select-all-label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 9px;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  font-family: var(--ck-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ck-ink-mute) !important;
+  cursor: pointer;
+}
+body.ckx .select-all-label input:checked + span { color: #fff !important; }
+body.ckx .ck-selnote {
+  font-family: var(--ck-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ck-muted);
+}
+
+/* Checkboxes — 17px, 5px radius, gradient when checked.
+   JS: both #selectAll and .select-item are read via .checked and written by
+   the page's own handlers. appearance:none changes only how they paint. */
+body.ckx .select-all-label input[type="checkbox"],
+body.ckx .item-select .select-item {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0;
+  border-radius: 5px;
+  background: rgba(8, 16, 29, .6);
+  border: 1px solid rgba(120, 170, 230, .4);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background .18s var(--ck-ease), border-color .18s var(--ck-ease);
+}
+body.ckx .select-all-label input[type="checkbox"]:checked,
+body.ckx .item-select .select-item:checked {
+  background: var(--tw-brand-grad);
+  border-color: transparent;
+}
+body.ckx .select-all-label input[type="checkbox"]:checked::after,
+body.ckx .item-select .select-item:checked::after {
+  content: "";
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+/* Wishlist + Clear Cart. Both keep their ids, onclick and data-fallback. */
+body.ckx .wishlist-toggle-btn,
+body.ckx .clear-cart-btn {
+  padding: 9px 13px !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+  font-family: var(--ck-mono);
+  font-size: 9.5px !important;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color .2s var(--ck-ease), border-color .2s var(--ck-ease), background .2s var(--ck-ease);
+}
+body.ckx .wishlist-toggle-btn {
+  background: var(--ck-sunken) !important;
+  border: 1px solid rgba(120, 170, 230, .2) !important;
+  color: var(--ck-ink-mute) !important;
+}
+body.ckx .wishlist-toggle-btn:hover,
+body.ckx .wishlist-toggle-btn.active {
+  color: #ffc2d3 !important;
+  border-color: rgba(224, 86, 122, .45) !important;
+}
+body.ckx .clear-cart-btn {
+  background: transparent !important;
+  border: 1px solid rgba(224, 86, 122, .32) !important;
+  color: #ffc2d3 !important;
+}
+body.ckx .clear-cart-btn:hover { background: rgba(224, 86, 122, .16) !important; }
+
+/* ----------------------------------------------------------------------------
+   5. Layout
+   ------------------------------------------------------------------------- */
+body.ckx .cart-layout {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 16px !important;
+  align-items: start;
+}
+/* auto-fit alone would give the summary an equal share; this keeps the list
+   the wider track while both still fit, and drops to one column below 1000px. */
+@media (min-width: 1001px) {
+  body.ckx .cart-layout { grid-template-columns: minmax(0, 1.85fr) minmax(330px, 1fr); }
+}
+@media (max-width: 1000px) {
+  body.ckx .cart-layout { grid-template-columns: minmax(0, 1fr); }
+  body.ckx .cart-summary { position: static !important; order: 0 !important; }
+}
+body.ckx .cart-summary {
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+  min-width: 0;
+}
+body.ckx .items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px !important;
+}
+
+/* ----------------------------------------------------------------------------
+   6. AI build bundles
+   ------------------------------------------------------------------------- */
+body.ckx .cart-bundle-group {
+  padding: 0 !important;
+  border: 1px solid rgba(127, 106, 224, .34) !important;
+  border-radius: 20px !important;
+  background: var(--ck-panel) !important;
+  box-shadow: var(--ck-shadow);
+  overflow: hidden;
+}
+body.ckx .cart-bundle-header {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 15px 17px;
+  background: linear-gradient(120deg, rgba(127, 106, 224, .18), rgba(224, 86, 122, .12));
+  border-bottom: 1px solid rgba(127, 106, 224, .26);
+  color: var(--ck-ink) !important;
+  font-size: inherit !important;
+  cursor: pointer;
+  user-select: none;
+}
+body.ckx .cart-bundle-title {
+  display: grid !important;
+  grid-template-columns: 30px auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 3px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+body.ckx .ck-bundle-icon {
+  grid-row: 1 / span 2;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(127, 106, 224, .24);
+  border: 1px solid rgba(127, 106, 224, .44);
+  color: #d8ccff;
+  font-size: 13px;
+}
+body.ckx .ck-bundle-pill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(127, 106, 224, .24);
+  border: 1px solid rgba(127, 106, 224, .5);
+  color: #e2d8ff;
+  font-family: var(--ck-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;          /* never break mid-phrase */
+  justify-self: start;
+}
+body.ckx .ck-bundle-name {
+  font-family: var(--ck-font);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+body.ckx .ck-bundle-sub {
+  grid-column: 2 / -1;
+  font-family: var(--ck-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #b8a9e8;
+}
+body.ckx .ck-bundle-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/* The chevron becomes a labelled button. The label is CSS-generated from the
+   group's own .expanded class, so the existing toggleBundleGroup(this) handler
+   on .cart-bundle-header is the only thing driving it — no new binding. */
+body.ckx .ck-bundle-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(8, 16, 29, .45);
+  border: 1px solid rgba(127, 106, 224, .3);
+  color: #d8ccff;
+  font-family: var(--ck-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+body.ckx .ck-bundle-toggle::after { content: "Expand"; }
+body.ckx .cart-bundle-group.expanded .ck-bundle-toggle::after { content: "Collapse"; }
+body.ckx .cart-bundle-chevron { font-size: 10px; transition: transform .2s var(--ck-ease); }
+
+body.ckx .cart-bundle-remove-btn {
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  border: 1px solid rgba(224, 86, 122, .35) !important;
+  color: #ffc2d3 !important;
+  font-family: var(--ck-mono);
+  font-size: 9px !important;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+body.ckx .cart-bundle-remove-btn:hover { background: rgba(224, 86, 122, .16) !important; }
+
+body.ckx .cart-bundle-items {
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+body.ckx .ck-bundle-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 17px;
+  border-top: 1px solid var(--ck-line-hair);
+  font-family: var(--ck-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ck-muted);
+}
+/* Left label is generated from the real collapse state. The selected-count
+   wording the brief asked for would need the page's selection JS, which is
+   out of scope here — see the report. */
+body.ckx .ck-bundle-state::after { content: "Collapsed · nothing shown"; }
+body.ckx .cart-bundle-group.expanded .ck-bundle-state::after { content: "All parts shown"; }
+/* JS: updateBundleGroupSubtotal() rewrites this element's whole textContent as
+   "N items · ₱X". It may live anywhere inside .cart-bundle-group — it is found
+   with groupEl.querySelector('.cart-bundle-count') — so moving it here is safe,
+   but its TEXT cannot be customised. */
+body.ckx .cart-bundle-count {
+  color: #e2d8ff !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------------------
+   7. Item rows — flex-wrap, never rigid columns
+   ------------------------------------------------------------------------- */
+body.ckx .cart-item {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px !important;
+  padding: 14px 17px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid var(--ck-line-hair) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: background .2s var(--ck-ease);
+}
+body.ckx .cart-bundle-items > .cart-item:first-child,
+body.ckx .items-list > .cart-item:first-child { border-top: 0 !important; }
+body.ckx .cart-item:hover { background: rgba(103, 232, 249, .045) !important; }
+body.ckx .cart-item.selected {
+  background: rgba(224, 86, 122, .06) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+/* Ungrouped rows sit on their own card, since they have no bundle around them. */
+body.ckx .items-list > .cart-item {
+  border-radius: 18px !important;
+  background: var(--ck-panel) !important;
+  border: 1px solid var(--ck-line) !important;
+  box-shadow: var(--ck-shadow) !important;
+}
+body.ckx .items-list > .cart-item:hover { border-color: rgba(103, 232, 249, .4) !important; }
+
+body.ckx .item-select { flex: none; display: flex; align-items: center; }
+
+/* Group 1: thumbnail + name + meta. flex:1 1 240px with min-width:0 is what
+   keeps product names from being squeezed into a ~100px column. */
+body.ckx .ck-item-main {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex: 1 1 240px;
+  min-width: 0;
+}
+body.ckx .cart-item .item-image {
+  flex: none;
+  width: 62px !important;
+  height: 62px !important;
+  border-radius: 12px !important;
+  background: rgba(8, 16, 29, .5) !important;
+  border: 1px solid var(--ck-line) !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+body.ckx .image-placeholder {
+  font-family: var(--ck-mono);
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--ck-muted);
+}
+body.ckx .cart-item .item-details {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+body.ckx .cart-item .item-name { margin: 0; }
+body.ckx .cart-item .item-name a {
+  font-family: var(--ck-font);
+  font-size: 13.5px !important;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ck-title) !important;
+  text-decoration: none;
+  margin: 0 !important;
+  display: block;
+  overflow-wrap: anywhere;
+}
+body.ckx .ck-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+/* JS: updateItemSubtotal() and updateCartDisplay() read this element's
+   textContent and strip everything but digits and dots to recover the unit
+   price. NOTHING containing a digit may be added inside it — the stock pill is
+   a SIBLING for exactly this reason. */
+body.ckx .cart-item .item-price {
+  margin: 0 !important;
+  font-family: var(--ck-mono);
+  font-size: 10px !important;
+  color: var(--ck-caption) !important;
+  white-space: nowrap;
+}
+
+/* Stock pill */
+body.ckx .ck-stock {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-family: var(--ck-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  white-space: nowrap;          /* never break mid-phrase */
+  background: rgba(52, 211, 153, .12);
+  border: 1px solid rgba(52, 211, 153, .32);
+  color: var(--ck-green-lt);
+}
+body.ckx .ck-stock.is-low {
+  background: rgba(251, 191, 36, .14);
+  border-color: rgba(251, 191, 36, .38);
+  color: #fcd34d;
+}
+
+/* Group 2: stepper + total + trash. Wraps under group 1 on narrow widths.
+   JS: this must stay .item-controls — the row's click-to-select handler
+   ignores clicks inside it (target.closest('.item-controls')). */
+body.ckx .cart-item .item-controls {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end;
+  gap: 12px !important;
+  min-width: 0 !important;
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+
+body.ckx .quantity-control {
+  display: flex !important;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 11px;
+  background: rgba(8, 16, 29, .6) !important;
+  border: 1px solid rgba(120, 170, 230, .2) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+body.ckx .qty-btn {
+  width: 30px !important;
+  height: 30px !important;
+  border: 0 !important;
+  border-radius: 8px;
+  background: transparent !important;
+  color: var(--ck-ink-mute) !important;
+  cursor: pointer;
+  transition: background .18s var(--ck-ease), color .18s var(--ck-ease);
+}
+body.ckx .qty-btn:hover:not(:disabled) {
+  background: rgba(103, 232, 249, .12) !important;
+  color: #fff !important;
+}
+/* JS: toggleQtyButtons() writes style.opacity inline on the plus button, which
+   an inline style always wins — so the disabled look is carried by colour,
+   not opacity. */
+body.ckx .qty-btn:disabled {
+  color: rgba(157, 177, 203, .35) !important;
+  cursor: not-allowed;
+  background: transparent !important;
+}
+body.ckx .qty-btn span { font-size: 15px !important; font-weight: 700; }
+body.ckx .qty-input {
+  width: auto !important;
+  min-width: 30px;
+  height: 30px !important;
+  padding: 0 4px;
+  border: 0 !important;
+  background: transparent !important;
+  text-align: center;
+  font-family: var(--ck-mono);
+  font-size: 12.5px !important;
+  font-weight: 700;
+  color: var(--ck-title) !important;
+  -moz-appearance: textfield;
+}
+body.ckx .qty-input::-webkit-outer-spin-button,
+body.ckx .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* JS: updateBundleGroupSubtotal() parses this element's textContent for the
+   line total — currency text only. */
+body.ckx .item-subtotal {
+  min-width: 0 !important;
+  font-family: var(--ck-mono);
+  font-size: 14px !important;
+  font-weight: 700;
+  color: var(--ck-pink-lt) !important;
+  text-align: right;
+  white-space: nowrap;
+}
+
+body.ckx .cart-item .remove-item-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0 !important;
+  border-radius: 10px;
+  background: rgba(8, 16, 29, .5) !important;
+  border: 1px solid rgba(120, 170, 230, .18) !important;
+  color: var(--ck-ink-mute) !important;
+  cursor: pointer;
+  transition: transform .2s var(--ck-ease), color .2s var(--ck-ease), border-color .2s var(--ck-ease);
+}
+body.ckx .cart-item .remove-item-btn:hover {
+  color: #ffc2d3 !important;
+  border-color: rgba(224, 86, 122, .5) !important;
+  transform: translateY(-2px);
+}
+
+/* ----------------------------------------------------------------------------
+   8. Order summary
+   ------------------------------------------------------------------------- */
+/* The panel the numbers sit on. --ck-panel is translucent (.88/.94), which
+   is right for the wide item cards but not here: the drifting grid and the
+   pink/cyan blooms in body::before/::after showed straight through the
+   summary column and washed out exactly the figures people read before
+   paying. This surface is the same hue family, just opaque and one step
+   lighter, so the text has a steady ground. --ck-know below shares it so the
+   two stacked cards in this column still match. */
+body.ckx .summary-card,
+body.ckx .ck-know {
+  background: linear-gradient(180deg, rgba(28, 48, 78, .97), rgba(16, 30, 50, .99)) !important;
+  border: 1px solid rgba(120, 170, 230, .28) !important;
+  box-shadow: 0 18px 42px rgba(3, 8, 16, .5), inset 0 1px 0 rgba(160, 200, 245, .09);
+}
+body.ckx .summary-card {
+  padding: 22px !important;
+  border-radius: 20px;
+}
+/* Was 9.5px/.2em in --ck-muted, which read as a faint hairline rather than
+   the card's title. Same mono-uppercase motif, legible weight. */
+body.ckx .summary-card h3 {
+  margin: 0 0 14px !important;
+  font-family: var(--ck-mono);
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ck-title) !important;
+}
+/* The scope note. Deliberately NOT .summary-line — see the JS note below.
+   This one is a sentence, not a label, so it drops the uppercase mono
+   treatment the short captions keep: two lines of tracked-out 9px caps is
+   the hardest thing on the page to read. */
+body.ckx .ck-scope {
+  padding: 11px 13px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: rgba(103, 232, 249, .1);
+  border: 1px solid rgba(103, 232, 249, .28);
+  font-family: var(--ck-font);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #bdf0fa;
+}
+/* JS: updateSummaryTotals() rewrites the label with
+   document.querySelector('.summary-line span') — the FIRST span of the FIRST
+   .summary-line in the document. The Subtotal row must therefore stay the
+   first .summary-line, and nothing above it may carry that class. */
+/* Label and amount both moved up a step and brightened: these rows were
+   12.5/13px in --ck-body (#a9bcd4) and --ck-ink, which is the same weight
+   the page uses for incidental captions. They are the figures the customer
+   is actually here to check, so they now read as primary text. */
+body.ckx .summary-line {
+  display: flex !important;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 12px !important;
+  color: var(--ck-ink-dim) !important;
+}
+body.ckx .summary-line > span:first-child {
+  font-family: var(--ck-font);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ck-ink-dim);
+  white-space: nowrap;          /* "Subtotal (7 items)" must not wrap */
+}
+body.ckx .summary-line > span:last-child {
+  font-family: var(--ck-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ck-title);
+  white-space: nowrap;
+  text-align: right;
+}
+/* "Shouldered by customer" is prose in the amount column - let it sit back
+   so it doesn't read as a figure, and let it wrap on a narrow rail. */
+body.ckx .summary-line > span:last-child:not([class]) {
+  font-family: var(--ck-font);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ck-caption);
+  white-space: normal;
+}
+body.ckx .summary-divider {
+  height: 1px !important;
+  background: rgba(120, 170, 230, .28) !important;
+  margin: 16px 0 !important;
+}
+body.ckx .summary-line.total-line { margin-bottom: 18px !important; }
+body.ckx .total-line > span:first-child {
+  font-family: var(--ck-font);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ck-title);
+}
+body.ckx .total-line > span:last-child {
+  font-family: var(--ck-mono);
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--ck-pink-lt);
+  letter-spacing: -.02em;
+}
+
+body.ckx .checkout-btn {
+  width: 100%;
+  padding: 16px !important;
+  border-radius: 14px !important;
+  background: var(--tw-brand-grad) !important;
+  border: 0 !important;
+  color: #fff !important;
+  font-family: var(--ck-mono);
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin-bottom: 0 !important;
+  transition: transform .2s var(--ck-ease), box-shadow .2s var(--ck-ease);
+}
+body.ckx .checkout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(224, 86, 122, .45);
+}
+body.ckx .checkout-btn i { font-size: 12px; }
+/* Also a sentence rather than a label - 8.5px tracked caps was effectively
+   decoration. Matches .ck-scope's treatment. */
+body.ckx .ck-cta-note {
+  margin: 12px 0 0;
+  font-family: var(--ck-font);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: center;
+  color: var(--ck-caption);
+}
+
+/* ----------------------------------------------------------------------------
+   9. Wishlist strip + "Good to know"
+   ------------------------------------------------------------------------- */
+body.ckx .ck-wishstrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 14px 17px;
+  border-radius: 16px;
+  background: rgba(8, 16, 29, .45);
+  border: 1px dashed rgba(120, 170, 230, .22);
+  font-family: var(--ck-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ck-caption);
+}
+body.ckx .ck-wishstrip a {
+  color: var(--ck-pink-lt);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .2s var(--ck-ease);
+}
+body.ckx .ck-wishstrip a:hover { color: var(--ck-cyan); }
+
+body.ckx .ck-know {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--ck-panel);
+  border: 1px solid var(--ck-line);
+  box-shadow: var(--ck-shadow);
+}
+body.ckx .ck-know-cap {
+  margin: 0 0 12px;
+  font-family: var(--ck-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ck-title);
+}
+body.ckx .ck-know ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+body.ckx .ck-know li {
+  position: relative;
+  padding-left: 16px;
+  font-family: var(--ck-font);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ck-ink-dim);
+}
+body.ckx .ck-know li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ck-green-lt);
+}
+
+/* ----------------------------------------------------------------------------
+   10. Wishlist panel + empty states, brought onto the same ground
+   ------------------------------------------------------------------------- */
+body.ckx .wishlist-section,
+body.ckx .empty-cart,
+body.ckx .cart-empty-instock-note {
+  background: var(--ck-panel) !important;
+  border: 1px solid var(--ck-line) !important;
+  box-shadow: var(--ck-shadow) !important;
+  border-radius: 20px !important;
+  color: var(--ck-body) !important;
+}
+body.ckx .empty-cart h2,
+body.ckx .wishlist-section-header h2 { color: var(--ck-title) !important; }
+body.ckx .empty-cart p,
+body.ckx .wishlist-section-header p,
+body.ckx .cart-empty-instock-note p { color: var(--ck-body) !important; }
+body.ckx .empty-cart-icon i { color: var(--ck-muted) !important; }
+body.ckx .empty-cart .btn-primary {
+  background: var(--tw-brand-grad) !important;
+  font-family: var(--ck-mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+body.ckx .wishlist-item {
+  background: var(--ck-sunken) !important;
+  border: 1px solid var(--ck-line-hair) !important;
+  box-shadow: none !important;
+  border-radius: 14px !important;
+}
+body.ckx .wishlist-item .item-name a { color: var(--ck-title) !important; }
+body.ckx .wishlist-item .item-price,
+body.ckx .item-desired-qty { color: var(--ck-caption) !important; }
+body.ckx .out-of-stock-badge { color: #ffc2d3 !important; }
+body.ckx .wishlist-hide-btn {
+  background: var(--ck-sunken) !important;
+  border: 1px solid rgba(120, 170, 230, .2) !important;
+  box-shadow: none !important;
+  color: var(--ck-ink-mute) !important;
+  border-radius: 10px !important;
+}
+/* The old bottom "Continue Shopping" — it moved into the header. */
+body.ckx .cart-items-footer { display: none !important; }
+
+/* ----------------------------------------------------------------------------
+   11. Footer — dark, not cream, and no mono leaking in
+   ------------------------------------------------------------------------- */
+body.ckx:has(.cart-page) .main-footer {
+  background: rgba(6, 13, 24, .85);
+  color: #8fa6c4;
+  border-top: 1px solid rgba(120, 170, 230, .16);
+  font-family: var(--ck-font);
+  --bg-secondary: rgba(6, 13, 24, .85);
+  --text-primary: #cfe0f5;
+  --text-secondary: #8fa6c4;
+  --text-muted: #7f95b3;
+  --border-color: rgba(120, 170, 230, .16);
+  --accent-cyan: #ff9ab5;
+}
+body.ckx:has(.cart-page) .footer-content { border-bottom-color: rgba(120, 170, 230, .16); }
+body.ckx:has(.cart-page) .footer-column h3 { color: #cfe0f5; }
+body.ckx:has(.cart-page) .footer-column p,
+body.ckx:has(.cart-page) .contact-list span { color: #8fa6c4; }
+body.ckx:has(.cart-page) .footer-column ul li a,
+body.ckx:has(.cart-page) .contact-list a.social-link {
+  color: #ff9ab5;
+  transition: color .18s var(--ck-ease);
+}
+body.ckx:has(.cart-page) .footer-column ul li a:hover,
+body.ckx:has(.cart-page) .contact-list a.social-link:hover { color: #67e8f9; }
+body.ckx:has(.cart-page) .footer-bottom p,
+body.ckx:has(.cart-page) .footer-bottom .footer-address,
+body.ckx:has(.cart-page) .made-with { color: #8fa6c4; }
+/* Their rule for these two sets the colour with !important, so this must. */
+body.ckx:has(.cart-page) .footer-bottom .contact-list i,
+body.ckx:has(.cart-page) .footer-column .contact-list i[style*="6b7280"] { color: #8fa6c4 !important; }
+body.ckx:has(.cart-page) .main-footer,
+body.ckx:has(.cart-page) .main-footer * { font-family: var(--ck-font); }
+
+/* ----------------------------------------------------------------------------
+   Z. Reduced motion
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  body.ckx::before,
+  body.ckx::after,
+  body.ckx .cart-item,
+  body.ckx .qty-btn,
+  body.ckx .remove-item-btn,
+  body.ckx .ck-btn-ghost,
+  body.ckx .checkout-btn,
+  body.ckx .cart-bundle-chevron {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  body.ckx .ck-btn-ghost:hover,
+  body.ckx .checkout-btn:hover,
+  body.ckx .cart-item .remove-item-btn:hover { transform: none; }
+}

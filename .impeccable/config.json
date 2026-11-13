@@ -1,0 +1,167 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "public/shared/style.css"
+        ],
+        "createdAt": "2026-08-19T01:20:00.373Z",
+        "reason": "Pre-existing intentional brand wordmark gradient on the site logo (.logo h2), not AI-generated decorative gradient text on a heading/metric; unrelated to the motion-token addition that triggered this scan"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "public/shared/style.css"
+        ],
+        "createdAt": "2026-08-19T01:22:53.536Z",
+        "reason": "Toast notification left-border is a functional severity/type color-code (info/success/error/warning via .toast-* modifier classes), not a decorative accent border on a content card - standard toast/snackbar convention, unrelated to the motion-token work that triggered this scan"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "public/shared/admin.css"
+        ],
+        "createdAt": "2026-08-21T12:58:36.282Z",
+        "reason": "notification-error/-success/-info alert banners use a 4px colored left border as the standard severity-indicator convention, not a decorative side-tab on a content card; contrast already verified in the adjacent comment"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "public/shared/admin.css"
+        ],
+        "createdAt": "2026-08-25T11:58:25.012Z",
+        "reason": "user confirmed: explicitly requested a smooth ~0.2s width/max-width transition for the sidebar collapse/hover-expand feature across multiple messages (\"Smooth width transition (~0.2s ease)\", \"labels slide/fade in\"); transform/opacity alone cannot reflow sidebar width + label reveal without distorting content, so width/max-width/padding transitions are the correct technique here, not an oversight"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "public/shared/style.css"
+        ],
+        "createdAt": "2026-08-25T19:12:19.050Z",
+        "reason": "Header .container padding-left must transition in sync with the sidebar's real width (68px collapsed -> 260px hover-expanded) so content genuinely reflows and clears the sidebar - same sanctioned exception already applied to admin.css's collapse/expand sidebar transitions this session. transform/opacity can't reserve real layout space, only fake a visual shift."
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "public/shared/css/customer-home.css"
+        ],
+        "createdAt": "2026-08-26T02:04:07.387Z",
+        "reason": "user confirmed: design brief explicitly requested 'a subtle pink/white gradient or white text with a very subtle pink glow' for the active category name label — scoped to this one small decorative badge, not body text/headings/metrics"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "public/shared/assets/css/techworld-anim.css"
+        ],
+        "createdAt": "2026-09-07T10:14:25.050Z",
+        "reason": "user confirmed: redesign brief explicitly specifies 'a faint 120px grid of crossing 1px lines that pans diagonally on a 26s linear loop' as the animated background for the gaming-rig landing page"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "public/shared/css/customer-dark.css"
+        ],
+        "createdAt": "2026-09-09T14:50:20.095Z",
+        "reason": "user confirmed: asked for the customer pages' background to be 'same as the background of the homepage and login page'. The landing ground already layers this exact grid via .tw-bg-grid in techworld-anim.css (120px cell, same opacity and pan); this is a port of it so the pages match, not a new decorative field."
+      },
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-09-10T17:12:04.138Z",
+        "reason": "User specified it: their template_spec sets page.font_family to 'Arial, Helvetica, sans-serif'. It is also the right call for the domain - delivery-note.css is print-only, and a core system font is guaranteed present on every printer and PDF engine, where a webfont would silently substitute."
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "public/shared/assets/css/ai-builder-skin.css"
+        ],
+        "createdAt": "2026-09-12T11:20:52.089Z",
+        "reason": "user confirmed: both redesign briefs specified this layer verbatim -- '::before = 120x120px grid from two 1px linear-gradients in rgba(120,170,230,.05), drifting 0 -> 120px over 26s linear infinite'. It is the established house ambient layer, already shipped in techworld-anim.css sec.3a on the landing pages and techworld-dashboard-bg.css sec.2."
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "public/shared/css/techworld-dashboard-glass.css"
+        ],
+        "createdAt": "2026-09-12T11:20:59.737Z",
+        "reason": "user confirmed: the dashboard brief specified this layer verbatim -- '::before = 120x120px grid from two 1px linear-gradients in rgba(120,170,230,.05), drifting 0 -> 120px over 26s linear infinite'. Matches the existing techworld-dashboard-bg.css sec.2 layer it supersedes."
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "public/shared/assets/css/notifications-skin.css"
+        ],
+        "createdAt": "2026-09-12T11:39:20.227Z",
+        "reason": "user confirmed: the notifications brief specified this layer verbatim, and the user then asked explicitly for 'the same background of the homepage'. The rule is ported verbatim from techworld-anim.css sec.3a, which ships on both landing pages. Third file in this session with the same sanctioned exception (see ai-builder-skin.css, techworld-dashboard-glass.css)."
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "linear-gradient(to right, rgba(120, 170, 230, .05) 1px, transparent 1px)",
+        "createdAt": "2026-09-23T13:16:26.669Z"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "linear-gradient(to right, rgba(20, 50, 95, .045) 1px, transparent 1px)",
+        "createdAt": "2026-09-23T13:16:26.774Z"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "public/shared/css/th-hero-anim.css"
+        ],
+        "createdAt": "2026-09-24T01:57:06.619Z",
+        "reason": "th-accent-line (NEXT RIG headline) is the landing page's deliberate pink-to-cyan brand gradient, matching tw-hours and other bento gradient text already shipped; not touched by this session's edit"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "public/shared/css/th-hero-anim.css"
+        ],
+        "createdAt": "2026-09-24T01:57:06.737Z",
+        "reason": "th-hero-media-glow::before/::after are decorative content:'' pseudo-elements (orbit rings), not <img> tags; hook mis-triggered on the comment's literal <img> mention. Not touched by this session's edit"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "public/shared/css/customer-dark.css"
+        ],
+        "createdAt": "2026-09-24T02:23:53.351Z",
+        "reason": "cx-title em is the same deliberate pink-to-cyan accent-word gradient used sitewide (landing hero, bento stats); pre-existing, unrelated to this session's checkbox/font edit"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "public/shared/css/theme-light.css"
+        ],
+        "createdAt": "2026-09-24T02:37:16.036Z"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "public/shared/css/theme-light.css"
+        ],
+        "createdAt": "2026-09-24T02:59:09.596Z",
+        "reason": "Light-mode counterpart of the sitewide pink-to-cyan accent-word gradient that is already sanctioned in customer-home.css, th-hero-anim.css and customer-dark.css. Not introduced here: .ord-head h1 em and .ord-stat--spend b have carried linear-gradient(100deg,#ff9ab5,#67e8f9) in orders.php since the page was built, and dark mode keeps it. This file only re-values the stops to #c23a63 -> #a8355f -> #4a7fa8 so the fill is legible on white (the dark stops measured ~2:1); removing the gradient would diverge light from dark and revert the user's explicit request this turn. Same stops as the Next Rig headline in sec. 8d."
+      }
+    ]
+  }
+}

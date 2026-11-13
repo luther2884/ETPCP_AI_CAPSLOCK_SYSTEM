@@ -1,0 +1,695 @@
+/* th-hero-anim.css — additive motion layer for the .th-* hero.
+   Loaded AFTER customer-home.css on the guest + customer homepages, so the
+   few rules here that override that file (the headline entrance) win on
+   source order at equal specificity.
+
+   Everything is additive: no layout, spacing, color or type is changed. The
+   palette is customer-home.css's locked brand tokens (--th-mauve,
+   --th-mauve-tint, --th-red, --th-light) inherited from .th-home — no new
+   hues, per that file's header note. No fonts, no libraries, no JS.
+
+   Ported from the "landing page animation redesign" handoff, whose own
+   .tw-* stylesheet was written against a light-theme site with a pink/cyan
+   palette that this page is not. Only the four motion ideas that page
+   didn't already have were taken:
+     1. word-by-word headline reveal   (replaces the block fade-rise)
+     2. pulsing eyebrow dot
+     3. shine sweep across the primary CTA on hover
+     4. orbit rings + scan line on the product render
+   The handoff's grid/aurora background, drifting blobs, float, glow-pulse
+   and chip-float were dropped as duplicates — customer-home.css already
+   ships all five. */
+
+/* ---- 1. Headline: per-word reveal --------------------------------------
+   customer-home.css fades the whole <h1> up as one block via the
+   `.th-hero-copy > *` stagger. The two lines ("Build Your" / "Next PC")
+   are already separate <span>s, so they can carry the entrance instead:
+   each tips up from below on its own X axis, 120ms apart. The container
+   gives up its own animation so the words aren't double-animated. */
+.tw-home .th-hero-title {
+  opacity: 1;
+  transform: none;
+  animation: none;
+  perspective: 800px;
+  /* Type scale matched to the approved design's headline (handoff .tw-h1:
+     clamp(44px, 6.4vw, 92px) / .94 / -.03em). customer-home.css sizes this
+     at clamp(34px, 4.8vw, 58px) with line-height 1.05 and no tracking, which
+     renders ~59% smaller at 1440px. Set here rather than there so it stays
+     scoped to the two .tw-home landing pages - .th-hero-title is used on no
+     others - and outranks the base rule on specificity. */
+  font-size: clamp(44px, 6.4vw, 92px);
+  line-height: .94;
+  letter-spacing: -.03em;
+}
+/* Below 687px the clamp floors at 44px and stops scaling, so the narrowest
+   phones have the least slack. .th-display puts this headline in UPPERCASE
+   Archivo Black, whose caps run ~0.62em per glyph - much wider than the
+   mixed-case figure a first pass suggests - so "BUILD YOUR" needs ~273px at
+   44px against a 232px lane at 320px. Each headline line is its own
+   display:block span, so the failure mode is one line wrapping into itself.
+   A flat step-down still overflows at the low end (38px is still ~236px), so
+   this scales with the viewport instead of sitting fixed. */
+@media (max-width: 400px) {
+  .tw-home .th-hero-title { font-size: clamp(28px, 10.5vw, 38px); }
+}
+.tw-home .th-hero-title > span {
+  opacity: 0;
+  transform: translateY(26px) rotateX(-38deg);
+  transform-origin: 50% 100%;
+  animation: thx-word 640ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  will-change: transform, opacity;
+}
+.tw-home .th-hero-title > span:nth-child(1) { animation-delay: 120ms; }
+.tw-home .th-hero-title > span:nth-child(2) { animation-delay: 240ms; }
+@keyframes thx-word {
+  to { opacity: 1; transform: translateY(0) rotateX(0); }
+}
+
+/* Terminal-style caret trailing the accent line. Inline-block so it sits on
+   the text baseline rather than inheriting the parent span's display:block.
+   Fades in only once the second word has landed. */
+.tw-home .th-hero-title .thx-caret {
+  display: inline-block;
+  width: 3px;
+  height: 0.82em;
+  margin-left: 10px;
+  vertical-align: -0.06em;
+  border-radius: 2px;
+  background: var(--tw-cyan);
+  opacity: 0;
+  animation: thx-caret-in 1ms linear 900ms forwards,
+             thx-blink 1.15s steps(1, end) 900ms infinite;
+}
+@keyframes thx-caret-in { to { opacity: 1; } }
+@keyframes thx-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.15; } }
+
+/* ---- 2. Eyebrow dot: live pulse ----------------------------------------
+   The red dot before "Smart Technology, Smarter Choices" is already drawn
+   by .th-hero-label::before; this only adds an expanding ring to it, so it
+   reads as a live status indicator. Long cycle (2.6s) to stay ambient. */
+.tw-home .th-hero-label::before {
+  animation: thx-pulse 2.6s ease-out infinite;
+  animation-delay: 900ms;
+}
+@keyframes thx-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(230, 0, 38, 0.55); }
+  70%  { box-shadow: 0 0 0 11px rgba(230, 0, 38, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(230, 0, 38, 0); }
+}
+
+/* ---- 3. Primary CTA: shine sweep ---------------------------------------
+   A single specular pass across the button on hover. Hover-only and
+   non-repeating on purpose — the handoff ran it on a loop, which pulls the
+   eye continuously and competes with the hero render for attention.
+   .th-btn-primary uses neither pseudo-element in customer-home.css. */
+.tw-home .th-btn-primary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.tw-home .th-btn-primary::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: 0;
+  width: 42%;
+  height: 220%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(var(--tw-veil-rgb, 255, 255, 255), 0.32) 50%,
+    transparent 100%
+  );
+  transform: translateX(-180%) skewX(-18deg);
+}
+.tw-home .th-btn-primary:hover::after {
+  animation: thx-shine 720ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes thx-shine {
+  to { transform: translateX(340%) skewX(-18deg); }
+}
+
+/* ---- 4a. Product render: orbit rings ------------------------------------
+   Hung off .th-hero-media-glow rather than added as new elements: that glow
+   is absolutely positioned with no offsets (it sits at its static position
+   inside the flex row), so anything positioned against it tracks the render
+   automatically instead of needing coordinates that would drift at other
+   breakpoints. Both pseudos on it were unused.
+   Counter-rotating, near-transparent, and behind the image (the glow is
+   z-index 0, the <img> is 1). */
+.tw-home .th-hero-media-glow::before,
+.tw-home .th-hero-media-glow::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.tw-home .th-hero-media-glow::before {
+  inset: -26px;
+  border: 1px dashed rgba(242, 242, 243, 0.16);
+  animation: thx-spin 46s linear infinite;
+}
+.tw-home .th-hero-media-glow::after {
+  inset: 16px;
+  border: 1px solid rgba(179, 123, 152, 0.22);
+  animation: thx-spin-rev 34s linear infinite;
+}
+@keyframes thx-spin     { to { transform: rotate(360deg); } }
+@keyframes thx-spin-rev { to { transform: rotate(-360deg); } }
+
+/* ---- 4b. Product render: travelling iridescent bloom --------------------
+   Two earlier versions of this read as a straight edge crossing the product:
+   first a hard 2px bar, then a soft horizontal band. Both moved top to bottom
+   in a straight line, which is what made them read as a scanner rather than
+   as light.
+
+   This has no straight edge and no vertical path. Two background layers move
+   together across the diagonal: a soft radial bloom, and an angled
+   iridescent streak at 115deg that is far wider than the render so only a
+   slice of it is ever visible. They travel at different rates, so the
+   highlight shifts colour as it crosses instead of sliding rigidly.
+
+   Blended in screen so it adds light rather than painting over the product,
+   and blurred so neither layer resolves into a defined shape. Sized in
+   percentages of its own box, so it tracks whatever size the render is.
+
+   Still constrained to the image lane (.th-hero-media anchors the img at
+   flex-start) so it never crosses the floating price chips on the right. */
+.tw-home .thx-scan {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 500px;
+  max-width: 100%;
+  pointer-events: none;
+  background-image:
+    radial-gradient(42% 32% at 50% 50%,
+      rgba(var(--tw-veil-rgb, 255, 255, 255), 0.22),
+      rgba(var(--tw-cyan-rgb, 103, 232, 249), 0.16) 42%,
+      rgba(var(--tw-pink-rgb, 224, 86, 122), 0.10) 66%,
+      transparent 78%),
+    linear-gradient(115deg,
+      transparent 42%,
+      rgba(var(--tw-pink-rgb, 224, 86, 122), 0.14) 47%,
+      rgba(var(--tw-veil-rgb, 255, 255, 255), 0.20) 50%,
+      rgba(var(--tw-cyan-rgb, 103, 232, 249), 0.16) 53%,
+      transparent 60%);
+  background-repeat: no-repeat, no-repeat;
+  background-size: 150% 120%, 260% 260%;
+  background-position: -50% -40%, -70% -10%;
+  mix-blend-mode: screen;
+  filter: blur(9px);
+  opacity: 0;
+  animation: thx-shimmer 9s cubic-bezier(.4, 0, .2, 1) 1.2s infinite;
+}
+@keyframes thx-shimmer {
+  0%        { background-position: -50% -40%, -70% -10%; opacity: 0; }
+  14%       { opacity: 1; }
+  55%       { background-position: 125% 105%, 150% 60%;  opacity: 1; }
+  72%, 100% { background-position: 165% 140%, 200% 90%;  opacity: 0; }
+}
+
+
+/* ---- 6. Accent line: gradient text fill ---------------------------------
+   The design fills "Next PC" with a pink-to-cyan sweep rather than the
+   flat --th-mauve-tint customer-home.css gives it. Hues are this page's
+   own dark-theme tokens (--tw-pink-lt / --tw-pink / --tw-cyan from
+   techworld-anim.css's .tw-home block), so no new colors enter the page.
+
+   color: is a real fallback, not decoration - a browser without
+   background-clip:text would otherwise render the line invisible once
+   -webkit-text-fill-color:transparent applies. Same pattern customer-
+   home.css already uses for the active carousel label.
+
+   width: fit-content matters: customer-home.css sets
+   .th-hero-title span { display: block }, so without it the background
+   box spans the full column and only the leftmost sliver of the gradient
+   lands on the glyphs. Shrinking the box to the text maps the full sweep
+   across the words. Layout is unchanged - the box only narrows. */
+.tw-home .th-hero-title .th-accent-line {
+  color: var(--tw-pink-lt);
+  background-image: linear-gradient(
+    96deg,
+    var(--tw-pink-lt) 0%,
+    var(--tw-pink) 44%,
+    var(--tw-cyan) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  width: fit-content;
+}
+
+/* ---- 7. Eyebrow: pill ---------------------------------------------------
+   customer-home.css styles .th-hero-label as bare uppercase text with a
+   red ::before dot. The design wraps it in an outlined pill. The dot is a
+   pseudo-element of this same box, so it sits inside the padding with no
+   markup change; the asymmetric left padding accounts for the dot's own
+   8px margin-right, keeping the text optically centered in the pill. */
+.tw-home .th-hero-label {
+  border: 1px solid rgba(var(--tw-pink-rgb, 224, 86, 122), 0.32);
+  border-radius: 999px;
+  padding: 7px 15px 7px 12px;
+}
+/* ---- 5. Reduced motion --------------------------------------------------
+   Mirrors the guard customer-home.css applies to its own hero rules: all
+   entrances resolve to their final state, all ambient loops stop, and the
+   two purely decorative additions (rings, scan line) are removed outright
+   rather than frozen mid-sweep. */
+
+/* ---- 8. Hero stats row --------------------------------------------------
+   Three proof points under the CTAs. Numbers carry the weight; labels are
+   mono/uppercase so they read as metadata rather than copy, matching
+   .tw-eyebrow's treatment in techworld-anim.css. Wraps rather than shrinks
+   on narrow viewports so the figures never get cramped. */
+.tw-home .thx-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 34px;
+}
+.tw-home .thx-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tw-home .thx-stat-num {
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--tw-ink);
+  letter-spacing: -0.01em;
+}
+.tw-home .thx-stat-label {
+  font-family: var(--tw-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+
+/* ---- 9. Brand marquee ---------------------------------------------------
+   Pure-CSS loop: the track holds the brand list twice and slides exactly
+   -50%, so the second copy lands where the first began and the seam is
+   invisible. Both copies must stay identical for that to hold - the
+   duplicate is aria-hidden so screen readers hear the list once.
+   The mask fades items at both edges instead of clipping them mid-glyph. */
+.tw-home .thx-marquee {
+  position: relative;
+  overflow: hidden;
+  /* Full hero width, centred: this block is a direct child of .th-hero, not of
+     the .th-hero-copy grid column, so it spans the whole section rather than
+     the ~52% copy lane. A hairline underneath separates it from the section
+     below, matching the approved design. */
+  margin: clamp(52px, 7.5vh, 82px) auto 0;
+  width: 100%;
+  padding-bottom: clamp(16px, 2.4vh, 24px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.tw-home .thx-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: thx-marquee 28s linear infinite;
+}
+.tw-home .thx-marquee-group {
+  display: flex;
+  /* Wider spacing now that the row runs the full width instead of one column. */
+  gap: clamp(44px, 5vw, 72px);
+  padding-right: clamp(44px, 5vw, 72px);
+  flex-shrink: 0;
+}
+.tw-home .thx-marquee-item {
+  font-family: var(--tw-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--tw-ink);
+  opacity: 0.38;
+}
+@keyframes thx-marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* ---- 10. Hero copy column ------------------------------------------------
+   .th-hero-copy is a 1.05fr grid item. A grid track's automatic minimum is
+   min-content, so the marquee's width:max-content track would widen the
+   column instead of being clipped by it. min-width:0 restores the intended
+   column width and lets overflow:hidden do its job.
+   The two new blocks also inherit customer-home.css's `.th-hero-copy > *`
+   entrance; these delays continue its existing stagger. */
+.tw-home .th-hero-copy { min-width: 0; }
+.tw-home .thx-stats { animation-delay: 420ms; }
+/* No delay for .thx-marquee: it is no longer a child of .th-hero-copy, so it
+   never receives that column's `> *` entrance animation in the first place. */
+@media (prefers-reduced-motion: reduce) {
+  .tw-home .th-hero-title > span,
+  .tw-home .th-hero-title .thx-caret,
+  .tw-home .th-hero-label::before,
+  .tw-home .th-btn-primary::after,
+  .tw-home .thx-marquee-track,
+  .tw-home .th-btn-primary:hover::after {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .tw-home .th-hero-media-glow::before,
+  .tw-home .th-hero-media-glow::after,
+  .tw-home .thx-scan {
+    display: none !important;
+  }
+}
+
+/* ---- 11. Page rhythm around the hero -------------------------------------
+   customer-home.css gives .th-hero `padding: 64px 40px` and `margin: 0 0 40px`.
+   Stacked with the next section's own 28px top margin that is ~132px of dead
+   space between the hero and the carousel, and 60px of horizontal inset per
+   side once .container's own 20px is counted - on the customer page that sits
+   on top of .tw-home's 92px sidebar rail as well.
+
+   Tightened here rather than in customer-home.css so the change stays scoped
+   to the two landing pages; every other page using .th-hero keeps its rhythm.
+   Gap to the carousel becomes 44 + 16 + 28 = 88px, and the content gains 32px
+   of usable width. */
+.tw-home .th-hero {
+  padding: 40px 24px 44px;
+  margin: 0 0 16px;
+}
+/* The 900px rule keeps a deeper bottom inset because .th-price-strip drops to
+   static there and sits below the render, so it needs the room the desktop
+   layout does not. */
+@media (max-width: 900px) {
+  .tw-home .th-hero { padding: 32px 16px 56px; }
+}
+
+/* The divider under the brand marquee. It was a border-bottom on .thx-marquee,
+   which can never carry the design's traveling light: a border has no inner
+   element to animate. It is now the ported .tw-hairline / .tw-hairline i pair
+   (with @keyframes tw-hairline), which were present in techworld-anim.css all
+   along but used only by the METRO DELIVERY bento cell.
+
+   The sweep colour is overridden here. The shared rule fades cyan, which
+   is what handoff ships and what the bento cell keeps; this one runs pink into
+   near-white to match the brief for this divider.
+
+   No box-shadow: the parent .tw-hairline clips its content (overflow:hidden,
+   overflow:clip with a 14px margin), and the glow's blur radius is larger
+   than that margin. Since the sweep enters from translateX(-100%) - fully
+   off the left edge - the glow got hard-clipped by that boundary every pass,
+   showing as a flat rectangular "cut" in the light instead of a soft fade. */
+.tw-home .th-hero > .thx-hero-rule {
+  margin-top: clamp(16px, 2.4vh, 24px);
+}
+.tw-home .thx-hero-rule i {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--tw-pink-rgb, 224, 86, 122), .95) 45%,
+    rgba(255, 235, 243, .95) 55%,
+    transparent
+  );
+}
+
+/* ---- Brand mark, relocated into the hero ---------------------------------
+   .th-cat-brand keeps the justify-content:center it was built with for the
+   category panel. The selector had to follow the markup out of the grid: it
+   was .th-hero-copy .th-cat-brand, which centred the mark over the copy
+   column only, because .th-hero-inner is a two-column grid and .th-hero-copy
+   is just its left track. As a direct child of .th-hero it centres against
+   the full section width instead.
+
+   .th-cat-brand-name reads its colour from var(--th-light), one of the tokens
+   declared only on the dead .th-home class, so it resolves to nothing and the
+   name just inherits whatever colour it lands in. Given an explicit value
+   here so it does not depend on that. */
+.tw-home .th-hero > .th-cat-brand {
+  justify-content: center;
+  margin-bottom: 18px;
+}
+.tw-home .th-hero > .th-cat-brand .th-cat-brand-name { color: var(--tw-ink, #e8eef7); }
+
+/* ---- Hero typography, CTA and render size --------------------------------
+   Fonts. All three faces are already loaded by both pages' Google Fonts link
+   (Figtree 400-900, JetBrains Mono 400-700), so nothing new is fetched.
+
+   The headline was 'Archivo Black' via .th-display, which also applies
+   text-transform:uppercase - that is left in place, only the family changes.
+   Figtree's caps are narrower than Archivo Black's, so the small-screen
+   overflow guard added in 61d82bf gains headroom rather than losing it. */
+.tw-home .th-hero-title {
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Nothing had ever set a weight here: the headline got its heft from
+     'Archivo Black', which only ships a black face. Swapping the family to
+     Figtree therefore dropped it to the browser's default h1 weight of 700 -
+     lighter than before. 900 is stated explicitly so the weight no longer
+     depends on which family happens to be applied, and it is one of the
+     Figtree weights both pages already load. */
+  font-weight: 900;
+}
+.tw-home .th-hero-label {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+  /* customer-home.css sets this to 700. 400 is the lightest JetBrains Mono
+     face both pages load (the link requests 400;500;600;700), so asking for
+     anything below it would just be synthesised or snapped back up. */
+  font-weight: 400;
+}
+.tw-home .th-hero-sub {
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Primary CTA, on the site's standard gradient: 120deg from --tw-pink into
+   --tw-violet with a white label. That is what .tw-btn-addall (the AI band's
+   CTA), .tw-btn-buy (BUY NOW on the product cards), .auth-btn (the login
+   modal) and .aib-btn-primary (the AI Builder's submit) all use, so this
+   button now matches every other primary action on the site.
+
+   There is no darker pink token to pair with --tw-pink: the palette holds
+   --tw-pink-lt and --tw-pink-pale, both lighter. --tw-violet is the magenta
+   end every other CTA reaches for, so it is used here too.
+
+   .th-btn-primary's own rule is `background: var(--th-mauve)`, a token
+   declared only on the dead .th-home class, so it resolved to nothing and the
+   button rendered unstyled - the "dim grey" look this override exists to
+   fix. */
+.tw-home .th-btn-primary {
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-magenta));
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(var(--tw-violet-rgb, 127, 106, 224), 0.38);
+}
+.tw-home .th-btn-primary:hover {
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-magenta));
+  color: #fff;
+  box-shadow: 0 18px 40px rgba(var(--tw-violet-rgb, 127, 106, 224), 0.5);
+}
+
+/* The price chips lost their thumbnail, so the 8px left padding that made
+   room for it is no longer needed - it now matches the right side. */
+.tw-home .th-price-chip { padding: 8px 14px; }
+
+/* Larger hero render. The glow behind it is sized in fixed px rather than
+   relative to the image, so it has to grow in step or it stops reading as a
+   halo around the product and starts reading as a disc behind one corner. */
+.tw-home .th-hero-media img { width: 500px; }
+.tw-home .th-hero-media-glow { width: 520px; height: 520px; }
+@media (max-width: 900px) {
+  .tw-home .th-hero-media img { width: min(420px, 86vw); }
+  .tw-home .th-hero-media-glow { width: 440px; height: 440px; }
+}
+
+/* ---- Hero: tighter vertical rhythm + the eyebrow dot ---------------------
+   The four gaps down the copy column started at 16 / 18 / 30 / 34px, were cut
+   to 10 / 12 / 18 / 20, and now sit between the two: enough air to separate
+   the blocks without the loose feel of the originals. Kept in proportion, so
+   the subtext-to-CTA and CTA-to-stats breaks stay the larger ones.
+
+   The last value is a different rule: the space between each stat's figure
+   and its label is .thx-stat's own column gap, not a margin in this chain. */
+.tw-home .th-hero-label { margin-bottom: 26px; }
+.tw-home .th-hero-title { margin-bottom: 26px; }
+.tw-home .th-hero-sub { margin-bottom: 40px; }
+.tw-home .thx-stats { margin-top: 40px; }
+.tw-home .thx-stat { gap: 8px; }
+
+/* The caret is a drawn bar, not glyph text, so "bold" is its width rather
+   than a font-weight - 3px looked hairline beside a 900-weight headline.
+   Widened to 5px with the corner radius taken up in step so it stays a
+   rounded bar rather than turning into a rectangle. */
+.tw-home .th-hero-title .thx-caret {
+  width: 5px;
+  border-radius: 3px;
+  /* The caret is an inline-block child of .th-accent-line, which paints its
+     gradient with background-clip:text and -webkit-text-fill-color:transparent.
+     A non-text child inside that context can pick up a sliver of the parent's
+     clipped gradient along its box edge, which shows as a thin line just left
+     of the bar. These opt the caret out of the inherited text-fill and clip it
+     to its own box, so only its own cyan fill paints. */
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  text-indent: 0;
+  overflow: hidden;
+}
+
+/* The dot before the eyebrow text was never missing: customer-home.css:159
+   already draws .th-hero-label::before as an 8px circle. It painted nothing
+   because its fill is var(--th-red), a token declared only on the dead
+   .th-home class, so the declaration was invalid at computed-value time and
+   background fell back to transparent. Same root cause as the caret, the
+   footer, the active tile border and the brand wordmark. A live colour is
+   given here; the pseudo-element itself is untouched. */
+.tw-home .th-hero-label::before { background: var(--tw-pink, #e0567a); }
+
+/* ---- Hero render: depth pass --------------------------------------------
+   Three layers, all on pseudo-elements that were free, so no markup changes.
+   Each is anchored to the 500px image lane rather than the media column,
+   because .th-hero-media is a flex box that anchors the img at flex-start -
+   centring against the column would park them to the right of the product.
+
+   1. A slowly turning conic aurora behind the render. Heavily blurred so it
+      reads as coloured light in the air rather than a visible ring, and it
+      turns 26s per revolution - slow enough to notice only if you look. */
+.tw-home .th-hero-media::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 560px;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    rgba(var(--tw-pink-rgb, 224, 86, 122), 0.30),
+    rgba(var(--tw-violet-rgb, 127, 106, 224), 0.20),
+    rgba(var(--tw-cyan-rgb, 103, 232, 249), 0.28),
+    rgba(var(--tw-pink-rgb, 224, 86, 122), 0.30)
+  );
+  filter: blur(46px);
+  opacity: 0.5;
+  animation: thx-aurora 26s linear infinite;
+}
+@keyframes thx-aurora {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* 2. A contact shadow on the ground. The product floats on th-float; without
+      something beneath it, it reads as pasted onto the background rather than
+      hovering above it. Timed to the same 6s cycle so the shadow tightens as
+      the product rises and spreads as it settles. */
+.tw-home .th-hero-media::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 4%;
+  width: 500px;
+  max-width: 100%;
+  height: 44px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(var(--tw-shadow-rgb, 0, 0, 0), 0.55), transparent 70%);
+  filter: blur(13px);
+  animation: thx-ground 6s ease-in-out infinite;
+}
+@keyframes thx-ground {
+  0%, 100% { transform: scaleX(1);    opacity: 0.55; }
+  50%      { transform: scaleX(0.88); opacity: 0.38; }
+}
+
+/* 3. Rim light on the product itself. The flat black drop-shadow is kept for
+      weight, with a pink and a cyan bloom added either side so the render
+      picks up the page's own two accent colours instead of sitting in a grey
+      shadow. drop-shadow follows the PNG's alpha, so these hug the silhouette
+      rather than boxing it. */
+.tw-home .th-hero-media img {
+  filter:
+    drop-shadow(0 26px 34px rgba(var(--tw-shadow-rgb, 0, 0, 0), 0.5))
+    drop-shadow(-14px 2px 26px rgba(var(--tw-pink-rgb, 224, 86, 122), 0.32))
+    drop-shadow(14px 2px 26px rgba(var(--tw-cyan-rgb, 103, 232, 249), 0.26));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-home .th-hero-media::before,
+  .tw-home .th-hero-media::after { animation: none !important; }
+}
+
+
+/* ---- 12. Hero on phones and tablets -------------------------------------
+   DESKTOP IS UNCHANGED. Everything here is inside the same max-width:900px
+   breakpoint customer-home.css already uses (its block at :342), which
+   stacks the hero into one column and sets text-align:center.
+
+   That block centres the title, sub, CTAs and stats correctly. Three things
+   it does not reach, measured at 360/390/430/768/900:
+
+     .th-accent-line   off centre by 72-291px
+     .th-hero-media img  off by 1-204px
+     .th-price-strip   off by 100-275px
+
+   All three for the same reason in two parts: the accent line is
+   width:fit-content (which is what maps the gradient across the glyphs
+   rather than the whole column) so it shrink-wraps and ignores text-align;
+   and .th-hero-media is a flex row anchored to flex-start, so the image and
+   the now-static price chips sit at its left edge instead of the middle.
+   ------------------------------------------------------------------------ */
+@media (max-width: 900px) {
+
+  /* fit-content boxes do not honour text-align - they need the auto margins. */
+  .tw-home .th-hero-title .th-accent-line {
+    margin-inline: auto;
+  }
+
+  /* The image and the price chips, stacked and centred under the copy.
+     The axis has to flip: the base rule is a row so the image can sit beside
+     the copy on desktop, and the price strip becomes a sibling in that row
+     once customer-home.css drops its absolute positioning at this width. */
+  .tw-home .th-hero-media {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tw-home .th-price-strip {
+    align-self: center;
+    align-items: center;
+  }
+
+  /* Scale with the viewport instead of the fixed 280px, so the shot is not
+     marooned in the middle of a wide tablet or cramped on a small phone. */
+  .tw-home .th-hero-media img {
+    width: min(360px, 72vw);
+  }
+
+  /* The eyebrow is a pill; centred text alone leaves the box full-width. */
+  .tw-home .th-hero-label {
+    margin-inline: auto;
+  }
+
+  /* flex-wrap left "48h" stranded alone on a second row. An even three-up
+     grid keeps the row balanced; the labels wrap to two lines on a narrow
+     phone, which reads as intentional where an orphan does not. */
+  .tw-home .thx-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px 10px;
+  }
+  .tw-home .thx-stat {
+    align-items: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  /* Keep the headline on two lines rather than three at the narrow end. */
+  .tw-home .th-hero-title { font-size: clamp(26px, 9.4vw, 34px); }
+}

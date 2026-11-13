@@ -1,0 +1,1424 @@
+/* ===========================================================================
+   tw-mobile.css - the customer side below 1100px.
+
+   LINKED FROM  authenticated/customer/includes/footer.php, which every
+                customer page includes exactly once and includes LAST. That
+                position is the point: several pages carry their own inline
+                <style> after the shared sheets, and this has to be able to
+                correct them without an arms race of !important.
+
+   SCOPE        Every rule in this file is inside a max-width media query.
+                Nothing here matches at 1100px and above, so the desktop
+                layout is not overridden, not re-specified - simply not
+                addressed. The four bands are:
+
+                  <= 479px   phone S
+                  480-767px  phone L
+                  768-1099px tablet (the icon rail is already the sidebar's
+                             own behaviour at this width)
+                  >= 1100px  desktop, untouched
+
+                Type and spacing are fluid between them with clamp(), grid
+                tracks are minmax(0, 1fr) so a long word cannot push a column
+                wider than its share, and nothing that holds text carries a
+                fixed width.
+
+   WHAT IS NOT HERE
+                The phone navigation - top bar, tab bar, menu sheet - lives in
+                customer/includes/mobile_nav.php next to the markup it styles.
+   ======================================================================== */
+
+
+/* ===========================================================================
+   1. SAFETY NET
+   The three rules that stop a single wide child turning into a horizontally
+   scrolling page. All three are written with :where(), which contributes zero
+   specificity, so any existing rule in any sheet still wins - this is a
+   floor, not an override. That matters for the last one in particular:
+   `img { height: auto }` would otherwise break every avatar and icon sized to
+   fill its box (`width:100%;height:100%;object-fit:cover`), because this
+   sheet loads after the ones that set them.
+   ======================================================================== */
+@media (max-width: 767.98px) {
+  html, body { overflow-x: clip; }
+
+  :where(img, video) { max-width: 100%; height: auto; }
+
+  /* min-width on a flex or grid child defaults to auto, meaning "never
+     narrower than my content" - which is how one long unbroken string
+     (an order number, an e-mail address, a 40-character product name)
+     widens its column, then its row, then the page. */
+  :where(body *) { min-width: 0; }
+
+  /* Long unbroken strings themselves. Scoped to the places they actually
+     occur rather than applied to everything, so ordinary prose keeps normal
+     word breaking. */
+  :where(.footer-address, .tw-sheet-name small, .order-id, code, .breadcrumb) {
+    overflow-wrap: anywhere;
+  }
+}
+
+
+/* ===========================================================================
+   2. SCROLL-TO-TOP BUTTON
+   shared/assets/js/main.js builds this element at runtime and writes its box
+   as an inline cssText - bottom:96px, right:25px, 50x50, z-index:1000. Inline
+   styles outrank any stylesheet, so the five properties that have to change
+   under 768px are the five marked !important here. Everything else about the
+   button (its gradient, its shadow, the display toggle the scroll handler
+   drives) is left to that script.
+   ======================================================================== */
+@media (max-width: 767.98px) {
+  .scroll-to-top {
+    /* Clear of the tab bar by the same 84px the page body is padded by, so
+       the button sits in the gap above it rather than on it. */
+    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+    right: 16px !important;
+    width: 44px !important;
+    height: 44px !important;
+    /* Below the tab bar (1400) and below both sheets (1500/1501), above the
+       page. It must never be the thing a thumb hits when it is aiming for a
+       tab. */
+    z-index: 1200 !important;
+    font-size: 18px !important;
+    opacity: 1;
+    transition: opacity 160ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-to-top { transition: none; }
+  }
+}
+
+/* Ducked by mobile_nav.php's scroll handler while there is text or a control
+   underneath it. The alternative the brief offers - a permanent 64px dead
+   lane down the right of the grid - costs a fifth of the width of a 360px
+   screen on every row to keep one button clear on a few.
+
+   Up to the tablet ceiling rather than the phone one: at 820px the button is
+   still in its original bottom-right corner, over the same cards. */
+@media (max-width: 1099.98px) {
+  .scroll-to-top { transition: opacity 160ms ease; }
+  .scroll-to-top.tw-fab-duck {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-to-top { transition: none; }
+  }
+}
+
+
+/* ===========================================================================
+   3. FOOTER (customer homepage; the only customer page that renders one)
+   ======================================================================== */
+
+/* Tablet: five columns of 250px minimum cannot fit, and auto-fit was leaving
+   a ragged last row. Two even columns instead. */
+@media (min-width: 768px) and (max-width: 1099.98px) {
+  .main-footer .footer-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(24px, 4vw, 40px);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .main-footer .footer-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 32px 0 24px;
+  }
+  .main-footer .footer-column { min-width: 0; }
+  .main-footer .footer-column h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .main-footer .footer-column p { font-size: 14px; }
+
+  /* 44px rows. The padding goes on the <a>/<li> rather than on a wrapper, so
+     the tap target is the link itself and not a transparent area beside it. */
+  .main-footer .footer-column ul li { margin-bottom: 0; }
+  .main-footer .footer-column ul li a,
+  .main-footer .contact-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    margin-bottom: 0;
+    font-size: 14px;
+  }
+  .main-footer .contact-list span { font-size: 14px; }
+
+  /* The address. It was a flex row with the marker and the text as siblings,
+     so the text was one unbreakable flex item that ran off the right edge and
+     under whatever was floating there. As a block with the icon inline it
+     wraps like any other paragraph. */
+  .main-footer .footer-address {
+    display: block;
+    margin: 0 0 14px;
+    /* Clear of the 44px button at right:16px, so a second line can never run
+       under it. */
+    padding-right: 64px;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+  .main-footer .footer-address i { margin-right: 6px; }
+
+  /* Copyright and the made-with line, centred, small, and above the tab bar -
+     the clearance itself comes from the body padding in mobile_nav.php. */
+  .main-footer .footer-bottom { padding: 20px 0 8px; }
+  .main-footer .footer-bottom-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+  .main-footer .footer-bottom p,
+  .main-footer .made-with { font-size: 12px; }
+}
+
+
+/* ===========================================================================
+   4. LANDING HERO (index.php)
+   ======================================================================== */
+@media (max-width: 767.98px) {
+
+  /* ---- Stats: one row of three, always ---------------------------------
+     This was a wrapping flex row with a 28px gap, so "Products in Stock"
+     took enough width to push the third stat onto a line of its own - the
+     2 + 1 in the screenshots. Three equal minmax(0, 1fr) tracks cannot do
+     that whatever the label says. */
+  .tw-home .thx-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: clamp(20px, 5vw, 32px);
+  }
+  .tw-home .thx-stat {
+    min-width: 0;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+  .tw-home .thx-stat-num {
+    font-size: clamp(20px, 6vw, 28px);
+    font-weight: 900;
+    line-height: 1.05;
+  }
+  .tw-home .thx-stat-label {
+    font-size: 9px;
+    line-height: 1.25;
+    letter-spacing: .1em;
+    /* Two lines is the budget: enough for "Metro Manila Delivery", not enough
+       for a label to grow the row out of proportion with the figures. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ---- CTAs: side by side if they fit, else stacked full width --------- */
+  .tw-home .th-hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .tw-home .th-hero-ctas .th-btn {
+    flex: 1 1 160px;          /* two per row while 160px each still fits */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 18px;
+    white-space: nowrap;
+  }
+
+  /* ---- Product callouts ------------------------------------------------
+     On desktop these are three glass pills floating over the render, pinned
+     with position:absolute and joined to it by a dot and a leader line. At
+     phone width there is nothing to the right of the image to float into, so
+     they were hanging off the edge of the screen (and, at the bottom of the
+     hero, under the tab bar).
+
+     Under 768px they come out of that layout entirely: a horizontal
+     scroll-snap row of cards sitting under the image, which is a shape a
+     thumb already knows. The connectors go with the floating - a leader line
+     pointing at nothing is just a stray mark. */
+  .tw-home .th-price-strip {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    /* As a flex item in the (centred) media column this sized itself to its
+       content - 742px of cards - so it never had an overflow to scroll and
+       simply ran off the edge, hidden by the safety net's overflow-x:clip.
+       Stretched to the column's width, it scrolls as intended. */
+    align-self: stretch;
+    width: 100%;
+    max-width: 100%;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 2px 0 6px;
+    overflow-x: auto;
+    /* proximity, not mandatory: a mandatory snap re-snaps the row whenever
+       anything re-measures it, which showed up as the row sitting on card two
+       rather than card one. Proximity still snaps a flick and leaves a
+       stationary row where it is. */
+    scroll-snap-type: x proximity;
+    scroll-padding-left: 16px;
+    scrollbar-width: none;
+  }
+  .tw-home .th-price-strip::-webkit-scrollbar { display: none; }
+
+  .tw-home .th-price-chip {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(230px, 70vw);
+    max-width: none;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: var(--tw-callout-bg, rgba(20, 36, 60, .9));
+    border: 1px solid var(--tw-callout-line, rgba(120, 170, 230, .16));
+    backdrop-filter: none;
+    animation: none;          /* the ambient bob reads as jitter in a scroller */
+    transform: none;
+  }
+  .tw-home .th-price-chip::before,
+  .tw-home .th-price-chip::after { display: none; }
+
+  .tw-home .th-price-chip .th-pc-thumb {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: #fff;
+    padding: 3px;
+  }
+  .tw-home .th-price-chip .th-pc-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--tw-callout-ink, #ffffff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tw-home .th-price-chip .th-pc-price {
+    flex: none;
+    margin-left: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--tw-callout-price, #ff9ab5);
+  }
+
+  /* ---- Marquee: clipped by the hero, never by the page ----------------- */
+  .tw-home .th-hero { overflow: hidden; }
+  .tw-home .thx-marquee { max-width: 100%; overflow: hidden; }
+
+  /* The render, and the column the callouts now sit in.
+     .th-hero-media is `display:flex` with the chips absolutely positioned out
+     of it, so it only ever had one in-flow child. Taking the chips out of
+     position makes them a second flex item, and the row then put them BESIDE
+     the render - with the safety net's min-width:0 letting the image squeeze
+     down to a thumbnail to make room. A column puts them back underneath it,
+     which is where the design has them. */
+  .tw-home .th-hero-media {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .tw-home .th-hero-media img { width: min(420px, 82vw); flex: none; }
+  .tw-home .th-hero-media-glow { max-width: 86vw; }
+}
+
+@media (max-width: 767.98px) {
+  html[data-mode="light"] {
+    --tw-callout-bg: #ffffff;
+    --tw-callout-line: #e3e9f2;
+    --tw-callout-ink: #16233a;
+    --tw-callout-price: #c23a63;
+  }
+}
+
+
+/* ===========================================================================
+   5. PRODUCTS LISTING
+   ======================================================================== */
+
+/* ---- Tablet: three columns, filter column above the grid ---------------
+   Three tracks are narrower than the auto-fill minimum this grid used to
+   honour, so the price-and-stock row inside a card no longer fits on one
+   line: the stock pill was the element pushing the page 6px wider than the
+   viewport at 820px. It wraps instead, and min-width:0 lets the track hold a
+   name longer than its share. */
+@media (min-width: 768px) and (max-width: 1099.98px) {
+  .products-listing .products-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .products-listing .products-grid .product-card,
+  .products-listing .products-grid .product-info { min-width: 0; }
+  .products-listing .price-stock-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .products-listing .price-stock-section > * { min-width: 0; }
+  .products-listing .product-actions { flex-wrap: wrap; }
+}
+
+@media (max-width: 767.98px) {
+
+  /* ---- The toolbar ------------------------------------------------------
+     Sticky under the 56px top bar. z-index sits under both bars and under
+     either sheet, so it can never be the thing a thumb hits by accident. */
+  .pf-toolbar {
+    position: sticky;
+    top: calc(56px + env(safe-area-inset-top));
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 -16px 12px;
+    padding: 8px 16px;
+    background: var(--tw-pf-bar, rgba(6, 13, 24, .94));
+    border-bottom: 1px solid var(--tw-pf-line, rgba(120, 170, 230, .16));
+    backdrop-filter: saturate(140%) blur(8px);
+  }
+  .pf-tb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--tw-pf-ctl-line, rgba(120, 170, 230, .35));
+    background: var(--tw-pf-ctl, rgba(255, 255, 255, .06));
+    color: var(--tw-pf-ink, #e8eef7);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .pf-tb-n {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: #c23a63;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 20px;
+    text-align: center;
+  }
+  .pf-tb-n[hidden] { display: none; }
+  .pf-tb-items {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    color: var(--tw-pf-muted, #93a7c2);
+    white-space: nowrap;
+  }
+
+  /* ---- The filter panel, as a bottom sheet ------------------------------
+     This is the same <aside class="filters-sidebar"> the desktop renders -
+     not a copy of it - so the form inside keeps its id, its field names, its
+     submit handler and the XHR filtering wired to all three. Only the box it
+     sits in changes. */
+  /* The panel's surface is pinned !important in both themes -
+     customer-dark.css paints it a translucent white-on-navy card and
+     theme-light.css repaints it --tw-surface, both at
+     `body:has(.products-listing)` depth. A sheet that keeps a translucent
+     card background shows the page straight through it, which is what the
+     first capture of this did. Matched at that depth, and at the light
+     theme's extra html[data-mode] depth, so the sheet is opaque in both. */
+  html body:has(.products-listing) .products-layout .filters-sidebar,
+  html[data-mode="light"] body:has(.products-listing) .products-layout .filters-sidebar,
+  .products-layout .filters-sidebar {
+    background: var(--tw-sheet-bg, #0f1c30) !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-radius: 28px 28px 0 0 !important;
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, .45) !important;
+  }
+
+  .products-layout .filters-sidebar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    max-height: 88vh;
+    margin: 0;
+    padding: 10px 16px 0;
+    border: 0;
+    border-radius: 28px 28px 0 0;
+    background: var(--tw-sheet-bg, #0f1c30);
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, .4);
+    transform: translateY(100%);
+    transition: transform 260ms ease-out;
+    visibility: hidden;
+    overflow: hidden;         /* the form inside is the scroller */
+  }
+  body.pf-sheet-open .products-layout .filters-sidebar {
+    transform: translateY(0);
+    visibility: visible;
+  }
+  body.pf-sheet-open { overflow: hidden; }
+
+  /* `section.products-listing` is `position:relative; z-index:1`, which makes
+     it a stacking context: every z-index inside it, the sheet's 1500
+     included, is resolved against that 1 rather than against the page. So the
+     tab bar's 1400 painted over the bottom of the sheet - including the
+     "Clear / Show results" bar - however high the sheet's own number went.
+     Raising the section itself is the fix, and only while the sheet is open,
+     so ordinary scrolling keeps the tab bar on top where it belongs. */
+  body.pf-sheet-open .products-listing { z-index: 1500; }
+
+  .pf-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1499;
+    background: var(--tw-pf-scrim, rgba(0, 0, 0, .55));
+    opacity: 0;
+    transition: opacity 260ms ease-out;
+  }
+  .pf-scrim[hidden] { display: none; }
+  .pf-scrim.is-on { opacity: 1; }
+
+  .pf-grab {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .pf-grab span {
+    display: block;
+    width: 40px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--tw-sheet-grab, rgba(147, 167, 194, .5));
+  }
+
+  /* The form scrolls; the action bar below it does not. */
+  .products-layout .filters-sidebar #pfFilterForm {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-top: 6px;
+  }
+  .products-layout .filters-sidebar .filter-section {
+    margin-bottom: 18px;
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+
+  /* Category rows: 48px, legible label, 22px box. The label was inheriting a
+     muted ink meant for a dense desktop column, which is the "far too dim"
+     in the screenshots; it is the sheet's own body colour here. */
+  .products-layout .filters-sidebar .category-filter li { margin-bottom: 0; }
+  body:has(.products-listing) .filters-sidebar .pf-cat-label,
+  .products-layout .filters-sidebar .pf-cat-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    /* customer-dark.css pins --text-secondary here with !important, which is
+       the "far too dim" slate in the screenshots. */
+    color: var(--tw-sheet-ink, #d6e2f1) !important;
+    cursor: pointer;
+  }
+  /* The checkbox itself - a 22px box drawn into a 44px target - is shared
+     with the tablet band and lives in section 8, so the two cannot drift. */
+
+  .products-layout .filters-sidebar .pf-all {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--tw-sheet-ink, #d6e2f1);
+    text-decoration: none;
+  }
+  /* "All Products", selected. theme-light.css fills it with the shared brand
+     gradient and white text at `html[data-mode="light"] body:has(...)` depth
+     and marks every property !important; in the sheet it should read as a
+     selected row, not as the primary button sitting two rows above it. The
+     dark value is the panel's own selection wash. */
+  html[data-mode="light"] body:has(.products-listing) .filters-sidebar .pf-all.active,
+  html body:has(.products-listing) .filters-sidebar .pf-all.active,
+  .products-layout .filters-sidebar .pf-all.active {
+    background: var(--tw-pf-sel, rgba(224, 86, 122, .16)) !important;
+    background-image: none !important;
+    border-color: #e0567a !important;
+    color: var(--tw-pf-sel-ink, #ffc2d3) !important;
+  }
+
+  /* Price boxes and the sort select: full width, 48px, no fixed sizes. */
+  .products-layout .filters-sidebar .pf-price-row { display: flex; gap: 10px; }
+  .products-layout .filters-sidebar .pf-price-row input,
+  .products-layout .filters-sidebar select {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+    height: 48px;
+    font-size: 15px;
+  }
+  .products-layout .filters-sidebar .pf-apply { min-height: 48px; width: 100%; }
+  .products-layout .filters-sidebar .pf-section-head { min-height: 44px; }
+  /* The in-panel Clear duplicates the sheet's own, which is always visible
+     and sits where a thumb is. */
+  .products-layout .filters-sidebar #pfClear { display: none; }
+
+  /* The section headings - Price Range, Sort By, Categories. These were 10px
+     mono caps in a muted slate (4.13:1) and this rule only lifted the colour;
+     customer-dark.css now sets them as Figtree 15px/700 in --text-primary, so
+     the size is already right here and only the sheet's own surface needs
+     answering - the sheet ground is lighter than the desktop panel, so it
+     takes the sheet ink token rather than the page one. */
+  body:has(.products-listing) .filters-sidebar .pf-section-title,
+  .products-layout .filters-sidebar .pf-section-title {
+    /* customer-dark.css pins its colour with !important, so matching its
+       depth is not enough on its own. */
+    color: var(--tw-sheet-ink, #d6e2f1) !important;
+  }
+
+  .pf-sheet-actions {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 10px;
+    margin: 0 -16px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--tw-sheet-bg, #0f1c30);
+    border-top: 1px solid var(--tw-sheet-tile-line, rgba(120, 170, 230, .16));
+  }
+  .pf-sheet-clear,
+  .pf-sheet-done {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 14px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .pf-sheet-clear {
+    border: 1px solid var(--tw-sheet-tile-line, rgba(120, 170, 230, .16));
+    background: none;
+    color: var(--tw-sheet-ink, #d6e2f1);
+  }
+  .pf-sheet-done {
+    border: 0;
+    background: linear-gradient(120deg, #d9355f, #6b5bc4);
+    color: #fff;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .products-layout .filters-sidebar, .pf-scrim { transition: none; }
+  }
+}
+
+/* The one min-width block in this file, and it only ever sets display:none.
+   Four of the elements the responsive pass needs have to exist in the markup
+   at every width - the page is rendered once, not per breakpoint - so above
+   the phone breakpoint they are simply not drawn, and the desktop filter
+   column and hero are exactly what they were.
+
+   .th-pc-thumb is the hero callout's thumbnail. It earns its place in the
+   phone card row; the desktop chips are small glass pills that have carried
+   no thumbnail since the hero was redrawn, and customer-home.css still has a
+   22px circle rule waiting for one, so leaving it visible would silently
+   change the desktop hero. */
+@media (min-width: 768px) {
+  .pf-toolbar, .pf-scrim, .pf-grab, .pf-sheet-actions,
+  .th-price-chip .th-pc-thumb { display: none; }
+}
+
+
+/* ---- The card grid -------------------------------------------------------
+   The dark theme styles these cards through `body:has(.products-listing)`
+   selectors that carry !important (see customer-dark.css, "card surface,
+   border and lift"). Matching that prefix here is what lets these rules land
+   without a second round of !important on every property; where that file
+   marks one !important, the override below has to as well.
+   ----------------------------------------------------------------------- */
+@media (max-width: 767.98px) {
+  .products-listing .products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  body:has(.products-listing) .products-grid .product-card,
+  .products-listing .products-grid .product-card {
+    padding: 8px !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+  }
+
+  /* Square plate, white, contained image, no outer border. The card used to
+     put the photo in a full-bleed well with its own top radius and a hairline
+     under it; at this size that reads as a white band wrapped around the
+     picture. */
+  body:has(.products-listing) .product-card .product-image,
+  .products-listing .product-card .product-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    /* style.css pins height:200px on this element, and under 768px drops it
+       to 120px. An explicit height wins over aspect-ratio, so the plate was
+       never square - height:auto hands the sizing back to the ratio. */
+    height: auto !important;
+    margin: 0;
+    padding: 6px;
+    background: #ffffff !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-bottom: 0 !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+  }
+  .products-listing .product-card .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .products-listing .product-card .product-info { padding: 8px 2px 0; }
+
+  /* Kicker above the name, 10px mono. */
+  body:has(.products-listing) .product-category,
+  .products-listing .product-category {
+    margin-bottom: 4px;
+    font-size: 10px !important;
+    letter-spacing: .12em;
+  }
+
+  .products-listing .product-title { margin: 0 0 6px; }
+  .products-listing .product-title a {
+    font-size: 14px;
+    font-weight: 700;
+    /* 14 x 1.57 = 22px a line, so two lines are exactly the 44px tap floor
+       this link also has to clear. With a line-height that did not divide
+       into 44 the min-height grew the box past the clamp and a sliver of the
+       third line showed under the ellipsis. */
+    line-height: 1.57;
+    margin-bottom: 0;
+    /* Two lines, so a long name cannot make one card twice the height of the
+       one beside it. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-height: 44px;
+  }
+
+  /* The rating row is five icons and a sentence of grey text - more than a
+     14px card can carry next to a price and two buttons. */
+  .products-listing .products-grid .product-rating { display: none; }
+
+  /* customer-dark.css owns this row through `body:has(.products-listing)`,
+     and products.php's own phone block turns it into a column. Both are
+     out-specified here so the price and the stock pill stay on one line. */
+  body:has(.products-listing) .price-stock-section,
+  .products-listing .price-stock-section {
+    display: flex;
+    flex-direction: row;
+    /* Wrap rather than squeeze. "₱47,995.00" and a short "2 LEFT" share the
+       line comfortably; "OUT OF STOCK" does not fit beside a six-figure price
+       on a 136px card, and the pill is flex:0 0 auto, so without wrapping the
+       price is the one that gives - it was being flattened to 10px wide and
+       spilling its text out under the pill. */
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 8px;
+    margin-bottom: 8px;
+  }
+  /* The price is content-sized, not a 1fr track that collapses to nothing
+     once the safety net's min-width:0 lets it. */
+  body:has(.products-listing) .price-stock-section .product-price,
+  .products-listing .price-stock-section .product-price {
+    flex: 0 1 auto;
+    margin-bottom: 0;
+  }
+  .products-listing .price-stock-section .current-price { white-space: nowrap; }
+  /* Full strength. Both the page block and the dark theme land this at
+     #a77693, a muted mauve drawn for a larger card; at 16px in a two-up grid
+     it reads as disabled text. */
+  body:has(.products-listing) .product-price,
+  body:has(.products-listing) .product-price .current-price,
+  .products-listing .product-price .current-price {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: var(--tw-card-price, #ff9ab5) !important;
+    opacity: 1 !important;
+  }
+  /* The struck-through "was" price is a second line inside the price block,
+     which makes the price-and-stock row two lines tall and pushes the stock
+     pill off centre beside it. On a 158px card the real price is the one
+     that has to read. `body:has(.products-listing)` sets it display:block, so
+     that depth is matched here. */
+  body:has(.products-listing) .product-price .original-price,
+  .products-listing .product-price .original-price { display: none; }
+
+  body:has(.products-listing) .stock-indicator,
+  body:has(.products-listing) .stock-low,
+  body:has(.products-listing) .stock-available,
+  body:has(.products-listing) .stock-out,
+  .products-listing .stock-indicator {
+    font-size: 10px !important;
+    letter-spacing: .1em;
+    padding: 4px 7px;
+    white-space: nowrap;
+  }
+  /* 4.5:1 against the card in both themes. The greens and ambers these
+     carried were picked against a white page. */
+  body:has(.products-listing) .stock-low,
+  .products-listing .stock-low {
+    color: var(--tw-card-warn, #ffc08a) !important;
+    background: var(--tw-card-warn-bg, rgba(255, 176, 80, .14)) !important;
+    border-color: var(--tw-card-warn-line, rgba(255, 176, 80, .35)) !important;
+  }
+  body:has(.products-listing) .stock-available,
+  .products-listing .stock-available {
+    color: var(--tw-card-ok, #7fe3b0) !important;
+    background: var(--tw-card-ok-bg, rgba(64, 200, 140, .14)) !important;
+    border-color: var(--tw-card-ok-line, rgba(64, 200, 140, .35)) !important;
+  }
+  body:has(.products-listing) .stock-out,
+  .products-listing .stock-out {
+    color: var(--tw-card-bad, #ff9ab5) !important;
+    background: var(--tw-card-bad-bg, rgba(224, 86, 122, .16)) !important;
+  }
+  /* The icon inside each pill doubles its width at this size for no gain. */
+  .products-listing .stock-indicator i { display: none; }
+
+  /* Two buttons, side by side, at full strength. `body:has(.products-listing)
+     .product-actions { display: flex }` in customer-dark.css and
+     `.product-actions { flex-direction: column }` in products.php's own phone
+     block both have to be beaten for the pair to sit side by side. */
+  body:has(.products-listing) .product-actions,
+  .products-listing .product-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: auto;
+  }
+  body:has(.products-listing) .product-actions > *,
+  .products-listing .product-actions > * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    /* The design calls for 40px; 44px is the tap-target floor the same brief
+       sets, and that is the one a thumb notices. */
+    min-height: 44px;
+    min-width: 0;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-decoration: none;
+    opacity: 1 !important;
+  }
+  html body:has(.products-listing) .add-to-cart-btn,
+  html[data-mode="light"] body:has(.products-listing) .add-to-cart-btn,
+  .products-listing .wishlist-action-btn {
+    background: none !important;
+    background-image: none !important;
+    border: 1px solid var(--tw-card-btn-line, rgba(255, 154, 181, .45)) !important;
+    color: var(--tw-card-btn-ink, #ffc2d3) !important;
+  }
+  body:has(.products-listing) .buy-now-btn,
+  .products-listing .buy-now-btn {
+    background: linear-gradient(120deg, #d9355f, #6b5bc4) !important;
+    background-image: linear-gradient(120deg, #d9355f, #6b5bc4) !important;
+    border: 0 !important;
+    color: #fff !important;
+  }
+  .products-listing .product-actions .wishlist-action-btn { grid-column: 1 / -1; }
+  .products-listing .product-actions i { font-size: 12px; }
+
+  /* The pagination row and the results heading.
+
+     .products-header is a three-item flex ROW - eyebrow, h1, results count -
+     spread with space-between. That reads at desktop width and nowhere near it
+     on a phone: with no room to spread, the items were squeezed into each
+     other until "THE CATALOG" and the title overlapped. Stack them instead, in
+     the order the markup is already written in - eyebrow above the title,
+     count under it - left-aligned.
+
+     Two selector shapes, deliberately. customer-dark.css styles this header as
+     `body:has(.products-listing) .products-header`, one element heavier than a
+     plain `.products-listing` descendant, so its `align-items: flex-end` - in
+     a column that means right-aligned - outranks the first rule and has to be
+     answered at matching weight. Separate rules rather than one comma list: a
+     browser without :has() support throws out a whole selector list that
+     mentions it, and the plain rule is what keeps the stack upright there. */
+  .products-listing .products-header {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  body:has(.products-listing) .products-header { align-items: flex-start; }
+  /* Nothing in the stack may outgrow the column it sits in, so a long category
+     or search title breaks instead of pushing the row wide. */
+  .products-listing .products-header > * { max-width: 100%; min-width: 0; }
+  /* The flex gap above spaces the stack now; the eyebrow's own 10px bottom
+     margin would double the first gap. */
+  .products-listing .pf-eyebrow { margin-bottom: 0; }
+  .products-listing .products-header h1 {
+    font-size: clamp(18px, 5vw, 22px);
+    overflow-wrap: break-word;
+  }
+  /* Same size again at customer-dark.css's own weight - this rule used to be
+     written as `.products-listing .products-header h1`, which that sheet's
+     `clamp(30px, 3.6vw, 46px)` quietly outranked, so the phone title was still
+     rendering at 30px in weight 900 and was half the reason the row collided. */
+  body:has(.products-listing) .products-header h1 { font-size: clamp(18px, 5vw, 22px); }
+  .products-listing .pagination { flex-wrap: wrap; gap: 8px; }
+  .products-listing .pagination .pagination-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Phone S: the two buttons no longer read at 12px across half of a 164px
+   card, so they stack. */
+@media (max-width: 379.98px) {
+  body:has(.products-listing) .product-actions,
+  .products-listing .product-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767.98px) {
+  html[data-mode="light"] {
+    --tw-pf-bar: rgba(255, 255, 255, .94);
+    --tw-pf-line: #e3e9f2;
+    --tw-pf-ctl: #ffffff;
+    --tw-pf-ctl-line: #cfd9e8;
+    --tw-pf-ink: #16233a;
+    --tw-pf-muted: #5d6f86;
+    --tw-pf-scrim: rgba(15, 26, 44, .42);
+    --tw-pf-sel: #fdecf1;
+    --tw-pf-sel-ink: #a8264d;
+    --tw-sheet-label: #5d6f86;
+
+    --tw-card-price: #c23a63;
+    --tw-card-warn: #8a4b00;
+    --tw-card-warn-bg: #fff3e0;
+    --tw-card-warn-line: #f0c89a;
+    --tw-card-ok: #0f6b4a;
+    --tw-card-ok-bg: #e6f7f0;
+    --tw-card-ok-line: #a5dcc6;
+    --tw-card-bad: #a8264d;
+    --tw-card-bad-bg: #fdecf1;
+    --tw-card-btn-line: #e0567a;
+    --tw-card-btn-ink: #a8264d;
+  }
+  /* The filter sheet borrows the menu sheet's surface tokens, which
+     mobile_nav.php declares in the same breakpoint - they are listed again
+     here only for the pages that render a filter panel without one. */
+  html[data-mode="light"] .products-layout .filters-sidebar,
+  html[data-mode="light"] .pf-sheet-actions { background: #ffffff; }
+  html[data-mode="light"] .products-layout .filters-sidebar .pf-cat-label { color: #2b3a52; }
+  html[data-mode="light"] .products-layout .filters-sidebar .pf-all { color: #2b3a52; }
+}
+
+
+/* ===========================================================================
+   6. TABLES BECOME CARDS
+   Under 640px a five-column table cannot be read without scrolling it
+   sideways, and a table that scrolls sideways inside a page that does not is
+   worse than either. Each row becomes a card and each cell a labelled line,
+   with the caption coming from the data-label the markup carries - which is
+   why only tables that have those attributes are converted.
+   ======================================================================== */
+@media (max-width: 639.98px) {
+  .orders-table table,
+  .orders-table thead,
+  .orders-table tbody,
+  .orders-table tr,
+  .orders-table td { display: block; width: 100%; }
+
+  /* Visually hidden rather than removed: the header row still names the
+     columns for anything reading the table as a table. */
+  .orders-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .orders-table tr {
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--tw-line, rgba(120, 170, 230, .16));
+    border-radius: 14px;
+    background: var(--tw-surface, rgba(255, 255, 255, .04));
+  }
+  .orders-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 36px;
+    padding: 6px 0;
+    border: 0;
+    text-align: right;
+  }
+  .orders-table td::before {
+    content: attr(data-label);
+    flex: none;
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tw-ink-faint, #7f95b3);
+    text-align: left;
+  }
+  /* The actions cell is a row of buttons, not a value, so it gets the whole
+     width and its label is dropped. */
+  .orders-table td.order-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .orders-table td.order-actions::before { display: none; }
+  .orders-table td.order-actions .btn-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 10px;
+  }
+}
+
+
+/* ===========================================================================
+   7. THE REST OF THE CUSTOMER PAGES
+
+   Dashboard, My Orders, Notifications, Cart, Checkout, Order Tracking,
+   Settings, Support, AI Builder and order_success each build their own cards
+   and grids, but the problems they have at phone width are the same three,
+   so they are grouped by problem rather than by page - one selector usually
+   covers several of them.
+
+   Every control named below was measured under 44px by tools/shoot.js at 360,
+   390, 430 and 820px, and every colour was measured under 4.5:1. Nothing is
+   here on suspicion.
+   ======================================================================== */
+
+/* ---- 7a. Grids that were built around a fixed minimum track ------------- */
+@media (max-width: 767.98px) {
+  .stats-grid,
+  .dashboard-grid,
+  .dash-grid,
+  .quick-actions,
+  .settings-grid,
+  .support-grid,
+  .cart-layout,
+  .checkout-layout,
+  .order-summary-grid,
+  .track-layout,
+  .os-grid,
+  .aib-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .account-page h1,
+  .page-header h1,
+  .section-header h2 { font-size: clamp(18px, 5.2vw, 24px); line-height: 1.25; }
+  .account-page h2 { font-size: clamp(16px, 4.6vw, 20px); }
+
+  .table-wrap,
+  .os-items { display: block; max-width: 100%; overflow-x: auto; }
+
+  .form-row,
+  .form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  select,
+  textarea { max-width: 100%; }
+}
+
+/* ---- 7b. Tap targets ---------------------------------------------------
+   style.css already carries a sitewide `button, .btn, .action-btn
+   { min-height: 44px }` under 768px. These are the controls that outrank it
+   from a page's own stylesheet, plus the links - which that rule never
+   covered, because a min-height on an inline element does nothing until it
+   is given a box.
+   ---------------------------------------------------------------------- */
+@media (max-width: 1099.98px) {
+
+  /* Links that are really buttons. inline-flex is what gives min-height
+     something to apply to. */
+  .breadcrumb a,
+  .btn-small,
+  .filter-tab,
+  .view-all-link,
+  .dash-btn-ghost,
+  .dash-btn-cta,
+  .quick-action-btn,
+  .continue-shopping-btn,
+  .header-back-btn,
+  .promo-shop,
+  .promo-close,
+  .help-link,
+  .btn-secondary,
+  .btn-outline,
+  .ord-tab,
+  .ordb,
+  .ordc-rate,
+  .ordc-rated,
+  .nf-action-link,
+  .th-product-card h3 a,
+  .ordc-item-name {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  /* Two of those are a block of wrapping text rather than a pill, so they
+     keep a block box and only take the floor. The product name is a third
+     case: it is clamped to two lines, and a clamp needs display:-webkit-box,
+     so writing display:block here would quietly switch the clamp off. */
+  .th-product-card h3 a,
+  .ordc-item-name {
+    display: block;
+    min-height: 44px;
+  }
+  .products-listing .product-title a { min-height: 44px; }
+
+  /* Numeric and text inputs that were sized to a 34px desktop row. */
+  .qty-input,
+  .orders-search input,
+  input[type="search"],
+  .ord-search input { min-height: 44px; }
+  .qty-input { min-width: 44px; text-align: center; }
+
+  /* The featured-card pair on the landing. */
+  .th-product-card .add-to-cart-btn,
+  .th-product-card .buy-now,
+  .th-product-card .wishlist-action-btn { min-height: 44px; }
+
+  /* Notification filter chips and the pager. The pager's 38px square comes
+     from `body.nfx .pagination button` in notifications-skin.css, which
+     out-specifies a bare `.pagination button` - matched here rather than
+     marked !important. */
+  .filter-tab { min-width: 44px; }
+  body.nfx .pagination button,
+  .pagination button { min-width: 44px; min-height: 44px; }
+
+  /* The theme three-way. The Settings page re-shapes it at 42px through
+     `body .account-page.set-page .settings-layout .tw-theme-choice button`,
+     so the floor has to be written at that depth to land. */
+  body .account-page.set-page .settings-layout .tw-theme-choice button,
+  .tw-theme-choice button { min-height: 44px; }
+
+  /* The product name in a cart row. */
+  .item-name a { display: block; min-height: 44px; }
+
+  /* "Rate" is two short words, so the floor has to be set on both axes. The
+     promo modal's close button is a 34px circle, same problem. */
+  .ordc-rate,
+  .ordc-rated,
+  .promo-close { min-width: 44px; justify-content: center; }
+
+  /* The category carousel's jump-to-slide pips. There are one per category -
+     nineteen of them - so 44px each would need 836px of row on a 360px
+     screen: they cannot be made to clear the floor and stay a row of pips.
+     customer-home.css opts them out of the sitewide 44px rule deliberately
+     and says so. On a phone they are also the one control here that a thumb
+     has no business aiming at: the arrows either side are 44px and the stage
+     takes a swipe. So the row is not shown, and nothing is lost that is not
+     reachable another way. */
+  .th-cat-dots { display: none; }
+
+  /* Cart selection checkboxes. A native checkbox is 15px and cannot be
+     grown without growing its tick with it, so the input becomes a 44px
+     transparent target and the 22px box is drawn into it - the control
+     looks the same size and is three times easier to hit. */
+  .item-select input.select-item,
+  input.select-item,
+  input#selectAll {
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    background: center / 22px 22px no-repeat
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='1' y='1' width='20' height='20' rx='5' fill='none' stroke='%237e90a9' stroke-width='1.5'/%3E%3C/svg%3E");
+    cursor: pointer;
+    flex: none;
+  }
+  input.select-item:checked,
+  input#selectAll:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='1' y='1' width='20' height='20' rx='5' fill='%23c23a63'/%3E%3Cpath d='M6 11.4l3.4 3.4L16 8' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  input.select-item:focus-visible,
+  input#selectAll:focus-visible { outline: 2px solid #e0567a; outline-offset: -4px; }
+}
+
+/* ---- 7c. Contrast ------------------------------------------------------
+   Five strings measured under 4.5:1 in one theme or the other. Each is fixed
+   where it fails and left alone where it passes, so neither theme is changed
+   to suit the other.
+   ---------------------------------------------------------------------- */
+@media (max-width: 1099.98px) {
+
+  /* The breadcrumb's "/" separator was a dim slate against the page: 2.87:1.
+     It is punctuation, but it is also the only thing telling the two links
+     apart. */
+  /* customer-dark.css sets this through
+     `body:has(.products-listing) .breadcrumb .container > span` at 38% ink,
+     which is 2.87:1 - matched at that depth rather than marked !important.
+     Light mode already resolves to --tw-ink-faint and passes, so the same
+     token is used and nothing changes there. */
+  body:has(.products-listing) .breadcrumb .container > span,
+  .breadcrumb span { color: var(--tw-ink-faint, #7f95b3); }
+  /* "Home" is 40px of text, so the link needs a little padding to clear the
+     floor on its narrow axis as well as its short one. */
+  .breadcrumb a { min-width: 44px; justify-content: center; padding: 0 4px; }
+
+  /* Notifications: the count inside a filter chip, white on a pale chip in
+     light mode. */
+  html[data-mode="light"] .nf-chip-count { color: #a8264d; }
+
+  /* The promo carousel's close "x". The button paints its own dark navy disc
+     (rgba(6,13,24,.66)) in both themes, so the glyph has to be light; the
+     muted ink it had sat at 3.48:1 on it. This is the only way out of a modal
+     that opens on first load after sign-in, so it has to read. */
+  .promo-close { color: #e8eef7; }
+
+  /* "Rate" on a completed order: --accent-cyan is a light-theme token and
+     lands at 3.7:1 on the dark card. */
+  .ordc-rate { color: var(--tw-rate-ink, #ff9ab5); }
+
+  /* Checkout's step dot and item quantity badges: white on the selection
+     line colour, 3.63:1. The accent fill carries white at 6.4:1. */
+  .co-step.is-active .co-step-dot,
+  .item-qty-badge {
+    background: #c23a63;
+    border-color: #c23a63;
+    color: #fff;
+  }
+
+  /* The product badge now sits on the card's white image plate rather than
+     on a dark well, so the 20%-pink wash it used to be legible against is
+     gone. Solid fills instead - same three colours, full strength. */
+  .products-listing .product-image .tw-badge {
+    border: 0;
+    color: #fff;
+  }
+  .products-listing .product-image .tw-badge--value  { background: #c23a63; }
+  .products-listing .product-image .tw-badge--stock  { background: #0f6b4a; }
+  .products-listing .product-image .tw-badge--new    { background: #4a5fc0; }
+}
+
+@media (max-width: 1099.98px) {
+  html[data-mode="light"] {
+    /* Light mode already resolves .ordc-rate to #1f4f86 (7.3:1); the token
+       exists so the rule above does not overwrite it. */
+    --tw-rate-ink: #1f4f86;
+  }
+}
+
+/* support.php writes `color: #fff` directly on its card headings, its contact
+   lines and its opening hours - the card was drawn dark and the colour was
+   pinned to it. In light mode that is white on a white card: 1:1, and the
+   text is simply not there.
+
+   This is a pre-existing bug, not something the responsive pass introduced,
+   and it is the same at 1280px - but desktop has to stay pixel-identical, so
+   the correction stops at the tablet ceiling. Worth fixing at every width
+   separately.
+   ----------------------------------------------------------------------- */
+@media (max-width: 1099.98px) {
+  html[data-mode="light"] .support-card .card-header h3,
+  html[data-mode="light"] .support-card .contact-item p,
+  html[data-mode="light"] .support-card .hours-item span,
+  html[data-mode="light"] .support-card .hours-item strong { color: var(--tw-ink, #16233a); }
+}
+
+
+/* ===========================================================================
+   8. THE TABLET BAND (768-1099px)
+
+   At this width the page is still the desktop layout - the sidebar has
+   already collapsed to its icon rail on its own, and the filter column is
+   still a column. What it is not is a desktop pointer: these are the controls
+   that are sized for a mouse and have to clear the 44px floor for a finger.
+   Phone widths are covered by section 7, which this band shares.
+   ======================================================================== */
+@media (min-width: 768px) and (max-width: 1099.98px) {
+
+  /* The collapsed sidebar rail: 46x40 rows and a 20px search glyph. */
+  .customer-sidebar nav a,
+  .customer-sidebar-fixed-list a,
+  .customer-sidebar-credit,
+  .customer-sidebar-profile,
+  .customer-sidebar-logout,
+  .customer-sidebar-search-icon,
+  .customer-sidebar-search-input { min-height: 44px; }
+  .customer-sidebar-search-icon { min-width: 44px; }
+
+  /* The hero's floating callouts keep their desktop shape here - they just
+     have to be tall enough to hit. */
+  .th-price-chip { min-height: 44px; }
+
+  /* The desktop filter column's own controls. */
+  .filters-sidebar .pf-cat-label,
+  .filters-sidebar .pf-all,
+  .filters-sidebar .pf-clear,
+  .filters-sidebar .pf-apply,
+  .filters-sidebar .pf-section-head,
+  .filters-sidebar .pf-price-row input,
+  .filters-sidebar select { min-height: 44px; }
+
+  /* Product cards keep the phone treatment for their action row only - the
+     three-up grid is otherwise the desktop card. */
+  .products-listing .product-actions > * { min-height: 44px; }
+  .products-listing .product-title a { display: block; min-height: 44px; }
+  .products-listing .pagination .pagination-btn { min-width: 44px; min-height: 44px; }
+}
+
+/* The same floor style.css already applies to every <button> under 768px,
+   carried through the tablet band. It is what covers the icon-only controls -
+   the quantity steppers, the remove buttons, the per-notification actions -
+   which are 26-34px squares drawn for a mouse. */
+@media (min-width: 768px) and (max-width: 1099.98px) {
+  button,
+  .btn,
+  .action-btn { min-height: 44px; min-width: 44px; }
+
+  /* The footer's link rows, same treatment as the phone layout. */
+  .main-footer .footer-column ul li a,
+  .main-footer .contact-list li,
+  .main-footer .social-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+  }
+
+  /* "Clear" above the category list is 39px of text. */
+  .filters-sidebar .pf-clear { min-width: 44px; justify-content: center; }
+}
+
+/* The filter column's checkboxes, in both bands.
+
+   Three rules already own this control and they disagree with each other:
+   customer-dark.css rebuilds it with appearance:none and pins it to a hard
+   16x16 in every dimension (width, min, max and flex-basis), drawing the tick
+   with a ::after; theme-light.css then reverts the whole thing to the native
+   control for light mode. 16px is not a tap target in either theme, and the
+   two themes do not look like the same control.
+
+   Under 1100px both are replaced by one box: a 44px transparent input with a
+   22px square painted into it, identical in light and dark. The selectors are
+   written at the depth those two files use - `html[data-mode="light"] body:has(...)`
+   is (0,4,3) - because out-specifying them is what lets this land without
+   !important, and max-width:16px would otherwise clamp any width set here.
+   ::after is switched off; the tick is part of the painted square now.
+
+   It only ever applies while the panel is on screen: with the phone sheet
+   closed the whole column is visibility:hidden.
+   ----------------------------------------------------------------------- */
+@media (max-width: 1099.98px) {
+  html body:has(.products-listing) .pf-cat-label input[type="checkbox"],
+  html[data-mode="light"] body:has(.products-listing) .pf-cat-label input[type="checkbox"],
+  .filters-sidebar .pf-cat-label input[type="checkbox"] {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    max-width: 44px;
+    max-height: 44px;
+    flex: 0 0 44px;
+    margin: 0;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    border-radius: 0;
+    background: center / 22px 22px no-repeat
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='1.25' y='1.25' width='19.5' height='19.5' rx='5' fill='none' stroke='%237e90a9' stroke-width='1.5'/%3E%3C/svg%3E");
+    cursor: pointer;
+  }
+  html body:has(.products-listing) .pf-cat-label input[type="checkbox"]:checked,
+  html[data-mode="light"] body:has(.products-listing) .pf-cat-label input[type="checkbox"]:checked,
+  .filters-sidebar .pf-cat-label input[type="checkbox"]:checked {
+    border: 0;
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='1' y='1' width='20' height='20' rx='5' fill='%23c23a63'/%3E%3Cpath d='M6 11.4l3.4 3.4L16 8' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  html body:has(.products-listing) .pf-cat-label input[type="checkbox"]:checked::after,
+  .filters-sidebar .pf-cat-label input[type="checkbox"]:checked::after { content: none; }
+  .filters-sidebar .pf-cat-label input[type="checkbox"]:focus-visible {
+    outline: 2px solid #e0567a;
+    outline-offset: -8px;
+  }
+
+  /* The selected-category count beside the Categories heading: white on the
+     pink wash at 3.63:1. The id is what products.php styles it by, so the
+     floor has to be written with it. */
+  #pfCatBadge,
+  .pf-badge { background: #c23a63; color: #fff; }
+}

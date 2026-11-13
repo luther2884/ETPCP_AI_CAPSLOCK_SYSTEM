@@ -1,0 +1,924 @@
+/* ============================================================================
+   notifications-skin.css — customer Notifications, dark-glass pass
+   ----------------------------------------------------------------------------
+   Linked LAST on public/authenticated/customer/notifications.php: after
+   style.css, customer-dark.css and the uicons sheets that includes/header.php
+   pulls in, and after that page's own <style> block (lines 139-546) — so it
+   wins on source order wherever specificity ties.
+
+   SCOPE: every rule is prefixed `body.nfx`. That class is new and is added to
+   the page's own <body> tag. Dropping it reverts the page exactly.
+
+   TOKENS: copied verbatim from public/shared/assets/css/techworld-anim.css
+   (section 1, `.tw-home`). No new hues. One neutral steel tone is used for
+   `system` notifications — it is the existing --tw-line blue, not a new
+   accent; see section 7c.
+
+   PRESENTATION ONLY. No PHP, query, route or request-handler change. The
+   row/pagination markup this sheet styles is emitted by the page's own
+   renderNotifications() / renderPagination() templates.
+   ========================================================================= */
+
+body.nfx {
+  /* --- landing-page tokens, verbatim from techworld-anim.css -------------- */
+  --nf-bg: #060d18;
+  --nf-bg-2: #0a1424;
+  --nf-bg-3: #16283f;
+
+  --nf-ink: #e8eef7;
+  --nf-ink-dim: #a9bcd4;
+  --nf-ink-faint: #7f95b3;
+  --nf-ink-mute: #9db1cb;
+
+  --nf-pink: #e0567a;
+  --nf-pink-lt: #ff9ab5;
+  --nf-cyan: #67e8f9;
+  --nf-violet: #7f6ae0;
+  --nf-green-lt: #9df3d0;
+
+  --nf-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --nf-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+  --nf-ease: cubic-bezier(.2, .85, .2, 1);
+
+  /* --- the recipes this redesign was specified in ------------------------- */
+  --nf-row-read: linear-gradient(180deg, rgba(20, 36, 60, .78), rgba(11, 22, 38, .88));
+  --nf-row-unread: linear-gradient(180deg, rgba(26, 44, 72, .92), rgba(13, 26, 44, .96));
+  --nf-bd-read: rgba(120, 170, 230, .13);
+  --nf-bd-unread: rgba(120, 170, 230, .24);
+  --nf-shadow: 0 14px 32px rgba(3, 8, 16, .4);
+  --nf-line: rgba(120, 170, 230, .12);
+  --nf-sunken: rgba(8, 16, 29, .55);
+
+  /* Per-type accent, re-pointed by the .nf-t-* classes in section 7c. */
+  --nf-accent-bg: rgba(103, 232, 249, .12);
+  --nf-accent-fg: #a5f3fc;
+  --nf-accent-bd: rgba(103, 232, 249, .3);
+  --nf-accent-spine: rgba(103, 232, 249, .55);
+}
+
+/* ----------------------------------------------------------------------------
+   1. The ground — base radial + two fixed ambient layers
+   ------------------------------------------------------------------------- */
+/* !important: customer-dark.css paints this page's body for the light theme,
+   and style.css animates it (bgDrift). Both use !important. */
+body.nfx {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) #060d18 !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  color: var(--nf-ink);
+  font-family: var(--nf-font);
+  animation: none !important;
+}
+
+/* The ambient layers are THE HOMEPAGE'S, not an approximation of them.
+   Sections 3a/3b/3c of techworld-anim.css are ported verbatim below, and
+   notifications.php renders the same three <div class="tw-bg"> elements the
+   two landing pages do. Two reasons this is real elements rather than body
+   pseudo-elements: the grid and the two blobs are three independently
+   animated layers (26s / 22s / 28s, different easings and directions) and a
+   body has only ::before and ::after; and copying the markup means the pages
+   stay identical by construction instead of by two sets of values that have
+   to be kept in step.
+
+   The earlier version of this block was the brief's written spec - blur(30px)
+   blooms at .20/.13, pink upper-RIGHT - which is a noticeably weaker and
+   differently-placed field than the homepage actually paints. These are the
+   homepage's own numbers. */
+body.nfx .tw-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* 1a. Faint 120px grid of crossing 1px lines, panning diagonally, 26s loop.
+   --tw-line is declared on .tw-home, which is not an ancestor here, so this
+   resolves to the same fallback the homepage itself uses. */
+body.nfx .tw-bg-grid {
+  background-image:
+    linear-gradient(to right, var(--tw-line, rgba(120, 170, 230, .12)) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--tw-line, rgba(120, 170, 230, .12)) 1px, transparent 1px);
+  background-size: 120px 120px;
+  opacity: .5;
+  animation: tw-grid-pan 26s linear infinite;
+  will-change: background-position;
+}
+@keyframes tw-grid-pan {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 120px 120px, 120px 120px; }
+}
+
+/* 1b. Large pink radial blur blob drifting, 22s ease-in-out loop. */
+body.nfx .tw-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  will-change: transform;
+}
+body.nfx .tw-bg-blob-pink {
+  width: 46vw;
+  height: 46vw;
+  min-width: 340px;
+  min-height: 340px;
+  top: -12vw;
+  left: -8vw;
+  background: radial-gradient(circle, rgba(224, 86, 122, .38), rgba(224, 86, 122, 0) 70%);
+  animation: tw-drift-pink 22s ease-in-out infinite alternate;
+}
+/* 1c. Cyan blob drifting the opposite way, 28s. */
+body.nfx .tw-bg-blob-cyan {
+  width: 42vw;
+  height: 42vw;
+  min-width: 320px;
+  min-height: 320px;
+  bottom: -14vw;
+  right: -10vw;
+  background: radial-gradient(circle, rgba(103, 232, 249, .30), rgba(103, 232, 249, 0) 70%);
+  animation: tw-drift-cyan 28s ease-in-out infinite alternate;
+}
+@keyframes tw-drift-pink {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(9vw, 7vw, 0) scale(1.12); }
+}
+@keyframes tw-drift-cyan {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-8vw, -6vw, 0) scale(1.1); }
+}
+
+/* The lift that puts body's children above these layers is NOT written here.
+   customer-dark.css already carries
+     body > *:not(script):not(style) { position: relative; z-index: 1 }
+   at (0,0,1), and that weakness is the point: it must lose to the (0,1,0)
+   class rules pinning .customer-sidebar, its backdrop, its toggle and the
+   floating cart button to `position: fixed`. A stronger copy here drops all
+   four into normal flow — the sidebar becomes an in-flow block that pushes
+   the page below the fold and the cart button jumps to the top-left. Only the
+   rail's z-index is restated, which changes no positioning. */
+body.nfx .customer-sidebar,
+body.nfx .customer-sidebar-backdrop,
+body.nfx .customer-menu-toggle { z-index: 3; }
+
+/* Every wrapper that was painting a sheet goes transparent. */
+body.nfx .notifications-page,
+body.nfx .notifications-page > .container,
+body.nfx .notifications-layout,
+body.nfx .notifications-main,
+body.nfx .notifications-list {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ----------------------------------------------------------------------------
+   2. Container — and closing the gap above the header
+   ------------------------------------------------------------------------- */
+body.nfx .notifications-page {
+  padding: 0 !important;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+body.nfx .notifications-page > .container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px clamp(16px, 3.5vw, 44px) 80px;
+}
+body.nfx .notifications-layout {
+  display: block !important;
+  max-width: none;
+  gap: 0;
+  margin: 0;
+}
+body.nfx *,
+body.nfx *::before,
+body.nfx *::after { box-sizing: border-box; }
+
+/* Dark scrollbars — a white one was showing through. */
+body.nfx {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 170, 230, .28) rgba(8, 16, 29, .6);
+}
+body.nfx ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.nfx ::-webkit-scrollbar-track { background: rgba(8, 16, 29, .6); }
+body.nfx ::-webkit-scrollbar-thumb {
+  background: rgba(120, 170, 230, .28);
+  border-radius: 999px;
+}
+body.nfx ::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, .42); }
+
+body.nfx :focus-visible {
+  outline: 2px solid rgba(103, 232, 249, .75);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------------------
+   3. Header
+   ------------------------------------------------------------------------- */
+body.nfx .notifications-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  text-align: left !important;
+  margin: 0 0 18px !important;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--nf-line);
+}
+body.nfx .nf-head-main { flex: 1 1 420px; min-width: 0; }
+
+body.nfx .nf-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  font-family: var(--nf-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--nf-ink-faint);
+}
+body.nfx .nf-eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nf-pink);
+  flex: none;
+  animation: nf-pulse 2.2s var(--nf-ease) infinite;
+}
+@keyframes nf-pulse {
+  0%, 100% { opacity: 1;  transform: scale(1); }
+  50%      { opacity: .3; transform: scale(.6); }
+}
+
+body.nfx .notifications-header h1 {
+  display: block !important;
+  margin: 0 !important;
+  font-family: var(--nf-font);
+  font-size: clamp(28px, 3.3vw, 44px);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+  color: var(--nf-ink) !important;
+}
+body.nfx .notifications-header p {
+  margin: 11px 0 0;
+  font-family: var(--nf-font);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--nf-ink-dim) !important;
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+/* "Mark All as Read" — same button, same onclick, ghost treatment. */
+body.nfx .notifications-header .bulk-actions { flex: none; }
+body.nfx .bulk-actions .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 17px;
+  border-radius: 12px;
+  background: rgba(20, 36, 60, .7) !important;
+  border: 1px solid rgba(120, 170, 230, .24) !important;
+  color: #cfe0f5 !important;
+  font-family: var(--nf-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .25s var(--nf-ease), transform .25s var(--nf-ease);
+}
+body.nfx .bulk-actions .btn-secondary:hover:not(:disabled) {
+  background: rgba(103, 232, 249, .12) !important;
+  transform: translateY(-2px);
+}
+body.nfx .bulk-actions .btn-secondary:disabled { opacity: .55; cursor: default; }
+body.nfx .bulk-actions .btn-secondary i { font-size: 11px; }
+
+/* ----------------------------------------------------------------------------
+   4. Filter chips — lifted out of the white bar onto the page ground
+   ------------------------------------------------------------------------- */
+/* .notifications-controls now holds only the "Mark All as Read" button, up in
+   the header row - see the note in notifications.php for why the button keeps
+   that wrapper. Its old cream bar treatment is stripped here. */
+body.nfx .notifications-controls {
+  display: block !important;
+  flex: none;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+body.nfx .nf-filterbar { margin: 0 0 20px; }
+body.nfx .filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+body.nfx .filter-tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  /* Padding grows with the type so the pill keeps its proportions. */
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: var(--nf-sunken) !important;
+  border: 1px solid var(--nf-line, rgba(120, 170, 230, .2)) !important;
+  color: var(--nf-ink-mute) !important;
+  /* Readable first, decorative second.
+     These were 10px mono, uppercase, at .12em tracking - three things that
+     each cost legibility, stacked on the page's primary navigation. They are
+     the control a first-time visitor uses to find anything here, so they now
+     take the page's own font at a normal reading size and sentence case, with
+     only enough tracking to keep the pill shape. */
+  font-family: var(--nf-font, inherit);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-transform: none;
+  cursor: pointer;
+  transition: transform .2s var(--nf-ease), border-color .2s var(--nf-ease), color .2s var(--nf-ease), background .2s var(--nf-ease);
+}
+body.nfx .filter-tab:hover {
+  transform: translateY(-2px);
+  border-color: var(--nf-accent-bd, rgba(103, 232, 249, .45)) !important;
+  /* --nf-ink, not #fff: white is right on the navy pill and invisible on the
+     light one. The token carries the correct ink for whichever mode is on. */
+  color: var(--nf-ink) !important;
+}
+body.nfx .filter-tab.active {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .9), rgba(127, 106, 224, .9)) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+/* The count, appended by the page's own nfLoadChipCounts(). */
+body.nfx .nf-chip-count {
+  font-family: var(--nf-mono);
+  /* Deliberately a step BELOW the label. The point of raising the tabs was to
+     break the flat wall of same-size text the page had - so the count has to
+     stay subordinate to the word it counts, not match it. */
+  font-size: 12px;
+  opacity: .7;
+}
+body.nfx .nf-chip-count:empty { display: none; }
+
+/* ----------------------------------------------------------------------------
+   5. The list + the day dividers
+   ------------------------------------------------------------------------- */
+body.nfx .notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 !important;
+}
+body.nfx .nf-daygroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+body.nfx .nf-daygroup + .nf-daygroup { margin-top: 18px; }
+body.nfx .nf-daylabel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--nf-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--nf-ink-faint);
+}
+body.nfx .nf-daylabel::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(120, 170, 230, .1);
+}
+
+body.nfx .loading-state {
+  padding: 48px 20px;
+  text-align: center;
+  border-radius: 16px;
+  background: var(--nf-row-read);
+  border: 1px solid var(--nf-bd-read);
+  color: var(--nf-ink-dim) !important;
+}
+body.nfx .loading-state p { color: var(--nf-ink-dim) !important; margin: 8px 0 0; }
+body.nfx .loading-state i { color: var(--nf-ink-faint) !important; font-size: 22px; }
+
+/* ----------------------------------------------------------------------------
+   6. The row
+   ------------------------------------------------------------------------- */
+/* !important on the surface: the page's own <style> block (line 257) sets
+   .notification-item's background/border, and customer-dark.css forces a
+   light-theme card treatment on the same class. */
+body.nfx .notification-item {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 16px 18px !important;
+  margin: 0 !important;
+  border-radius: 16px !important;
+  background: var(--nf-row-read) !important;
+  border: 1px solid var(--nf-bd-read) !important;
+  box-shadow: var(--nf-shadow) !important;
+  cursor: pointer;
+  transition: transform .25s var(--nf-ease), border-color .25s var(--nf-ease);
+}
+body.nfx .notification-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(103, 232, 249, .4) !important;
+  background: var(--nf-row-read) !important;
+}
+body.nfx .notification-item.unread {
+  background: var(--nf-row-unread) !important;
+  border-color: var(--nf-bd-unread) !important;
+}
+body.nfx .notification-item.unread:hover { border-color: rgba(103, 232, 249, .4) !important; }
+
+/* The old floating unread dot, replaced by the in-card one after the title. */
+body.nfx .notification-item.unread::before { display: none !important; }
+
+/* 2px colour spine down the left inside edge. */
+body.nfx .notification-item::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--nf-accent-spine);
+  pointer-events: none;
+}
+
+/* 6a. Icon — a tinted square per type, not the same grey circle every row. */
+body.nfx .notification-icon {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+  display: grid !important;
+  place-items: center;
+  flex: none;
+  background: var(--nf-accent-bg) !important;
+  border: 1px solid var(--nf-accent-bd) !important;
+  color: var(--nf-accent-fg) !important;
+  font-size: 15px !important;
+}
+/* The flaticon glyph is replaced by the typographic one the design calls for.
+   getNotificationIcon() still runs and still writes its class - the <i> is
+   simply not rendered - so that function is untouched. */
+body.nfx .notification-icon i { display: none !important; }
+body.nfx .nf-glyph {
+  font-family: var(--nf-mono);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--nf-accent-fg);
+}
+
+/* 6b. Content */
+body.nfx .notification-content { min-width: 0; }
+body.nfx .notification-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--nf-font);
+  font-size: 14.5px !important;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #eaf1fa !important;
+  margin: 0 0 5px !important;
+}
+body.nfx .notification-item.unread .notification-title { color: #fff !important; }
+
+/* Unread marker, immediately after the title. */
+body.nfx .nf-unread-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nf-pink-lt);
+  flex: none;
+}
+body.nfx .notification-item:not(.unread) .nf-unread-dot { display: none; }
+
+/* ----------------------------------------------------------------------------
+   6c. Read vs unread
+   ------------------------------------------------------------------------- */
+/* The whole point of this list is "which of these still needs me", and the
+   two row recipes above (--nf-row-read vs --nf-row-unread) differ by about
+   4% alpha - invisible on a dark ground. So the state is carried by four
+   things at once instead: a pink spine, a brighter surface, a live dot, and
+   a read row that is visibly dimmed and desaturated next to it. */
+
+/* Unread: the type-coloured 2px spine becomes a full-height pink bar. */
+body.nfx .notification-item.unread::after {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 16px 0 0 16px;
+  background: linear-gradient(180deg, var(--nf-pink-lt), var(--nf-pink)) !important;
+  box-shadow: 0 0 14px rgba(224, 86, 122, .45);
+}
+body.nfx .notification-item.unread {
+  box-shadow: 0 14px 32px rgba(3, 8, 16, .45), inset 0 0 0 1px rgba(255, 154, 181, .10) !important;
+}
+body.nfx .notification-item.unread .notification-icon {
+  box-shadow: 0 0 0 1px rgba(255, 154, 181, .22), 0 6px 16px rgba(3, 8, 16, .45) !important;
+}
+/* The 6px dot was easy to miss against the title. Bigger, with a halo. */
+body.nfx .notification-item.unread .nf-unread-dot {
+  width: 8px;
+  height: 8px;
+  box-shadow: 0 0 0 3px rgba(224, 86, 122, .18), 0 0 10px rgba(255, 154, 181, .7);
+  animation: nf-unread-pulse 2.4s var(--nf-ease) infinite;
+}
+@keyframes nf-unread-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(224, 86, 122, .18), 0 0 10px rgba(255, 154, 181, .65); }
+  50%      { box-shadow: 0 0 0 6px rgba(224, 86, 122, 0),   0 0 14px rgba(255, 154, 181, .95); }
+}
+
+/* Read: settled, not deleted. Desaturated accent, dimmed type, shallower
+   shadow - it reads as "done" without becoming unreadable. */
+body.nfx .notification-item:not(.unread) {
+  box-shadow: 0 8px 20px rgba(3, 8, 16, .28) !important;
+}
+body.nfx .notification-item:not(.unread) .notification-icon {
+  filter: grayscale(.85);
+  opacity: .6;
+}
+body.nfx .notification-item:not(.unread)::after {
+  filter: grayscale(1);
+  opacity: .4;
+}
+body.nfx .notification-item:not(.unread) .notification-title {
+  color: var(--nf-ink-mute) !important;
+  font-weight: 600;
+}
+body.nfx .notification-item:not(.unread) .notification-message,
+body.nfx .notification-item:not(.unread) .nf-cat,
+body.nfx .notification-item:not(.unread) .notification-time {
+  color: var(--nf-ink-faint) !important;
+}
+/* Hovering a read row is the user asking to look at it again - give the
+   colour back rather than making them squint at a dimmed row. */
+body.nfx .notification-item:not(.unread):hover .notification-icon {
+  filter: none;
+  opacity: 1;
+}
+body.nfx .notification-item:not(.unread):hover::after { filter: none; opacity: .7; }
+body.nfx .notification-item:not(.unread):hover .notification-title { color: var(--nf-ink) !important; }
+
+/* Marking a row read in place (markAsReadFromList / openNotificationFromList
+   drop .unread and add .read-transition) should be a visible fade between the
+   two states above, not a jump - the base row transition only covers
+   transform and border-colour. */
+body.nfx .notification-item {
+  transition: transform .25s var(--nf-ease), border-color .25s var(--nf-ease),
+              background .3s var(--nf-ease), box-shadow .3s var(--nf-ease);
+}
+body.nfx .notification-item::after,
+body.nfx .notification-item .notification-icon,
+body.nfx .notification-item .notification-title,
+body.nfx .notification-item .notification-message {
+  transition: filter .3s var(--nf-ease), opacity .3s var(--nf-ease),
+              color .3s var(--nf-ease), box-shadow .3s var(--nf-ease);
+}
+
+/* HIGH / URGENT — a real chip, not grey text. */
+body.nfx .notification-title .priority-high,
+body.nfx .notification-title .priority-urgent {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(251, 191, 36, .14);
+  border: 1px solid rgba(251, 191, 36, .36);
+  color: #fcd34d;
+  font-family: var(--nf-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  flex: none;
+}
+
+body.nfx .notification-message {
+  font-family: var(--nf-font) !important;
+  font-size: 13px !important;
+  line-height: 1.5;
+  color: var(--nf-ink-dim) !important;
+  margin: 0 0 9px !important;
+  text-wrap: pretty;
+}
+
+/* 6c. Meta row */
+body.nfx .notification-meta {
+  display: flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 !important;
+}
+body.nfx .notification-time {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0 !important;
+  font-family: var(--nf-mono);
+  font-size: 9px !important;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--nf-ink-faint) !important;
+}
+body.nfx .notification-time i { display: none !important; }
+/* The arrival estimate line, inserted by nfEtaChip() between the message and
+   the meta row. A bordered inline strip rather than another paragraph: it is a
+   different kind of fact from the message above it (a live estimate, not what
+   we said when the order was placed), and the border is what stops the two
+   reading as one run of grey text.
+
+   Tokens only, and the cyan already declared in section 1 - an estimate is
+   information, so it does not take the pink the unread accents use. */
+body.nfx .nf-eta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  padding: 5px 10px;
+  border: 1px solid rgba(103, 232, 249, .26);
+  border-radius: 999px;
+  background: rgba(103, 232, 249, .08);
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+body.nfx .nf-eta > i {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--nf-cyan);
+  flex: none;
+}
+body.nfx .nf-eta-label {
+  font-family: var(--nf-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--nf-cyan);
+}
+body.nfx .nf-eta-value {
+  font-family: var(--nf-font);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--nf-ink);
+}
+
+body.nfx .nf-cat {
+  font-family: var(--nf-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--nf-accent-fg);
+}
+body.nfx .nf-action-link {
+  font-family: var(--nf-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--nf-pink-lt);
+  text-decoration: none;
+  transition: color .2s var(--nf-ease);
+}
+body.nfx .nf-action-link:hover { color: var(--nf-cyan); }
+
+/* ----------------------------------------------------------------------------
+   7. Row actions — consistent on every row, not hover-only
+   ------------------------------------------------------------------------- */
+body.nfx .notification-actions {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  opacity: 1 !important;
+  visibility: visible !important;
+  flex: none;
+}
+body.nfx .notification-action {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  background: rgba(8, 16, 29, .5) !important;
+  border: 1px solid rgba(120, 170, 230, .18) !important;
+  color: var(--nf-ink-mute) !important;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform .2s var(--nf-ease), color .2s var(--nf-ease), border-color .2s var(--nf-ease);
+}
+body.nfx .notification-action:hover { transform: translateY(-2px); }
+body.nfx .nf-act-read:hover {
+  color: var(--nf-green-lt) !important;
+  border-color: rgba(52, 211, 153, .5) !important;
+}
+body.nfx .nf-act-del:hover {
+  color: #ffc2d3 !important;
+  border-color: rgba(224, 86, 122, .5) !important;
+}
+/* Nothing to mark on a row that is already read. */
+body.nfx .notification-item:not(.unread) .nf-act-read { display: none; }
+
+/* ----------------------------------------------------------------------------
+   7c. Per-type accent. Each class only re-points the four --nf-accent-*
+       variables; the icon, spine and category text all read them.
+
+       order_status ....... cyan    (order placed / confirmed / shipped)
+       payment, success ... green   (invoice ready, payment received)
+       cancelled .......... pink    (set by the template when the title or an
+                                     explicit status says cancelled - there is
+                                     no `cancelled` type in the table)
+       promotional ........ violet
+       security ........... pink    - an alert that wants the eye, same family
+                                      as cancelled
+       system ............. steel   - the existing rgba(120,170,230) line blue,
+                                      not a new accent hue. System messages are
+                                      informational and should not compete with
+                                      the four that need action.
+   ------------------------------------------------------------------------- */
+body.nfx .nf-t-order {
+  --nf-accent-bg: rgba(103, 232, 249, .12);
+  --nf-accent-fg: #a5f3fc;
+  --nf-accent-bd: rgba(103, 232, 249, .3);
+  --nf-accent-spine: rgba(103, 232, 249, .55);
+}
+body.nfx .nf-t-payment {
+  --nf-accent-bg: rgba(52, 211, 153, .12);
+  --nf-accent-fg: #9df3d0;
+  --nf-accent-bd: rgba(52, 211, 153, .3);
+  --nf-accent-spine: rgba(52, 211, 153, .55);
+}
+body.nfx .nf-t-cancelled,
+body.nfx .nf-t-security {
+  --nf-accent-bg: rgba(224, 86, 122, .14);
+  --nf-accent-fg: #ffc2d3;
+  --nf-accent-bd: rgba(224, 86, 122, .36);
+  --nf-accent-spine: rgba(224, 86, 122, .7);
+}
+body.nfx .nf-t-promo {
+  --nf-accent-bg: rgba(127, 106, 224, .16);
+  --nf-accent-fg: #d8ccff;
+  --nf-accent-bd: rgba(127, 106, 224, .4);
+  --nf-accent-spine: rgba(127, 106, 224, .6);
+}
+body.nfx .nf-t-system {
+  --nf-accent-bg: rgba(120, 170, 230, .12);
+  --nf-accent-fg: #cfe0f5;
+  --nf-accent-bd: rgba(120, 170, 230, .3);
+  --nf-accent-spine: rgba(120, 170, 230, .5);
+}
+
+/* ----------------------------------------------------------------------------
+   8. Pagination
+   ------------------------------------------------------------------------- */
+body.nfx .nf-pagerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+body.nfx .nf-showing {
+  font-family: var(--nf-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--nf-ink-faint);
+}
+body.nfx .nf-showing:empty { display: none; }
+body.nfx .pagination {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+body.nfx .pagination button {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 11px;
+  background: rgba(20, 36, 60, .7) !important;
+  border: 1px solid rgba(120, 170, 230, .18) !important;
+  color: var(--nf-ink-mute) !important;
+  font-family: var(--nf-mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .2s var(--nf-ease), border-color .2s var(--nf-ease);
+}
+body.nfx .pagination button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: rgba(103, 232, 249, .45) !important;
+  background: rgba(20, 36, 60, .7) !important;
+}
+body.nfx .pagination button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+body.nfx .pagination .active {
+  background: rgba(224, 86, 122, .2) !important;
+  border-color: rgba(224, 86, 122, .5) !important;
+  color: #ffd7e2 !important;
+}
+
+/* ----------------------------------------------------------------------------
+   9. The footer — dark, not cream, and no mono leaking in
+   ----------------------------------------------------------------------------
+   customer-dark.css paints a #fff4ef footer for every page in its
+   `body:has(…, .notifications-page, …)` list. Each of those selectors is
+   countered below at a higher specificity (`body.nfx:has(.notifications-page)`
+   adds a class over their `body:has(.notifications-page)`), plus !important
+   for the one they set that way.
+   ------------------------------------------------------------------------- */
+body.nfx:has(.notifications-page) .main-footer {
+  background: rgba(6, 13, 24, .85);
+  color: #8fa6c4;
+  border-top: 1px solid rgba(120, 170, 230, .16);
+  font-family: var(--nf-font);
+  --bg-secondary: rgba(6, 13, 24, .85);
+  --text-primary: #cfe0f5;
+  --text-secondary: #8fa6c4;
+  --text-muted: #7f95b3;
+  --border-color: rgba(120, 170, 230, .16);
+  --accent-cyan: #ff9ab5;
+}
+body.nfx:has(.notifications-page) .footer-content { border-bottom-color: rgba(120, 170, 230, .16); }
+body.nfx:has(.notifications-page) .footer-column h3 { color: #cfe0f5; }
+body.nfx:has(.notifications-page) .footer-column p,
+body.nfx:has(.notifications-page) .contact-list span { color: #8fa6c4; }
+body.nfx:has(.notifications-page) .footer-column ul li a,
+body.nfx:has(.notifications-page) .contact-list a.social-link {
+  color: #ff9ab5;
+  transition: color .18s var(--nf-ease);
+}
+body.nfx:has(.notifications-page) .footer-column ul li a:hover,
+body.nfx:has(.notifications-page) .contact-list a.social-link:hover { color: #67e8f9; }
+body.nfx:has(.notifications-page) .footer-bottom p,
+body.nfx:has(.notifications-page) .footer-bottom .footer-address,
+body.nfx:has(.notifications-page) .made-with { color: #8fa6c4; }
+/* Their rule for these two sets the colour with !important, so this must. */
+body.nfx:has(.notifications-page) .footer-bottom .contact-list i,
+body.nfx:has(.notifications-page) .footer-column .contact-list i[style*="6b7280"] { color: #8fa6c4 !important; }
+body.nfx:has(.notifications-page) .main-footer,
+body.nfx:has(.notifications-page) .main-footer * { font-family: var(--nf-font); }
+
+/* ----------------------------------------------------------------------------
+   10. Responsive
+   ------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  body.nfx .notification-item {
+    grid-template-columns: 38px minmax(0, 1fr);
+    grid-template-areas: "icon content" "icon actions";
+  }
+  body.nfx .notification-icon { grid-area: icon; }
+  body.nfx .notification-content { grid-area: content; }
+  body.nfx .notification-actions { grid-area: actions; justify-content: flex-start; margin-top: 10px; }
+  body.nfx .notifications-header { align-items: flex-start; }
+}
+
+/* ----------------------------------------------------------------------------
+   Z. Reduced motion — kills every loop, resets to the visible end state.
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  body.nfx .tw-bg,
+  body.nfx .tw-bg-grid,
+  body.nfx .tw-bg-blob,
+  body.nfx .nf-eyebrow::before,
+  body.nfx .notification-item,
+  body.nfx .notification-item.unread .nf-unread-dot,
+  body.nfx .filter-tab,
+  body.nfx .notification-action,
+  body.nfx .pagination button {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  body.nfx .nf-eyebrow::before { opacity: 1; transform: none; }
+  body.nfx .notification-item:hover,
+  body.nfx .filter-tab:hover,
+  body.nfx .notification-action:hover,
+  body.nfx .pagination button:hover:not(:disabled),
+  body.nfx .bulk-actions .btn-secondary:hover:not(:disabled) { transform: none; }
+}

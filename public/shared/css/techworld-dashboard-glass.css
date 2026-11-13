@@ -1,0 +1,879 @@
+/* ============================================================================
+   techworld-dashboard-glass.css — customer dashboard, dark-glass pass
+   ----------------------------------------------------------------------------
+   The LAST stylesheet the dashboard loads. dashboard.php links it after
+   techworld-dashboard-bg.css, which is itself after the footer include, so
+   nothing can load after this file.
+
+   SCOPE: every rule is prefixed `body.tw-dash.tw-glass`. `tw-glass` is new and
+   is added to the <body> tag alongside the existing `tw-page tw-dash`.
+   Removing that one class reverts the page exactly to its previous state.
+
+   WHY THE SPECIFICITY LOOKS HEAVY
+   Three sheets already paint this page's panels warm vanilla, all with
+   !important:
+     techworld-dashboard.css  §3  html body.tw-dash .stats-grid .stat-card
+                                  { background: var(--twd-cream, #fff4ef) !important }      (0,3,2)
+     techworld-dashboard.css  §10 html body.tw-dash .notification-item
+                                  { background: var(--twd-cream, #fff4ef) !important }      (0,2,2)
+     techworld-dashboard-bg.css §6 html body.tw-dash .stat-card, .action-card,
+                                  .orders-table, .empty-state,
+                                  .notification-item { … !important }     (0,2,2)
+   and customer-dark.css carries the light-theme blocks
+     [data-theme="light"] body :is(…, .stat-card, …)        (0,3,1) !important
+     [data-theme="light"] body :is(table td, table th)      (0,3,1) !important
+   which apply because header.php stamps data-theme="light" on <html> for
+   anti-FOUC. An ordinary declaration never beats an !important one however
+   specific, so the surfaces those blocks own are restated here at
+   `html body.tw-dash.tw-glass …` (0,3,2)+ with !important. Everything they do
+   NOT touch is written plainly. Each such rule is marked `/* !I: … *​/` with
+   the sheet it is beating.
+
+   TOKENS: copied verbatim from public/shared/assets/css/techworld-anim.css
+   (section 1, `.tw-home`). No new hues.
+
+   PRESENTATION ONLY. No PHP, query, route or data change.
+   ========================================================================= */
+
+body.tw-dash.tw-glass {
+  /* --- landing-page tokens, verbatim from techworld-anim.css -------------- */
+  --twg-bg: #060d18;
+  --twg-bg-2: #0a1424;
+  --twg-bg-3: #16283f;
+
+  --twg-ink: #e8eef7;
+  --twg-ink-dim: #a9bcd4;
+  --twg-ink-faint: #7f95b3;
+  --twg-ink-mute: #9db1cb;
+
+  --twg-pink: #e0567a;
+  --twg-pink-lt: #ff9ab5;
+  --twg-cyan: #67e8f9;
+  --twg-violet: #7f6ae0;
+  --twg-green: #34d399;
+  --twg-green-lt: #9df3d0;
+
+  --twg-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --twg-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+  --twg-ease: cubic-bezier(.2, .85, .2, 1);
+
+  /* --- the panel recipe from section 1 of the brief ----------------------- */
+  --twg-glass: linear-gradient(180deg, rgba(20, 36, 60, .9), rgba(11, 22, 38, .96));
+  --twg-line: rgba(120, 170, 230, .16);
+  --twg-line-soft: rgba(120, 170, 230, .14);
+  --twg-line-hair: rgba(120, 170, 230, .08);
+  --twg-shadow: 0 18px 40px rgba(3, 8, 16, .45);
+  --twg-sunken: rgba(8, 16, 29, .55);
+
+  --twg-title: #f2f6fc;
+  --twg-body: #a9bcd4;
+  --twg-caption: #8fa6c4;
+  --twg-muted: #7f95b3;
+}
+
+/* ----------------------------------------------------------------------------
+   1. The ground — base radial + two fixed ambient layers
+   ----------------------------------------------------------------------------
+   techworld-dashboard-bg.css already paints all three at
+   `html body.tw-dash` with !important. They are restated here only so this
+   sheet stands on its own (remove the other two sheets and the page still
+   looks right), and so the grid/bloom values match the brief exactly.
+   ------------------------------------------------------------------------- */
+/* !I: beats techworld-dashboard-bg.css §1 `html body.tw-dash` !important */
+html body.tw-dash.tw-glass {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) var(--tw-bg, #060d18) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  color: var(--twg-ink) !important;
+  font-family: var(--twg-font);
+  position: relative;
+}
+
+html body.tw-dash.tw-glass::before,
+html body.tw-dash.tw-glass::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+
+/* 1a. 120px grid of two 1px lines, drifting 0 -> 120px, 26s linear. */
+html body.tw-dash.tw-glass::before {
+  background-image: linear-gradient(to right, rgba(120, 170, 230, .05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 170, 230, .05) 1px, transparent 1px);
+  background-size: 120px 120px;
+  filter: none;
+  animation: twg-grid 26s linear infinite;
+  will-change: background-position;
+}
+@keyframes twg-grid {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 120px, 0 120px; }
+}
+
+/* 1b. Two blurred blooms — pink upper right, cyan lower left. */
+html body.tw-dash.tw-glass::after {
+  background-image: radial-gradient(42vw 42vw at 82% 6%, rgba(224, 86, 122, .20), rgba(224, 86, 122, 0) 68%),
+    radial-gradient(38vw 38vw at 12% 88%, rgba(56, 189, 248, .13), rgba(56, 189, 248, 0) 68%);
+  background-repeat: no-repeat;
+  filter: blur(30px);
+  animation: twg-bloom 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes twg-bloom {
+  from { transform: scale(1); }
+  to   { transform: scale(1.12); }
+}
+
+/* Content above the layers.
+
+   The lift itself is deliberately NOT written here. customer-dark.css already
+   carries it as
+     body > *:not(script):not(style) { position: relative; z-index: 1 }
+   at (0,0,1), and techworld-dashboard-bg.css §2 documents why that weakness
+   matters: it loses to the (0,1,0) class rules pinning .customer-sidebar, its
+   backdrop, its toggle and the floating cart button to `position: fixed`. A
+   stronger copy forces all four back to `position: relative`, which drops them
+   into normal flow - the sidebar becomes an in-flow block that pushes the page
+   below the fold, and the cart button lands top-left instead of bottom-right.
+   That regression shipped once from this sheet; this note is why it will not
+   again. Only the z-index is restated, which changes no positioning. */
+body.tw-dash.tw-glass .customer-sidebar,
+body.tw-dash.tw-glass .customer-sidebar-backdrop,
+body.tw-dash.tw-glass .customer-menu-toggle { z-index: 3; }
+
+/* Every wrapper that was painting a sheet goes transparent — including the
+   big .dashboard-main panel behind everything.
+   !I: beats techworld-dashboard.css §10 `html body.tw-dash …` !important */
+html body.tw-dash.tw-glass .dashboard-container,
+html body.tw-dash.tw-glass .dashboard-main,
+html body.tw-dash.tw-glass .quick-actions,
+html body.tw-dash.tw-glass .recent-orders,
+html body.tw-dash.tw-glass .recent-notifications,
+html body.tw-dash.tw-glass .notifications-list {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* ----------------------------------------------------------------------------
+   2. Container — and closing the dead gap at the top
+   ------------------------------------------------------------------------- */
+/* !I: beats techworld-dashboard-bg.css §3 padding !important */
+html body.tw-dash.tw-glass .dashboard-main {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px clamp(18px, 4vw, 48px) 90px !important;
+}
+/* The gap was .dashboard-container's 40px block padding stacking on top of
+   .dashboard-main's own 28px and the header's margin. */
+html body.tw-dash.tw-glass .dashboard-container {
+  padding: 0 !important;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+body.tw-dash.tw-glass .dashboard-container > .container {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+body.tw-dash.tw-glass .dashboard-header { margin-bottom: 22px; }
+
+body.tw-dash.tw-glass *,
+body.tw-dash.tw-glass *::before,
+body.tw-dash.tw-glass *::after { box-sizing: border-box; }
+
+/* Dark scrollbars — a white one was showing through. */
+body.tw-dash.tw-glass,
+body.tw-dash.tw-glass .orders-table,
+body.tw-dash.tw-glass .dash-rail {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--twd-line-rgb, 120, 170, 230), .28) rgba(var(--twd-deep-rgb, 8, 16, 29), .6);
+}
+body.tw-dash.tw-glass ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.tw-dash.tw-glass ::-webkit-scrollbar-track { background: rgba(var(--twd-deep-rgb, 8, 16, 29), .6); }
+body.tw-dash.tw-glass ::-webkit-scrollbar-thumb {
+  background: rgba(var(--twd-line-rgb, 120, 170, 230), .28);
+  border-radius: 999px;
+}
+body.tw-dash.tw-glass ::-webkit-scrollbar-thumb:hover { background: rgba(var(--twd-line-rgb, 120, 170, 230), .42); }
+
+body.tw-dash.tw-glass :focus-visible {
+  outline: 2px solid rgba(var(--twd-cyan-rgb, 103, 232, 249), .75);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------------------
+   3. Header
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .dash-headrow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  /* The header's own margin is zeroed below, so the row carries the gap to the
+     stat cards. Without it the buttons sit flush on the cards' top edge. */
+  margin-bottom: 22px;
+}
+body.tw-dash.tw-glass .dash-headrow > .dashboard-header {
+  flex: 1 1 460px;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+body.tw-dash.tw-glass .dash-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--twg-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--twg-muted);
+  margin: 0 0 14px;
+}
+body.tw-dash.tw-glass .dash-eyebrow::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--twg-green);
+  flex: none;
+}
+
+/* !I: beats techworld-dashboard.css §10 `html body.tw-dash h1` !important */
+html body.tw-dash.tw-glass .dashboard-header h1 {
+  font-family: var(--twg-font);
+  font-size: clamp(30px, 3.6vw, 48px);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+  color: var(--twg-ink) !important;
+  margin: 0;
+}
+body.tw-dash.tw-glass .dashboard-header p {
+  margin: 12px 0 0;
+  font-family: var(--twg-font);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--twg-body);
+  max-width: 58ch;
+  text-wrap: pretty;
+}
+
+body.tw-dash.tw-glass .dash-headactions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+body.tw-dash.tw-glass .dash-headactions > a {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-family: var(--twg-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform .25s var(--twg-ease), background .25s var(--twg-ease), box-shadow .25s var(--twg-ease);
+}
+body.tw-dash.tw-glass .dash-btn-ghost {
+  background: rgba(var(--twd-panel-rgb, 20, 36, 60), .7);
+  border: 1px solid rgba(var(--twd-line-rgb, 120, 170, 230), .24);
+  color: var(--tw-ink-bright-2, #cfe0f5);
+}
+body.tw-dash.tw-glass .dash-btn-ghost:hover {
+  background: rgba(var(--twd-cyan-rgb, 103, 232, 249), .12);
+  transform: translateY(-2px);
+}
+/* .dash-btn-cta, not .btn-primary: the page's own <style> block carries
+   `.btn-primary` and sits after every <link>, so it would win the tie. */
+body.tw-dash.tw-glass .dash-btn-cta {
+  background: var(--tw-brand-grad);
+  border: 0;
+  color: var(--twd-white-ink, #fff);
+}
+body.tw-dash.tw-glass .dash-btn-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(var(--twd-pink-rgb, 224, 86, 122), .42);
+}
+
+/* ----------------------------------------------------------------------------
+   4. Stat cards — number leads, icon tile gone, hairline meter
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .stats-grid {
+  display: grid;
+  /* 210, not 190: with the pill's 84px track reserved above, 190px left only
+     70px for the label and wrapped every one of them. At 210 the four shorter
+     labels sit on one line and only "TOTAL ORDERS" wraps, and five cards still
+     fit across a 1280 laptop. */
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin: 0 0 16px;
+}
+
+/* !I: beats techworld-dashboard.css §3, techworld-dashboard-bg.css §6 and
+   customer-dark.css's [data-theme="light"] :is(… .stat-card …) — all three
+   force #fff4ef here. */
+html body.tw-dash.tw-glass .stats-grid .stat-card {
+  position: relative;
+  display: block;              /* was flex, for the icon tile */
+  min-width: 0;
+  /* A size container, so .stat-info h3 below can be sized against THIS CARD
+     instead of against the viewport. 2.4vw said nothing about how much room
+     the number actually had: at 1333px and up it resolved to 32px in every
+     card, including a 190px one where a peso figure needs 204px. */
+  container-type: inline-size;
+  overflow: visible;
+  padding: 16px 18px 18px !important;
+  border-radius: 18px !important;
+  background: var(--twg-glass) !important;
+  background-image: var(--twg-glass) !important;
+  border: 1px solid var(--twg-line) !important;
+  box-shadow: var(--twg-shadow) !important;
+  color: var(--twg-title) !important;
+  transition: transform .35s var(--twg-ease), border-color .35s var(--twg-ease), box-shadow .35s var(--twg-ease);
+}
+html body.tw-dash.tw-glass .stats-grid .stat-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(var(--twd-pink-rgb, 224, 86, 122), .45) !important;
+}
+
+/* The five icon tiles carry no information. Out of sight, still in the DOM. */
+html body.tw-dash.tw-glass .stat-card .stat-icon { display: none !important; }
+
+/* dashboard.php renders <h3>value</h3> then <p>label</p>; the design wants the
+   label as a caption ABOVE the number. column-reverse gets there without
+   touching the markup, so DOM (and screen-reader) order is unchanged. */
+body.tw-dash.tw-glass .stat-card .stat-info {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+/* !I: beats customer-dark.css's forced .stat-card colour cascade */
+html body.tw-dash.tw-glass .stat-card .stat-info p {
+  margin: 0;
+  /* .stat-pill is position:absolute, so it never pushed this label aside - it
+     simply sat on top of it. In the narrowest card the content box is 154px
+     and "TOTAL ORDERS" + the "ALL TIME" pill need 162px, so the two collided.
+     Reserving the pill's widest track (ALL TIME = 71px) is what separates them.
+
+     Then nowrap, not wrapping: .stat-info is column-reverse, so a label that
+     wrapped to two lines would push that card's number down and leave the five
+     figures sitting at different heights. Tracking is .14em rather than .2em
+     so every label still fits on its one line - "TOTAL ORDERS" is 84px in the
+     90px that leaves. Ellipsis is the guard if a longer label is ever added:
+     it truncates in place instead of knocking the row out of alignment. */
+  padding-right: 76px;
+  font-family: var(--twg-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--twg-caption) !important;
+}
+/* The clipped ₱902,129.xx: a shrinkable track, no wrap, visible overflow and
+   a fluid size so it can never truncate again. */
+/* The number. `white-space:nowrap` + `overflow:visible` fixed an earlier
+   clipping bug by letting the value escape the card instead - which meant
+   PHP207,194.40 at 32px (204px wide) spilled 50px over the card beside it.
+   Sizing against the card's own width keeps it whole AND inside: 13cqi is
+   20px in a 154px card and 30px in a roomy one, and an 11-character peso
+   figure fits at every step. The vw clamp is kept first as the fallback for
+   engines without container queries. */
+html body.tw-dash.tw-glass .stat-card .stat-info h3 {
+  display: block;
+  margin: 12px 0 0;
+  min-width: 0;
+  max-width: 100%;
+  font-family: var(--twg-mono);
+  font-size: clamp(18px, 2vw, 26px);
+  font-size: clamp(18px, 13cqi, 30px);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  color: var(--twg-title) !important;
+  white-space: nowrap;
+  /* Last-resort guard: if a value is longer than anything priced here, it
+     ellipsises inside its own card rather than covering its neighbour. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Context pill, top-right. */
+body.tw-dash.tw-glass .stat-pill {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-family: var(--twg-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(var(--twd-ok-rgb, 52, 211, 153), .12);
+  border: 1px solid rgba(var(--twd-ok-rgb, 52, 211, 153), .34);
+  color: var(--twg-green-lt);
+  white-space: nowrap;
+}
+
+/* 3px hairline meter. */
+body.tw-dash.tw-glass .stat-bar {
+  display: block;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 999px;
+  background: rgba(var(--twd-line-rgb, 120, 170, 230), .14);
+  overflow: hidden;
+}
+body.tw-dash.tw-glass .stat-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--tw-brand-1), var(--tw-brand-2));
+}
+
+/* ----------------------------------------------------------------------------
+   5. Two-column body
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .dash-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  body.tw-dash.tw-glass .dash-columns { grid-template-columns: minmax(0, 1fr); }
+}
+body.tw-dash.tw-glass .dash-col-main { min-width: 0; }
+body.tw-dash.tw-glass .dash-rail {
+  position: sticky;
+  top: 20px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (max-width: 1000px) {
+  body.tw-dash.tw-glass .dash-rail { position: static; }
+}
+body.tw-dash.tw-glass .dash-col-main > * + * { margin-top: 18px; }
+html body.tw-dash.tw-glass .recent-orders,
+html body.tw-dash.tw-glass .recent-notifications,
+html body.tw-dash.tw-glass .quick-actions { margin-bottom: 0 !important; }
+
+/* ----------------------------------------------------------------------------
+   6. Section headings — shared by Recent Orders and Recent Notifications
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .section-header,
+body.tw-dash.tw-glass .quick-actions > h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 0 2px;
+}
+/* !I: beats techworld-dashboard-bg.css §5 heading colour !important */
+html body.tw-dash.tw-glass .section-header h2,
+html body.tw-dash.tw-glass .quick-actions > h2 {
+  margin: 0;
+  font-family: var(--twg-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--twg-muted) !important;
+}
+/* "View All" was pink-on-cream at roughly 1.4:1. */
+/* !I: beats techworld-dashboard-bg.css §5 `.section-header a` !important */
+html body.tw-dash.tw-glass .section-header .view-all-link {
+  font-family: var(--twg-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--twg-pink-lt) !important;
+  opacity: 1 !important;
+  transition: color .2s var(--twg-ease);
+}
+html body.tw-dash.tw-glass .section-header .view-all-link:hover {
+  color: var(--twg-cyan) !important;
+  text-decoration: none;
+}
+
+/* ----------------------------------------------------------------------------
+   7. Recent Orders — a panel, not a paper table
+   ------------------------------------------------------------------------- */
+/* !I: beats techworld-dashboard.css §4 and techworld-dashboard-bg.css §6 */
+html body.tw-dash.tw-glass .orders-table,
+html body.tw-dash.tw-glass .empty-state {
+  border-radius: 20px !important;
+  overflow: hidden;
+  background: var(--twg-glass) !important;
+  background-image: var(--twg-glass) !important;
+  border: 1px solid var(--twg-line) !important;
+  box-shadow: var(--twg-shadow) !important;
+  color: var(--twg-ink) !important;
+}
+body.tw-dash.tw-glass .orders-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+}
+/* !I: beats customer-dark.css `[data-theme="light"] body :is(table td, table th)`
+   and style.css's `[data-theme="light"] table th`, both !important */
+html body.tw-dash.tw-glass .orders-table th {
+  text-align: left;
+  padding: 13px 20px;
+  font-family: var(--twg-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--twg-muted) !important;
+  background: var(--twg-sunken) !important;
+  border-bottom: 1px solid var(--twg-line-hair) !important;
+}
+html body.tw-dash.tw-glass .orders-table td {
+  padding: 14px 20px;
+  font-family: var(--twg-font);
+  font-size: 13px;
+  color: var(--twg-ink) !important;
+  background: transparent;
+  border-bottom: 1px solid var(--twg-line-hair) !important;
+  vertical-align: middle;
+}
+html body.tw-dash.tw-glass .orders-table tbody tr:last-child td { border-bottom: 0 !important; }
+body.tw-dash.tw-glass .orders-table tbody tr { transition: background .25s var(--twg-ease); }
+html body.tw-dash.tw-glass .orders-table tbody tr:hover td { background: rgba(var(--twd-cyan-rgb, 103, 232, 249), .05) !important; }
+
+body.tw-dash.tw-glass .order-id {
+  font-family: var(--twg-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--twg-pink-lt);
+}
+/* The item-summary second line. order_items is not part of the dashboard's
+   query, so dashboard.php never renders this element — the rule is here for
+   the day the summary is available, and costs nothing meanwhile. */
+body.tw-dash.tw-glass .order-items {
+  margin-top: 4px;
+  font-family: var(--twg-font);
+  font-size: 12px;
+  color: var(--twg-caption);
+}
+html body.tw-dash.tw-glass .orders-table td.order-total {
+  font-family: var(--twg-mono);
+  font-weight: 700;
+  color: var(--twg-title) !important;
+  white-space: nowrap;
+}
+
+/* Status chips — dark-ground, all SIX values of the orders.status ENUM.
+   The brief specified four; `packed` and `ready` are real ENUM values with no
+   rule in it, so they are given one here in the same idiom (violet for packed,
+   a dimmer green for ready, which sits between packed and shipped). */
+body.tw-dash.tw-glass .status-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-family: var(--twg-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+body.tw-dash.tw-glass .status-preparing { background: rgba(var(--twd-warn-rgb, 251, 191, 36), .14); color: var(--twd-warn-ink, #fcd34d); border: 1px solid rgba(var(--twd-warn-rgb, 251, 191, 36), .4); }
+body.tw-dash.tw-glass .status-packed    { background: rgba(var(--twd-violet-rgb, 127, 106, 224), .18); color: var(--twd-ink-violet, #c7bcff); border: 1px solid rgba(var(--twd-violet-rgb, 127, 106, 224), .45); }
+body.tw-dash.tw-glass .status-ready     { background: rgba(var(--twd-ok-rgb, 52, 211, 153), .10); color: var(--twd-ink-green, #7fe3c4); border: 1px solid rgba(var(--twd-ok-rgb, 52, 211, 153), .32); }
+body.tw-dash.tw-glass .status-shipped   { background: rgba(var(--twd-cyan-rgb, 103, 232, 249), .14); color: var(--twd-ink-cyan, #a5f3fc); border: 1px solid rgba(var(--twd-cyan-rgb, 103, 232, 249), .4); }
+body.tw-dash.tw-glass .status-completed { background: rgba(var(--twd-ok-rgb, 52, 211, 153), .14); color: var(--tw-ok, #9df3d0); border: 1px solid rgba(var(--twd-ok-rgb, 52, 211, 153), .4); }
+body.tw-dash.tw-glass .status-cancelled { background: rgba(var(--twd-pink-rgb, 224, 86, 122), .16); color: var(--tw-danger, #ffc2d3); border: 1px solid rgba(var(--twd-pink-rgb, 224, 86, 122), .45); }
+
+/* The VIEW button was pale pink on cream. Ghost treatment. */
+body.tw-dash.tw-glass .order-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+html body.tw-dash.tw-glass .order-actions .btn-small {
+  padding: 8px 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--twd-pink-rgb, 224, 86, 122), .4);
+  background: transparent;
+  color: var(--tw-danger, #ffc2d3);
+  font-family: var(--twg-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .25s var(--twg-ease);
+}
+html body.tw-dash.tw-glass .order-actions .btn-small:hover { background: rgba(var(--twd-pink-rgb, 224, 86, 122), .18); }
+/* "Pickup QR" keeps a filled treatment so it still reads as the primary
+   action of the row. */
+html body.tw-dash.tw-glass .order-actions .btn-small.btn-primary {
+  border: 0;
+  color: var(--twd-white-ink, #fff);
+  background: var(--tw-brand-grad);
+}
+
+/* Empty state, when there are no orders at all. */
+html body.tw-dash.tw-glass .empty-state h3 { color: var(--twg-title) !important; }
+html body.tw-dash.tw-glass .empty-state p { color: var(--twg-body) !important; }
+html body.tw-dash.tw-glass .empty-icon i { color: var(--twg-muted) !important; }
+html body.tw-dash.tw-glass .empty-state .btn-primary {
+  background: var(--tw-brand-grad) !important;
+  font-family: var(--twg-mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+/* ----------------------------------------------------------------------------
+   8. Quick Actions — 2x2 tiles in the rail
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 420px) {
+  body.tw-dash.tw-glass .actions-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* !I: beats techworld-dashboard.css §5 and techworld-dashboard-bg.css §6/§7 */
+html body.tw-dash.tw-glass .action-card {
+  display: block;
+  padding: 14px !important;
+  border-radius: 14px !important;
+  text-align: left;
+  text-decoration: none;
+  background: var(--twg-sunken) !important;
+  background-image: none !important;
+  border: 1px solid var(--twg-line) !important;
+  box-shadow: none !important;
+  transition: transform .3s var(--twg-ease), border-color .3s var(--twg-ease), background .3s var(--twg-ease);
+}
+html body.tw-dash.tw-glass .action-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(var(--twd-cyan-rgb, 103, 232, 249), .45) !important;
+  background: rgba(var(--twd-cyan-rgb, 103, 232, 249), .08) !important;
+}
+html body.tw-dash.tw-glass .action-card i {
+  display: block;
+  font-size: 20px !important;
+  line-height: 1;
+  color: var(--twg-pink-lt) !important;
+  margin: 0 0 9px !important;
+}
+html body.tw-dash.tw-glass .action-card h3 {
+  margin: 0;
+  font-family: var(--twg-font);
+  font-size: 13.5px !important;
+  font-weight: 700;
+  color: var(--twg-title) !important;
+}
+html body.tw-dash.tw-glass .action-card p {
+  margin: 5px 0 0;
+  font-family: var(--twg-font);
+  font-size: 11.5px !important;
+  line-height: 1.4;
+  color: var(--twg-caption) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   9. Active Delivery card
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .dash-shipment {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border-radius: 20px;
+  background: linear-gradient(150deg, rgba(224, 86, 122, .22), rgba(127, 106, 224, .18) 60%, rgba(11, 22, 38, .94));
+  border: 1px solid rgba(var(--twd-pink-rgb, 224, 86, 122), .32);
+  box-shadow: 0 18px 44px rgba(var(--twd-shadow-rgb, 3, 8, 16), .45);
+}
+/* Slow light sweep, clipped by the card. */
+body.tw-dash.tw-glass .dash-shipment::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .09), transparent);
+  animation: twg-sweep 5.5s ease-in-out infinite;
+}
+@keyframes twg-sweep {
+  from { transform: translateX(-120%); }
+  to   { transform: translateX(220%); }
+}
+body.tw-dash.tw-glass .ship-eyebrow {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--twg-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--twd-rose-ink, #ffd7e2);
+}
+body.tw-dash.tw-glass .ship-title {
+  position: relative;
+  z-index: 1;
+  margin: 10px 0 0;
+  font-family: var(--twg-font);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--twd-white-ink, #fff);
+}
+body.tw-dash.tw-glass .ship-title .ship-inv { font-family: var(--twg-mono); font-size: 15px; }
+body.tw-dash.tw-glass .ship-eta {
+  position: relative;
+  z-index: 1;
+  margin: 5px 0 0;
+  font-family: var(--twg-font);
+  font-size: 13px;
+  color: var(--twd-ink-pink, #f3d9e3);
+}
+body.tw-dash.tw-glass .ship-steps {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+  margin-top: 18px;
+}
+body.tw-dash.tw-glass .ship-step {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--twg-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(var(--twd-rose2-rgb, 255, 230, 238), .5);
+}
+body.tw-dash.tw-glass .ship-step::before {
+  content: "";
+  display: block;
+  height: 4px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: rgba(var(--twd-white-rgb, 255, 255, 255), .22);
+}
+body.tw-dash.tw-glass .ship-step.is-done { color: var(--twd-ink-pink-2, #ffe6ee); }
+body.tw-dash.tw-glass .ship-step.is-done::before { background: linear-gradient(90deg, #ffd7e2, #fff); }
+
+/* ----------------------------------------------------------------------------
+   10. Recent Notifications
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* !I: beats techworld-dashboard.css §10 and techworld-dashboard-bg.css §6 */
+html body.tw-dash.tw-glass .notification-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px !important;
+  border-radius: 16px !important;
+  background: rgba(var(--twd-panel-rgb, 20, 36, 60), .85) !important;
+  background-image: none !important;
+  border: 1px solid var(--twg-line-soft) !important;
+  box-shadow: none !important;
+}
+/* The 40px round icon plate becomes a 6px dot, colour-coded by type. The
+   icon glyph itself stays in the DOM, just not rendered. */
+html body.tw-dash.tw-glass .notification-icon {
+  width: 6px !important;
+  height: 6px !important;
+  min-width: 6px;
+  border-radius: 50% !important;
+  flex: none;
+  margin-top: 7px;
+  font-size: 0 !important;
+  overflow: hidden;
+  background: var(--twg-cyan) !important;
+  color: transparent !important;
+}
+html body.tw-dash.tw-glass .notification-icon i { display: none !important; }
+html body.tw-dash.tw-glass .notification-success .notification-icon { background: var(--twg-green) !important; }
+html body.tw-dash.tw-glass .notification-warning .notification-icon { background: var(--twd-warn-surf, #fcd34d) !important; }
+html body.tw-dash.tw-glass .notification-error .notification-icon { background: var(--twg-pink) !important; }
+html body.tw-dash.tw-glass .notification-info .notification-icon,
+html body.tw-dash.tw-glass .notification-system .notification-icon { background: var(--twg-cyan) !important; }
+
+body.tw-dash.tw-glass .notification-content { min-width: 0; }
+html body.tw-dash.tw-glass .notification-content h4 {
+  margin: 0 0 4px;
+  font-family: var(--twg-font);
+  font-size: 13.5px !important;
+  font-weight: 700;
+  color: var(--twg-title) !important;
+}
+/* Body copy is Figtree, never mono. */
+html body.tw-dash.tw-glass .notification-content p {
+  margin: 0 0 7px;
+  font-family: var(--twg-font) !important;
+  font-size: 12.5px !important;
+  line-height: 1.5;
+  color: var(--twg-body) !important;
+}
+html body.tw-dash.tw-glass .notification-time {
+  font-family: var(--twg-mono);
+  font-size: 9px !important;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--twg-muted) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   11. Footer — keep it dark, and keep mono out of it
+   ------------------------------------------------------------------------- */
+body.tw-dash.tw-glass .main-footer,
+body.tw-dash.tw-glass .main-footer * { font-family: var(--twg-font); }
+
+/* ----------------------------------------------------------------------------
+   Z. Reduced motion — kills every loop, resets to the visible end state.
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html body.tw-dash.tw-glass::before,
+  html body.tw-dash.tw-glass::after,
+  body.tw-dash.tw-glass .dash-shipment::after,
+  body.tw-dash.tw-glass .stat-card,
+  body.tw-dash.tw-glass .action-card,
+  body.tw-dash.tw-glass .dash-headactions > a {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  body.tw-dash.tw-glass .dash-shipment::after { display: none; }
+  html body.tw-dash.tw-glass .stats-grid .stat-card:hover,
+  html body.tw-dash.tw-glass .action-card:hover,
+  body.tw-dash.tw-glass .dash-headactions > a:hover { transform: none; }
+}

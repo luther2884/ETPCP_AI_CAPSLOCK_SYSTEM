@@ -1,0 +1,305 @@
+-- 70_seed_products_from_list.sql
+-- Direct SQL seeding for categories and products based on tools/seed_products_from_list.php
+-- Run after database and tables are created (e.g., after 00-60 scripts)
+
+USE `techworld_ecommerce`;
+
+-- Temporary staging for seed rows
+-- price = estimated PHP peso retail price, cross-checked against pcworth.com and
+-- other PH surplus/used PC parts market listings for equivalent models. These are
+-- starting/testing prices, not final catalog prices - adjust in admin > products
+-- once real supplier costs are confirmed.
+DROP TEMPORARY TABLE IF EXISTS `seed_products`;
+CREATE TEMPORARY TABLE `seed_products` (
+	`category_name` VARCHAR(100) NOT NULL,
+	`product_name` VARCHAR(255) NOT NULL,
+	`qty` INT NOT NULL,
+	`price` DECIMAL(10,2) NOT NULL
+);
+
+INSERT INTO `seed_products` (`category_name`, `product_name`, `qty`, `price`) VALUES
+	-- PROCESSORS / MINI PCs
+	('Processors','INTEL NUC Celeron NUC7CJYSN Mini PC',2,6500),
+	('Processors','INTEL NUC CORE i5 10th Gen A Mini PC Kit',1,14500),
+	('Processors','INTEL NUC i5 Mini PC kit',1,11500),
+	('Processors','INTEL NUC i3 Mini PC kit',2,8500),
+	('Processors','INTEL CELERON G1840 PROCESSOR',3,900),
+	('Processors','INTEL PENTIUM G3250 PROCESSOR',3,1000),
+	('Processors','INTEL PENTIUM G3260 PROCESSOR',3,1050),
+	('Processors','INTEL CORE I3-12100 PROCESSOR',3,5500),
+	('Processors','INTEL CORE I3-10105 PROCESSOR',5,4200),
+	('Processors','INTEL CORE I5-11400F PROCESSOR',2,6800),
+	('Processors','INTEL CORE I5-12400F PROCESSOR',2,7500),
+	('Processors','INTEL CORE I5-12400 PROCESSOR',2,8500),
+	('Processors','INTEL CORE I5-9400F PROCESSOR',2,4500),
+	('Processors','INTEL CORE I5-13400 PROCESSOR',2,10500),
+	('Processors','Machenike Machreator Mini PC 2 i5-12450H',1,18500),
+	('Processors','Machenike Machreator Mini PC 2 i7-12650H',1,24500),
+	('Processors','AMD Ryzen 7 5700G PROCESSOR',3,9500),
+	('Processors','AMD Ryzen 5 5600G PROCESSOR',1,6800),
+	('Processors','AMD Ryzen 5 5500 PROCESSOR',2,4800),
+	('Processors','AMD Ryzen 5 3600 PROCESSOR',3,4200),
+	('Processors','AMD Ryzen 5 2600 PROCESSOR',3,3200),
+	('Processors','AMD Ryzen 3 3200G PROCESSOR',1,3895),
+	('Processors','AMD Ryzen 5 4600G PROCESSOR',5,6200),
+	('Processors','AMD Athlon 200GE PROCESSOR',1,1800),
+	('Processors','AMD Ryzen 3 PRO 4350G Tray type Processor',7,3500),
+
+	-- MOTHERBOARDS
+	('Motherboards','Gigabyte B550M DS3H Motherboard',1,4200),
+	('Motherboards','Gigabyte B450M DS3H Motherboard',1,3200),
+	('Motherboards','Gigabyte B450M S2H V2 Motherboard',1,2900),
+	('Motherboards','Gigabyte AB350M-HD3 Motherboard',2,2800),
+	('Motherboards','Gigabyte A320M-S2H V2 Motherboard',1,2300),
+	('Motherboards','Gigabyte B760M H DDR4 Motherboard',5,6200),
+	('Motherboards','Gigabyte A320M-S2H Motherboard',5,2200),
+	('Motherboards','MSI B450M Mortar Max Motherboard',2,3600),
+	('Motherboards','Asus TUF B450M-Pro II Motherboard',1,3800),
+	('Motherboards','Aorus B450 AORUS M Motherboard',2,3700),
+	('Motherboards','Asus Prime B365M-A Motherboard',1,3200),
+	('Motherboards','Asus TUF Z370-PLUS Motherboard',2,3900),
+	('Motherboards','BIOSTAR A75MG Motherboard',2,1800),
+	('Motherboards','ASUS A68HM-K Motherboard',2,1900),
+	('Motherboards','MSI H110M PRO-VH Motherboard',4,2000),
+	('Motherboards','MSI H110M PRO-VD Motherboard',4,2000),
+	('Motherboards','GIGABYTE H110M - S2 Motherboard',1,1950),
+	('Motherboards','ASUS H110M-D Motherboard',2,2100),
+	('Motherboards','GIGABYTE H110M-S2 Motherboard',2,1950),
+	('Motherboards','GIGABYTE H110M-H Motherboard',2,2000),
+	('Motherboards','GIGABYTE B150M-D3H Motherboard',1,2400),
+	('Motherboards','DURATHON 2 H110M4-C2 SERIES Motherboard',2,1600),
+	('Motherboards','ASUS EZ-B150M-V5 Motherboard',2,2500),
+	('Motherboards','MSI B150M BAZOOKA Motherboard',2,2500),
+	('Motherboards','GIGABYTE Z270M-D3H Motherboard',1,3000),
+	('Motherboards','ASUS PRIME B250M-D Motherboard',2,2600),
+	('Motherboards','ASUS EX-H310M-V3 R2.0 Motherboard',5,2300),
+	('Motherboards','MSI H310M PRO-VDH PLUS Motherboard',5,2300),
+	('Motherboards','MSI A320M PRO-VD/S Motherboard',2,2200),
+	('Motherboards','GIGABYTE A320M-DS2 Motherboard',2,2200),
+	('Motherboards','PRIME A320M-K Motherboard',5,2300),
+	('Motherboards','MSI BAZOOKA B350M Motherboard',2,2900),
+	('Motherboards','MSI B350 PRO-VD PLUS Motherboard',4,2900),
+	('Motherboards','MSI TOMAWAK B350 Motherboard',1,3200),
+	('Motherboards','MSI B360M GAMING PLUS Motherboard',2,3200),
+	('Motherboards','MSI B360 GAMING PRO CARBON Motherboard',2,3800),
+	('Motherboards','ROG STRIX B360-F GAMING Motherboard',2,4200),
+	('Motherboards','TUF B360M-E GAMING Motherboard',2,3600),
+	('Motherboards','MSI Z370 GAMING PLUS Motherboard',2,3900),
+	('Motherboards','ASUS PRIME B365-A Motherboard',1,3300),
+	('Motherboards','ASUS TUF B365- PLUS GAMING Motherboard',2,3800),
+	('Motherboards','PRIME Z370-A Motherboard',2,3900),
+	('Motherboards','MSI B450M PRO -VDH PLUS Motherboard',1,3300),
+	('Motherboards','ASUS ROG STRIX Z370-G GAMING (WIFI) Motherboard',2,5200),
+	('Motherboards','ASUS ROG STRIX Z370-F GAMING Motherboard',1,4800),
+	('Motherboards','MSI B450M PRO-M2 V2 Motherboard',2,3000),
+	('Motherboards','ASUS TUF B450M-PLUS GAMING Motherboard',2,3700),
+	('Motherboards','ASUS TUF B450M-PRO GAMING Motherboard',2,3900),
+	('Motherboards','ASUS TUF GAMING B450M - PRO II Motherboard',1,4000),
+	('Motherboards','MSI B450 TOMAHAWK MAX Motherboard',1,3900),
+	('Motherboards','MSI B350 TOMAHAWK Motherboard',1,3300),
+	('Motherboards','ASUS EX-H510M-V3 Motherboard',1,3200),
+	('Motherboards','GIGABYTE B460M POWER Motherboard',2,3600),
+	('Motherboards','ASUS PRIME B450- A II Motherboard',1,3300),
+	('Motherboards','MSI PRO SERIES PRO H510M-B Motherboard',1,3000),
+	('Motherboards','ASUS PRIME A520M-K Motherboard',2,3200),
+	('Motherboards','MSI MAG B550M BAZOOKA Motherboard',2,4300),
+	('Motherboards','ASROCK B550M-HDV Motherboard',1,3900),
+	('Motherboards','ASUS PRIME A520M-K Motherboard',1,3200),
+	('Motherboards','ASUS PRIME H610M-K D4 Motherboard',5,5200),
+	('Motherboards','MSI PRO H610M-E DDR4 Motherboard',2,5000),
+	('Motherboards','GIGABYTE H610M K DDR4 Motherboard',4,5000),
+
+	-- GRAPHICS CARDS
+	('Graphics Cards','Gigabyte RX570',1,4200),
+	('Graphics Cards','Gigabyte GTX1050Ti',3,3800),
+	('Graphics Cards','PowerColor RX 6700 XT 12GB GDDR6',1,14500),
+	('Graphics Cards','Asus TUF GTX 1660Ti 6GB OC GDDR6',2,7200),
+	('Graphics Cards','Asus TUF GTX 1650 4GB OC GDDR6',2,4800),
+	('Graphics Cards','ASUS Phoenix GTX 1660 6GB OC GDDR5',1,6500),
+	('Graphics Cards','MSI Ventus RTX 2060 6GB GDDR6',1,8200),
+	('Graphics Cards','Asus GTX 1050Ti 4GB DDR5',2,3700),
+	('Graphics Cards','INNO3D GTX 1050Ti 4GB DDR5',2,3600),
+	('Graphics Cards','INNO3D GTX 1660 6GB GDDR5',1,6200),
+	('Graphics Cards','INNO3D GTX 1660 Super 6GB GDDR6',1,6800),
+	('Graphics Cards','INNO3D GTX 1650 4GB GDDR6',1,4300),
+	('Graphics Cards','Gigabyte RTX 4070 12GB GDDR6X',1,32500),
+	('Graphics Cards','Gigabyte RTX 4060Ti 8GB GDDR6',1,21500),
+	('Graphics Cards','Gigabyte RTX 4060 8GB GDDR6',1,17500),
+	('Graphics Cards','Gigabyte RTX 4060Ti 16GB GDDR6',1,24500),
+	('Graphics Cards','MSI GT 710 2GB DDR3',2,1600),
+	('Graphics Cards','INNO3D GT 730 2GB SDDR3',4,1800),
+	('Graphics Cards','INNO3D GT 1030 2GB GDDR5',2,2800),
+	('Graphics Cards','PALIT GTX 1050Ti 4GB GDDR5',2,3700),
+	('Graphics Cards','Palit RTX 3050 8GB GDDR6',2,9200),
+	('Graphics Cards','Palit GTX 1050Ti 4GB DDR5',3,3700),
+	('Graphics Cards','Asus GTX 1050 2GB GDDR5',1,3200),
+	('Graphics Cards','Afox GT 730 4096MB DDR3',2,1900),
+	('Graphics Cards','Asus GT 710 2GB DDR3',2,1700),
+
+	-- MEMORY (DIMM + SO-DIMM)
+	('Memory','Hp 8GB PC4 3200 U-Dimm Memory',2,1600),
+	('Memory','TeamGroup T.Force 8GB DDR4 3200 DIMM Memory',5,1700),
+	('Memory','Transcend 16GB DDR4 3200 U-DIMM Memory',5,2900),
+	('Memory','Transcend 4GB DDR4 2666 U-DIMM Memory',10,950),
+	('Memory','Transcend 4GB DDR4 3200 U-DIMM Memory',10,1000),
+	('Memory','Team Group Elite 8GB DDR4 2666 DIMM Memory',6,1500),
+	('Memory','G.Skill 16GBx2 DDR4 3600 DIMM Memory',3,5800),
+	('Memory','Kingston 8GB DDR4 3200 DIMM Memory',9,1700),
+	('Memory','Kingston Fury 8GB DDR4 2666 DIMM Memory',10,1600),
+	('Memory','Hyper X fury 16GB DDR4 3200 U-DIMM Memory',10,3100),
+	('Memory','Hyper X 16GB DDR4 2666 DIMM Memory',8,2900),
+	('Memory','Hyper X 16GB DDR4 2400 DIMM Memory',2,2800),
+	('Memory','Hyper X HX432C16FB4/16 16GB DDR4 3200 DIMM MEMORY',10,3100),
+	('Memory','Hyper X HX426C16FB3/8 8GB DDR4 2666 DIMM Memory',8,1600),
+	('Memory','GSkill Aegis 4GB DDR4 2400 DIMM Memory',10,900),
+	('Memory','ADATA 16GB DDR4 3200 SO-DIMM Memory',3,2900),
+	('Memory','ADATA 16GB DDR4 3200 U-DIMM Memory',2,2800),
+	('Memory','Dahua 8GB DDR4 3200 DIMM Memory',10,1400),
+	('Memory','Kingston 8GB DDR4 2400 SODIMM Memory',5,1500),
+	('Memory','Kingston 16GB DDR4 2666 SODIMM Memory',10,2900),
+	('Memory','Kingston 8GB DDR4 2666 SODIMM Memory',9,1600),
+	('Memory','Crucial 4GB DDR4 2400 SODIMM Memory',1,900),
+	('Memory','Hp 16GB DDR4 2666 SODIMM Memory',2,2700),
+	('Memory','Kingmax 4GB DDR3 1600 SODIMM Memory',2,700),
+	('Memory','Transcend 8GB DDR4 2666 SODIMM Memory',4,1600),
+	('Memory','Transcend 4GB DDR4 3200 SODIMM Memory',5,1000),
+	('Memory','Kingston 8GB DDR4 3200 SODIMM Memory',5,1700),
+	('Memory','Kingston 16GB DDR4 3200 SODIMM Memory',1,3000),
+	('Memory','Apacer 8GB DDR4 2400 SODIMM Memory',4,1400),
+	('Memory','Apacer 4GB DDR4 2400 SODIMM Memory',5,850),
+	('Memory','Apacer 4GB DDR4 2666 SODIMM Memory',10,900),
+
+	-- POWER SUPPLY
+	('Power Supply','Antec ATOM B550 Bronze PSU',2,2200),
+	('Power Supply','Antec 550W 80PLUS PSU',3,2000),
+	('Power Supply','Antec NeoEco Ne 650 G.M psu',2,4300),
+	('Power Supply','Antec NeoEco Ne 750 G.M psu',2,5000),
+	('Power Supply','Antec NeoEco Ne 850 G.M psu',2,5800),
+	('Power Supply','Huntkey GS700 PSU',2,2600),
+	('Power Supply','Huntkey GS600 PSU',2,2200),
+	('Power Supply','Huntkey GS500 PSU',5,1800),
+	('Power Supply','Cooler Master 750 Bronze PSU',2,3600),
+	('Power Supply','Cooler Master 650 Bronze PSU',1,2900),
+	('Power Supply','Cooler Master 550 Bronze PSU',1,2300),
+	('Power Supply','Power logic ATX PM-600 PSU',3,1500),
+	('Power Supply','Corsair CV550 ATX PSU',1,2800),
+	('Power Supply','Orion ATX-700W PSU',3,1600),
+	('Power Supply','LC-8700BTXN Standard PSU',2,1200),
+
+	-- KEYBOARDS & COMBOS
+	('Keyboards & Combos','Aula Wind F2088 pro Keyboard',2,1100),
+	('Keyboards & Combos','Machenike K500B-B87 Mechanical Keyboard',1,1800),
+	('Keyboards & Combos','Aula L2098 Mechanical Keyboard',3,950),
+	('Keyboards & Combos','Aula T640 Mechanical Keyboard',3,900),
+	('Keyboards & Combos','Aula F2058 Mechanical Keyboard',1,850),
+	('Keyboards & Combos','Aula S2022 Mechanical Keyboard',2,900),
+	('Keyboards & Combos','Aula F3018 Mechanical Keyboard',2,950),
+	('Keyboards & Combos','Aula F2066-II Mechanical Keyboard',1,900),
+	('Keyboards & Combos','Aula AC203 Combo keyboard/Mouse',9,550),
+	('Keyboards & Combos','Aula F3061 Mini Keyboard',1,850),
+	('Keyboards & Combos','Rapoo 8000M wireless combo keyboard/Mouse',2,1200),
+	('Keyboards & Combos','Rapoo X1800S wireless combo keyboard/Mouse',2,950),
+	('Keyboards & Combos','Rapoo NK2600 Wired keyboard',5,450),
+	('Keyboards & Combos','Rapoo NX1600 Wired Combo keyboard/Mouse',5,550),
+	('Keyboards & Combos','Rapoo NX1700 wired USB Combo keyboard/Mouse',4,600),
+	('Keyboards & Combos','Fantech Maxpower MK853 Mechanical Keyboard',2,1300),
+	('Keyboards & Combos','Redragon Lakshmi K606R Mechanical Keyboard',2,1600),
+	('Keyboards & Combos','Redragon KUMARA K552RGB-1 Mechanical Keyboard',1,1500),
+	('Keyboards & Combos','Asus RA04 TUF Gaming K1 Gaming Keyboard',3,1900),
+	('Keyboards & Combos','A4tech FKS11 FStyler wired Keyboard',5,450),
+	('Keyboards & Combos','A4tech FBK11 FStyler wireless Keyboard',4,700),
+	('Keyboards & Combos','Delux KM36U Mechanical Keyboard',1,1200),
+	('Keyboards & Combos','Intex IT-1017RB USB Keyboard',2,350),
+	('Keyboards & Combos','A4tech KRS-8572 Combo keyboard/Mouse',2,500),
+	('Keyboards & Combos','Aula AC101 Wired Combo keyboard/Mouse',8,500),
+	('Keyboards & Combos','Aula AK205 Wired Keyboard',3,600),
+	('Keyboards & Combos','Redragon Mitra K551-1 Mechanical Keyboard',2,1400),
+	('Keyboards & Combos','Redragon Mitra K551RGB-1 Mechanical Keyboard',2,1500),
+	('Keyboards & Combos','Redragon Dark Avenger K568RGB-1 Mechanical Keyboard',1,1700),
+	('Keyboards & Combos','Redragon Gaming essentials K551RGB-BA 2in1 keyboard/Mouse Combo',2,1600),
+	('Keyboards & Combos','Redragon S107 keyboard/Mouse Combo set',2,700),
+	('Keyboards & Combos','Redragon SHRAPNEL K589RGB Mechanical Keyboard',2,1900),
+	('Keyboards & Combos','Redragon Dyausz K509RGB Mechanical Keyboard',2,1800),
+	('Keyboards & Combos','A4tech KRS-85 Keyboard',6,350),
+	('Keyboards & Combos','Machenike CKM500 wireless Keyboard',4,1400),
+	('Keyboards & Combos','Machenike K520-B108 Mechanical Keyboard',5,2000),
+
+	-- LAPTOP STANDS
+	('Laptop Stands','Aula Wind F61 Laptop Holder',3,450),
+
+	-- SPEAKERS
+	('Speakers','Aula N-189 Speaker',5,500),
+	('Speakers','Aula N-107 Speaker',4,450),
+	('Speakers','Mini Speaker A10 wireless',10,350),
+	('Speakers','Doss DS-1209 BT Speaker',3,900),
+	('Speakers','Edifier G1000 BT Speaker',2,1600),
+	('Speakers','Edifier MP260 BT Speaker',2,1300),
+	('Speakers','Edifier R19U Multimedia Speaker',2,600),
+	('Speakers','Asimom DS-1198 Speaker',2,500),
+	('Speakers','Aula N521 Gaming Speaker',4,750),
+	('Speakers','Aula N69 Gaming Speaker',6,650),
+
+	-- HEADSETS
+	('Headsets','Aula F606 Headset',5,550),
+	('Headsets','Aula S600 Headset',3,650),
+	('Headsets','Aula S605 Headset',2,700),
+	('Headsets','Rapoo H100 wired Headset',4,500),
+	('Headsets','Rapoo H150S Stereo Headset',3,750),
+	('Headsets','Rapoo H120 Stereo Headset',5,550),
+	('Headsets','AULA S503 Headset',2,600),
+	('Headsets','Aula S505 Headset',5,650),
+	('Headsets','HP H500GS Headset',2,700),
+	('Headsets','Edifier USB K800 Headset',2,900),
+	('Headsets','Redragon Ares H120 Headset',3,750),
+	('Headsets','Steelseries 61504 Arctis 5 Headset',2,4200),
+	('Headsets','Edifier K830 Headphone/Headset',2,1200),
+	('Headsets','Edifier G2II Headset',2,1500),
+	('Headsets','A4tech Bloody G520 Headset',2,900),
+	('Headsets','A4tech Bloody G500 Headset',3,850),
+	('Headsets','Redragon Lamia2 H320RGB-1 Headset',2,1300),
+	('Headsets','Edifier W800BT Plus Headset Black',2,1700),
+	('Headsets','Edifier W800BT Plus Headset White',2,1700),
+	('Headsets','Redragon Minos H210 Headset',2,700),
+	('Headsets','RAPOO Vpro VH200 Headset',2,650),
+	('Headsets','Redragon Mento H270-RGB Headset',1,1100),
+	('Headsets','Lenovo H300 Headset L02',2,450),
+	('Headsets','Logitech H151 Stereo Headset',4,650),
+	('Headsets','Logitech H150 Stereo Headset',4,600),
+	('Headsets','Logitech H111 Stereo Headset',4,550),
+	('Headsets','Plantronics Poly 3220 Headset',2,2200),
+	('Headsets','A4tech HS-7P Headset',10,350),
+	('Headsets','A4tech HS-50 Stereo Headset',5,400),
+	('Headsets','A4tech HU-30 USB Headset',5,450),
+	('Headsets','A4tech HS-5P Headset',10,350),
+	('Headsets','RAIKU S300 Standard Headset Brown Box',7,500);
+
+-- Ensure categories exist
+INSERT IGNORE INTO `categories` (`name`)
+SELECT DISTINCT sp.`category_name`
+FROM `seed_products` sp;
+
+-- Step 1: Update existing products (match by name), set active, bump stock, update category, set image_url
+-- price only backfills when the existing row has no real price yet (0 or NULL), so
+-- re-running this seed never overwrites a price an admin already set in the catalog.
+UPDATE `products` p
+JOIN `seed_products` sp ON sp.`product_name` = p.`name`
+JOIN `categories` c ON c.`name` = sp.`category_name`
+SET p.`stock` = p.`stock` + sp.`qty`,
+    p.`price` = IF(p.`price` IS NULL OR p.`price` = 0, sp.`price`, p.`price`),
+    p.`status` = 'active',
+    p.`category_id` = c.`id`,
+    p.`image_url` = CONCAT('public/shared/img/products/', sp.`product_name`, '.png'),
+    p.`updated_at` = NOW();
+
+-- Step 2: Insert products that do not yet exist
+INSERT INTO `products` (`name`, `description`, `price`, `stock`, `category_id`, `image_url`, `status`, `created_at`)
+SELECT sp.`product_name`, NULL, sp.`price`, sp.`qty`, c.`id`,
+       CONCAT('public/shared/img/products/', sp.`product_name`, '.png'), 'active', NOW()
+FROM `seed_products` sp
+JOIN `categories` c ON c.`name` = sp.`category_name`
+LEFT JOIN `products` p ON p.`name` = sp.`product_name`
+WHERE p.`id` IS NULL;
+
+-- Done
+
+

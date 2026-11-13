@@ -1,0 +1,32 @@
+Options -Indexes
+
+# Never serve secrets, database dumps, logs or project documents.
+<FilesMatch "(^\.|\.(sql|log|md|docx|zip|phar|lock|bat|gs)$|^composer\.json$)">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Server-side folders that should never be reached from a browser.
+  RewriteRule ^(DBSQL|storage|directives|execution|handoff|tools)(/|$) - [F,L]
+
+  # Serve existing files/directories directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Only redirect root to public/guest; keep all explicit public paths intact
+  RewriteRule ^$ public/guest/index.php [L]
+</IfModule>
+
+# PWA headers
+<IfModule mod_headers.c>
+  <Files "sw.js">
+    Header set Service-Worker-Allowed "/"
+  </Files>
+
+  <Files "manifest.json">
+    Header set Content-Type "application/manifest+json; charset=utf-8"
+  </Files>
+</IfModule>

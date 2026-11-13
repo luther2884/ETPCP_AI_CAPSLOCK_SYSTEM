@@ -1,0 +1,8 @@
+config/database.php
+.env
+/vendor/
+/uploads/
+storage/logs/
+storage/mail/
+skill-creator/
+skills-lock.json

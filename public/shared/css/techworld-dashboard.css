@@ -1,0 +1,347 @@
+/* techworld-dashboard.css — customer dashboard skin
+   ------------------------------------------------------------------
+   Repaints authenticated/customer/dashboard.php in the homepage
+   language: animated background, dark glass panels, mono labels.
+   No markup restructure required — only a body class + the two
+   background includes. Design reference: TechWorld Customer Dashboard.dc.html
+
+   INSTALL
+   1. Copy to assets/css/techworld-dashboard.css
+   2. In dashboard.php <head>, AFTER techworld-anim.css:
+        <link rel="stylesheet" href="/assets/css/techworld-dashboard.css">
+   3. <body class="tw-page tw-dash">
+        <?php include __DIR__ . '/../../includes/animated-background.php'; ?>
+      and wrap the dashboard content in <main class="tw-main"> … </main>.
+
+   SELECTOR MAP — section 0 is the ONLY place to touch. Add your real
+   class names next to mine (comma-separated) and the rest follows.
+   ------------------------------------------------------------------ */
+
+/* ---- 0. Tokens + the real selector map -------------------------------
+
+   TOKENS
+   Every var(--tw-*) below resolves to nothing on this page. techworld-anim.css
+   declares them on `.tw-home`, not on :root - and dashboard.php neither links
+   that sheet nor renders a .tw-home element. So the set is declared here, on
+   the same body class this file is scoped to. Values are copied verbatim from
+   techworld-anim.css so the dashboard and the landing page stay one palette;
+   --tw-panel-2 is the exception - it is used by .pick-thumb below but was
+   never defined anywhere, so it is given the panel colour one step darker.
+
+   SELECTOR MAP - what the placeholders turned out to be in dashboard.php:
+     .dashboard-wrapper  ->  .dashboard-container (ground) + .dashboard-main
+     .dash-header h1     ->  .dashboard-header h1
+     .welcome-sub        ->  .dashboard-header p
+     .dash-card          ->  .stat-card
+     .stat-label/.label  ->  .stat-info p
+     .stat-value/.value  ->  .stat-info h3
+     .quick-actions grid ->  .actions-grid   (.quick-actions is the SECTION,
+                             and it also holds the <h2> - making it the grid
+                             would put the heading in a column)
+     .quick-action       ->  .action-card
+     .qa-title/.qa-note  ->  .action-card h3 / .action-card p
+     .quick-action svg   ->  .action-card i  (icon font, no inline SVG)
+     .dash-panel/.panel  ->  .orders-table, .notification-item, .empty-state
+     .panel-head         ->  .section-header
+     .orders-table       ->  the WRAPPER div; the table is .orders-table table
+     .btn-view           ->  .btn-small
+     .status-*           ->  ok, but .status-packed / .status-ready were
+                             missing and are added - both are real ENUM values
+     .sidebar/.app-rail  ->  dropped, see the note in section 1
+
+   NOT IN THE MARKUP, so inert unless you add it later (left in place, costs
+   nothing): .dash-eyebrow, .stat-bar, .dash-columns, .order-items,
+   .dash-shipment + .ship-*, .pick-*, .btn-ghost.
+   ---------------------------------------------------------------------- */
+body.tw-dash {
+  --tw-ink: #e8eef7;
+  --tw-ink-dim: #a9bcd4;
+  --tw-ink-faint: #7f95b3;
+  --tw-line: rgba(120, 170, 230, .12);
+  --tw-pink: #e0567a;
+  --tw-pink-lt: #ff9ab5;
+  --tw-violet: #7f6ae0;
+  --tw-panel-2: #08111e;
+  --tw-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+/* ---- 1. Page shell: let the background through ------------------------ */
+body.tw-dash,
+body.tw-dash .page-wrapper,
+body.tw-dash .content,
+body.tw-dash .container,
+body.tw-dash .container-fluid,
+body.tw-dash .row,
+body.tw-dash main,
+body.tw-dash section,
+body.tw-dash .dashboard-container,
+body.tw-dash .dashboard-main {   /* .dashboard-main is the big sheet */
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+}
+body.tw-dash { color: var(--tw-ink); }
+body.tw-dash .tw-main { max-width: 1360px; margin: 0 auto; padding: 28px clamp(18px, 4vw, 48px) 90px; }
+
+/* The left rail is .customer-sidebar, shared chrome that includes/sidebar.php
+   renders on every customer page and that customer-dark.css already themes.
+   Re-skinning it here would make the dashboard the one page whose rail looks
+   different, so the rule is deliberately dropped rather than remapped. */
+
+/* ---- 2. Header ------------------------------------------------------- */
+body.tw-dash .dashboard-header h1 {
+  font-size: clamp(30px, 3.6vw, 48px); font-weight: 800;
+  letter-spacing: -.03em; line-height: 1; color: var(--tw-ink); margin: 12px 0 0;
+}
+body.tw-dash .dashboard-header p { margin: 10px 0 0; font-size: 15px; color: var(--tw-ink-dim); max-width: 58ch; text-wrap: pretty; }
+body.tw-dash .dash-eyebrow {
+  font-family: var(--tw-mono); font-size: 10px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--tw-ink-faint);
+}
+
+/* ---- 3. Stat cards --------------------------------------------------- */
+/* Change from your current version: the number leads, the label is a small
+   mono caption above it, and the icon tile is replaced by a progress hairline.
+   Five equal white boxes read as noise; this gives them a hierarchy. */
+body.tw-dash .stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px; margin-top: 28px;
+}
+/* html + .stats-grid are not decoration: customer-dark.css carries
+   `[data-theme="light"] body :is(..., .stat-card, ...)` at (0,2,1) with
+   !important, and header.php sets data-theme="light" on <html> for anti-FOUC.
+   A plain `body.tw-dash .stat-card` is (0,2,0) and loses to it. */
+html body.tw-dash .stats-grid .stat-card {
+  position: relative; overflow: hidden;
+  padding: 18px; border-radius: 18px;
+  /* Warm vanilla, matching the profile cards. The dark glass this used to be
+     is now the ground the cards sit on, not the cards themselves. */
+  background: var(--twd-cream, #fff4ef) !important;
+  border: 1px solid rgba(var(--twd-blue-rgb, 23, 72, 113),.14) !important;
+  box-shadow: 0 18px 40px rgba(var(--twd-shadow-rgb, 3, 8, 16),.42), inset 0 1px 0 rgba(var(--twd-hilite-rgb, 255, 255, 255),.85) !important;
+  color: var(--twd-ink-dark, #17324a) !important; opacity: 1;
+  transition: transform .4s cubic-bezier(.2,.8,.2,1), border-color .35s;
+}
+html body.tw-dash .stats-grid .stat-card:hover { transform: translateY(-6px); border-color: rgba(var(--twd-mauve-rgb, 160, 95, 128),.45) !important; }
+/* dashboard.php renders <h3>value</h3> and then <p>label</p>, but this
+   file's design calls for the label as a caption ABOVE the number.
+   column-reverse gets there without touching the markup; DOM order, and so
+   screen-reader order, is unchanged. */
+body.tw-dash .stat-card .stat-info { display: flex; flex-direction: column-reverse; align-items: flex-start; }
+body.tw-dash .stat-card .stat-info p {
+  font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--twd-ink-mute, #6b7c8f);
+}
+body.tw-dash .stat-card .stat-info h3 {
+  display: block; margin: 14px 0 0;
+  font-family: var(--tw-mono); font-size: clamp(24px, 2.4vw, 32px);
+  font-weight: 700; letter-spacing: -.02em; color: var(--twd-ink-dark, #17324a);
+}
+/* if you keep the icon tiles, shrink + tint them instead of dropping them */
+body.tw-dash .stat-card .stat-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(140deg, #a05f80, #174871);
+  display: grid; place-items: center; color: var(--twd-white-ink, #fff);
+}
+body.tw-dash .stat-card .stat-bar { height: 3px; margin-top: 12px; border-radius: 999px; background: rgba(var(--twd-line-rgb, 120, 170, 230),.14); overflow: hidden; }
+body.tw-dash .stat-card .stat-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--tw-pink), var(--tw-violet)); }
+
+/* ---- 4. Two-column body: orders left, side stack right ---------------- */
+/* Wrap the orders table and the right column in
+   <div class="dash-columns"> … </div> — the only markup change worth making.
+   Without it everything simply stacks, which is still fine. */
+body.tw-dash .dash-columns {
+  display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 16px; margin-top: 16px; align-items: start;
+}
+@media (max-width: 1000px) { body.tw-dash .dash-columns { grid-template-columns: minmax(0, 1fr); } }
+
+body.tw-dash .orders-table,
+body.tw-dash .notification-item,
+body.tw-dash .empty-state {
+  border-radius: 20px; overflow: hidden;
+  background: var(--twd-cream, #fff4ef);
+  border: 1px solid rgba(var(--twd-blue-rgb, 23, 72, 113),.14);
+  box-shadow: 0 18px 40px rgba(var(--twd-shadow-rgb, 3, 8, 16),.42), inset 0 1px 0 rgba(var(--twd-hilite-rgb, 255, 255, 255),.85);
+  color: var(--twd-ink-dark, #17324a);
+}
+/* .section-header is a SIBLING of the panel here, not its first child, so it
+   takes the head typography without the head's padding and divider. */
+body.tw-dash .section-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 2px 4px;
+  font-family: var(--tw-mono); font-size: 10px; letter-spacing: .2em; color: var(--tw-ink-faint);
+}
+body.tw-dash .section-header h2,
+body.tw-dash .quick-actions h2 {
+  font-family: var(--tw-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .2em; text-transform: uppercase; color: var(--tw-ink-faint); margin: 0;
+}
+body.tw-dash .section-header a { font-family: var(--tw-mono); font-size: 10px; letter-spacing: .14em; }
+
+/* ---- 5. Quick actions ------------------------------------------------- */
+body.tw-dash .actions-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 14px;
+}
+body.tw-dash .action-card {
+  padding: 14px; border-radius: 14px; text-align: left;
+  background: var(--twd-cream, #fff4ef); border: 1px solid rgba(var(--twd-blue-rgb, 23, 72, 113),.14);
+  cursor: pointer; transition: transform .35s, border-color .35s, background .35s;
+}
+body.tw-dash .action-card:hover { transform: translateY(-4px); border-color: rgba(var(--twd-mauve-rgb, 160, 95, 128),.45); background: var(--twd-cream-2, #fae7dd); }
+body.tw-dash .action-card h3 { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--twd-ink-dark, #17324a); }
+body.tw-dash .action-card p { margin: 5px 0 0; font-size: 11.5px; color: var(--twd-ink-slate, #55677c); line-height: 1.4; }
+/* the centered outline icons cost a lot of height for little meaning —
+   keep them small and inline if you keep them at all. These are icon-font
+   <i> elements, not inline SVG. */
+body.tw-dash .action-card i { display: block; font-size: 18px; color: var(--twd-ink-mauve, #8c4f6e); margin-bottom: 8px; }
+
+/* ---- 6. Recent orders table ------------------------------------------ */
+body.tw-dash .orders-table table { width: 100%; border-collapse: collapse; background: transparent; }
+html body.tw-dash .orders-table th {
+  text-align: left; padding: 14px 20px;
+  font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .18em;
+  /* colour is !important because TWO sheets force it: style.css's
+     `[data-theme="light"] table th` and customer-dark.css's
+     `[data-theme="light"] body :is(table td, table th)`. This selector already
+     outranks both on specificity, but an ordinary declaration never beats an
+     !important one however specific it is - without this the headings render
+     at --text-primary (near-white) instead of the faint mono grey. */
+  text-transform: uppercase; color: var(--twd-ink-mute, #6b7c8f) !important;
+  background: var(--twd-cream-2, #fae7dd); border-bottom: 1px solid rgba(var(--twd-blue-rgb, 23, 72, 113),.14) !important;
+}
+/* html prefix for the same reason as the stat cards: customer-dark.css forces
+   `[data-theme="light"] body :is(table td, table th)` colour and border-color
+   with !important at (0,2,1). */
+html body.tw-dash .orders-table td {
+  padding: 15px 20px; font-size: 13px; color: var(--twd-ink-slate, #55677c) !important;
+  border-bottom: 1px solid rgba(var(--twd-blue-rgb, 23, 72, 113),.10) !important; background: transparent;
+}
+body.tw-dash .orders-table tbody tr { transition: background .3s; }
+body.tw-dash .orders-table tbody tr:hover td { background: rgba(var(--twd-blue-rgb, 23, 72, 113),.04); }
+/* `.orders-table td a` was in this list; it also catches the two .btn-small
+   action links in the last column and would strip them back to bare text. */
+body.tw-dash .order-id { font-family: var(--tw-mono); font-size: 12px; color: var(--twd-ink-mauve, #8c4f6e); }
+html body.tw-dash .orders-table td.order-total { font-family: var(--tw-mono); font-weight: 700; color: var(--twd-ink-dark, #17324a) !important; }
+/* worth adding: a second line under the order id with the item summary —
+   it is the thing customers actually scan for */
+body.tw-dash .order-items { margin-top: 4px; font-size: 12px; color: var(--twd-ink-mute, #6b7c8f); }
+
+/* status chips — dark-ground versions of your pastel ones */
+body.tw-dash .status-badge {
+  display: inline-block; font-family: var(--tw-mono); font-size: 9px;
+  letter-spacing: .14em; padding: 6px 10px; border-radius: 999px; white-space: nowrap;
+}
+body.tw-dash .status-preparing { background: rgba(var(--twd-warn-rgb, 251, 191, 36),.14); color: var(--twd-warn-ink, #fcd34d); border: 1px solid rgba(var(--twd-warn-rgb, 251, 191, 36),.4); }
+body.tw-dash .status-completed { background: rgba(var(--twd-ok-rgb, 52, 211, 153),.14); color: var(--tw-ok, #9df3d0); border: 1px solid rgba(var(--twd-ok-rgb, 52, 211, 153),.4); }
+body.tw-dash .status-cancelled { background: rgba(var(--twd-pink-rgb, 224, 86, 122),.16); color: var(--tw-danger, #ffc2d3); border: 1px solid rgba(var(--twd-pink-rgb, 224, 86, 122),.45); }
+body.tw-dash .status-shipped   { background: rgba(var(--twd-cyan-rgb, 103, 232, 249),.14); color: var(--twd-ink-cyan, #a5f3fc); border: 1px solid rgba(var(--twd-cyan-rgb, 103, 232, 249),.4); }
+/* orders.status is an ENUM of preparing/packed/ready/shipped/completed/
+   cancelled. These two had no rule in this file and would have rendered as
+   an unstyled chip. */
+body.tw-dash .status-packed    { background: rgba(var(--twd-violet-rgb, 127, 106, 224),.18); color: var(--twd-ink-violet, #c7bcff); border: 1px solid rgba(var(--twd-violet-rgb, 127, 106, 224),.45); }
+body.tw-dash .status-ready     { background: rgba(var(--twd-ok-rgb, 52, 211, 153),.10); color: var(--twd-ink-green, #7fe3c4); border: 1px solid rgba(var(--twd-ok-rgb, 52, 211, 153),.32); }
+
+body.tw-dash .btn-small {
+  padding: 9px 14px; border-radius: 10px;
+  border: 1px solid rgba(var(--twd-pink-rgb, 224, 86, 122),.4); background: transparent;
+  color: var(--tw-danger, #ffc2d3); font-family: var(--tw-mono); font-size: 9px;
+  letter-spacing: .12em; cursor: pointer; transition: background .3s;
+}
+body.tw-dash .btn-small:hover { background: rgba(var(--twd-pink-rgb, 224, 86, 122),.18); }
+/* .btn-small.btn-primary is the Pickup QR link - it keeps the filled
+   treatment from section 9 rather than the outline one. The background is
+   restated here rather than left to section 9: the page's own <style> carries
+   `.btn-small.btn-primary` at (0,2,0), the same specificity as section 9's
+   `body.tw-dash .btn-primary`, and being later in the document it wins the
+   tie - which left this one button on the old cyan/blue gradient. */
+body.tw-dash .btn-small.btn-primary {
+  border: none; color: var(--twd-white-ink, #fff);
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-violet));
+}
+
+/* ---- 7. Active-delivery card (new — see the DC) ----------------------- */
+/* <div class="dash-shipment"> with .ship-eyebrow / .ship-title / .ship-eta
+   and a .ship-steps row of <div class="ship-step is-done">. This is the one
+   block worth adding: it answers "where is my order" without a click. */
+body.tw-dash .dash-shipment {
+  position: relative; overflow: hidden; border-radius: 20px; padding: 20px;
+  background: linear-gradient(150deg, rgba(224,86,122,.22), rgba(127,106,224,.18) 60%, rgba(11,22,38,.94));
+  border: 1px solid rgba(var(--twd-pink-rgb, 224, 86, 122),.32); box-shadow: 0 18px 44px rgba(var(--twd-shadow-rgb, 3, 8, 16),.45);
+}
+body.tw-dash .dash-shipment::after {
+  content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent);
+  animation: tw-shipSweep 5.5s ease-in-out infinite;
+}
+@keyframes tw-shipSweep { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
+body.tw-dash .ship-eyebrow { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .2em; color: var(--twd-rose-ink, #ffd7e2); }
+body.tw-dash .ship-title { margin-top: 10px; font-size: 17px; font-weight: 700; color: var(--twd-white-ink, #fff); }
+body.tw-dash .ship-eta { margin-top: 4px; font-size: 13px; color: var(--twd-ink-pink, #f3d9e3); }
+body.tw-dash .ship-steps { position: relative; display: flex; gap: 6px; margin-top: 18px; }
+body.tw-dash .ship-step { flex: 1; text-align: center; font-family: var(--tw-mono); font-size: 8.5px; letter-spacing: .1em; color: rgba(var(--twd-rose2-rgb, 255, 230, 238),.5); }
+body.tw-dash .ship-step::before { content: ""; display: block; height: 4px; border-radius: 999px; background: rgba(var(--twd-white-rgb, 255, 255, 255),.22); margin-bottom: 8px; }
+body.tw-dash .ship-step.is-done { color: var(--twd-ink-pink-2, #ffe6ee); }
+body.tw-dash .ship-step.is-done::before { background: linear-gradient(90deg, #ffd7e2, #fff); }
+
+/* ---- 8. Picked-for-you list ------------------------------------------ */
+body.tw-dash .pick-row { display: grid; grid-template-columns: 54px minmax(0,1fr) auto; align-items: center; gap: 12px; }
+body.tw-dash .pick-thumb {
+  height: 44px; border-radius: 11px; background-color: var(--tw-panel-2);
+  background-image: repeating-linear-gradient(135deg, rgba(120,170,230,.14) 0 8px, rgba(120,170,230,.04) 8px 16px);
+}
+body.tw-dash .pick-name { font-size: 13px; font-weight: 600; color: var(--twd-ink-bright, #eaf1fa); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.tw-dash .pick-kind { margin-top: 3px; font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .14em; color: var(--tw-ink-soft, #8fa6c4); }
+body.tw-dash .pick-price { font-family: var(--tw-mono); font-size: 13px; font-weight: 700; color: var(--tw-pink-lt); }
+
+/* ---- 9. Header buttons ------------------------------------------------ */
+body.tw-dash .btn-ghost {
+  padding: 12px 18px; border-radius: 12px; border: 1px solid rgba(var(--twd-line-rgb, 120, 170, 230),.24);
+  background: rgba(var(--twd-panel-rgb, 20, 36, 60),.7); color: var(--tw-ink-bright-2, #cfe0f5);
+  font-family: var(--tw-mono); font-size: 10px; letter-spacing: .14em;
+  cursor: pointer; transition: background .3s, transform .3s;
+}
+body.tw-dash .btn-ghost:hover { background: rgba(var(--twd-cyan-rgb, 103, 232, 249),.12); transform: translateY(-2px); }
+body.tw-dash .btn-primary {
+  padding: 12px 18px; border-radius: 12px; border: none;
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-violet));
+  color: var(--twd-white-ink, #fff); font-family: var(--tw-mono); font-size: 10px; letter-spacing: .14em;
+  font-weight: 700; cursor: pointer; transition: transform .3s, box-shadow .3s;
+}
+body.tw-dash .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(var(--twd-pink-rgb, 224, 86, 122),.42); }
+
+/* ---- 10. Light-theme leftovers --------------------------------------- */
+/* Live, not commented out: this page does hit the case. header.php sets
+   data-theme="light" on <html> for anti-FOUC, and customer-dark.css counters
+   that with `[data-theme="light"] body :is(...)` blocks at (0,2,1) !important.
+   The per-component overrides above carry the html prefix where they collide;
+   these are the page-level ones. */
+html body.tw-dash .dashboard-container,
+html body.tw-dash .dashboard-main { background: transparent !important; box-shadow: none !important; border: 0 !important; }
+html body.tw-dash,
+html body.tw-dash h1,
+html body.tw-dash h2 { color: var(--tw-ink) !important; }
+
+/* The page's own <style> block sits at the end of <body>, i.e. after every
+   <link>, so it wins any tie on source order. These are the two surfaces it
+   repaints that this skin needs back. */
+html body.tw-dash .empty-state { background: var(--twd-cream, #fff4ef) !important; }
+html body.tw-dash .notification-item { background: var(--twd-cream, #fff4ef) !important; }
+/* Ink for both panels: they were written for the dark glass they used to be. */
+html body.tw-dash .empty-state h3 { color: var(--twd-ink-dark, #17324a) !important; }
+html body.tw-dash .empty-state p { color: var(--twd-ink-slate, #55677c) !important; }
+html body.tw-dash .empty-icon i { color: var(--twd-ink-sand, #c2a98f) !important; }
+html body.tw-dash .notification-content h4 { color: var(--twd-ink-dark, #17324a) !important; }
+html body.tw-dash .notification-content p { color: var(--twd-ink-slate, #55677c) !important; }
+html body.tw-dash .notification-time { color: var(--twd-ink-mute, #6b7c8f) !important; }
+/* The round status icons' washes were mixed for a dark row. */
+html body.tw-dash .notification-success .notification-icon { background: rgba(var(--twd-grn2-rgb, 21, 128, 61),.14) !important; color: var(--twd-green-dk, #15803d) !important; }
+html body.tw-dash .notification-warning .notification-icon { background: rgba(var(--twd-amb2-rgb, 180, 122, 8),.14) !important; color: var(--twd-amber-dk, #b47a08) !important; }
+html body.tw-dash .notification-error .notification-icon { background: rgba(var(--twd-red2-rgb, 185, 28, 28),.14) !important; color: var(--twd-red-dk, #b91c1c) !important; }
+html body.tw-dash .notification-info .notification-icon,
+html body.tw-dash .notification-system .notification-icon { background: rgba(var(--twd-blue-rgb, 23, 72, 113),.12) !important; color: var(--twd-blue-ink, #174871) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.tw-dash .dash-shipment::after { animation: none; }
+  body.tw-dash .stat-card, body.tw-dash .action-card { transition: none; }
+}

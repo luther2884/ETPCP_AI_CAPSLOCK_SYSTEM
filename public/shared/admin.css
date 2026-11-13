@@ -1,0 +1,832 @@
+/* Admin notifications */
+.admin .notification {
+	padding: 12px 16px;
+	margin: 10px 0;
+	border-radius: 8px;
+	font-weight: 500;
+	text-align: center;
+	display: none;
+}
+
+/* Text stays solid/high-contrast (var(--admin-text)) in every variant -
+   the semantic accent color/gray/etc only tints the background and left
+   border, since colored text-on-tint in this palette measures well under
+   WCAG AA 4.5:1 for small text (verified: ~2.8-4.3:1 depending on theme). */
+.admin .notification-error {
+	background: rgba(194, 104, 111, 0.16);
+	color: var(--admin-text);
+	border: 1px solid var(--admin-border);
+	border-left: 4px solid var(--admin-danger);
+}
+
+.admin .notification-success {
+	background: rgba(95, 168, 138, 0.16);
+	color: var(--admin-text);
+	border: 1px solid var(--admin-border);
+	border-left: 4px solid var(--admin-success);
+}
+
+.admin .notification-info {
+	background: var(--accent-cyan-bg);
+	color: var(--admin-text);
+	border: 1px solid var(--admin-border);
+	border-left: 4px solid var(--accent-cyan);
+}
+
+/* Admin Theme - mirrors the same neumorphic palette as style.css (dark =
+   deep-navy end of the gradient, light = the F2F3F4/DED1C6 end), rather
+   than a separate independent color set. Neumorphic surfaces stay the same
+   color as --admin-bg on purpose - the --neu-raised/--neu-pressed shadow
+   pair (defined in style.css) is what gives them shape. */
+:root,
+[data-theme="dark"] {
+  --admin-bg:#123554;
+  --admin-surface:#123554;
+  --admin-surface-2:#123554;
+  --admin-card:#123554;
+  --admin-text:#f2f3f4;
+  --admin-muted:#a9b7c6;
+  --admin-primary:#174871;
+  --admin-primary-2:#174871;
+  --admin-accent:#a77693;
+  --admin-danger:#c2686f;
+  --admin-success:#5fa88a;
+  --admin-border:rgba(242,243,244,0.08);
+  /* Grey wash behind the selected sidebar row - a light film over the
+     dark navy ground. Paired with the neumorphic pressed shadow that
+     .btn-muted.active already carries, not replacing it. */
+  --admin-active-tint:rgba(233,238,243,0.16);
+  --admin-active-tint-hover:rgba(233,238,243,0.21);
+  --admin-nav-hover-tint:rgba(233,238,243,0.06);
+}
+
+[data-theme="light"] {
+  --admin-bg:#eef0f1;
+  --admin-surface:#eef0f1;
+  --admin-surface-2:#eef0f1;
+  --admin-card:#eef0f1;
+  --admin-text:#17324a;
+  --admin-muted:#556575;
+  --admin-primary:#ded1c6;
+  --admin-primary-2:#174871;
+  --admin-accent:#a05f80;
+  --admin-danger:#c2686f;
+  --admin-success:#4a8f70;
+  --admin-border:rgba(23,72,113,0.08);
+  /* Same idea inverted: a grey film over the light ground. */
+  --admin-active-tint:rgba(23,50,74,0.13);
+  --admin-active-tint-hover:rgba(23,50,74,0.17);
+  --admin-nav-hover-tint:rgba(23,50,74,0.05);
+}
+
+body.admin{
+  background: var(--bg-primary);
+  color: var(--admin-text);
+  font-family: var(--font-sans);
+}
+
+.admin .header{ background: var(--admin-surface); border-bottom:1px solid var(--admin-border); }
+.admin .header .logo h2{ color: var(--admin-text); letter-spacing:0.5px; }
+.admin .header .action-btn{ background: var(--admin-surface); box-shadow: var(--neu-raised-sm); border:none; color: var(--admin-text); }
+
+.admin .container{ max-width:1200px; }
+
+/* New simplified admin header and nav helpers */
+.admin-header-inner{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.admin-logo{ text-decoration:none; display:flex; align-items:center; gap:10px; }
+.admin-logo-img{ width:36px; height:36px; }
+.admin-title{ margin:0; color: var(--admin-text); font-size:1.25rem; }
+.admin-header-actions{ display:flex; align-items:center; gap:10px; }
+
+.admin-nav{ border-bottom:1px solid var(--admin-border); background: var(--admin-surface); }
+.admin-nav-inner{ display:flex; gap:16px; flex-wrap:wrap; padding:10px 0; justify-content:center; align-items:center; text-align:center; }
+
+.admin-dashboard{ background: var(--admin-surface); border:1px solid var(--admin-border); }
+.admin-dashboard h1{ color: var(--admin-text); font-weight:700; }
+
+/* Neumorphic card: same color as the page, shaped entirely by the
+   light/dark shadow pair instead of a border + drop shadow. */
+.admin-card{ background: var(--admin-surface-2); border:none; border-radius: var(--radius-lg); box-shadow: var(--neu-raised); }
+.admin-card h3{ color: var(--admin-text); }
+.admin-card p{ color: var(--admin-muted); margin:8px 0 16px; line-height:1.55; }
+
+/* Nav pills: raised by default, press inward like a real button when
+   clicked, and sink into a permanent "pressed" look while active/current -
+   the neumorphic equivalent of a selected state. */
+.action-btn{ transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); padding:8px 12px; border-radius: var(--radius-sm); font-size:12px; text-decoration:none; }
+.action-btn:active{ transform: scale(0.97); }
+.btn-muted{ background: var(--admin-surface); color: var(--admin-text); border:none; box-shadow: var(--neu-raised-sm); }
+.btn-muted:hover{ box-shadow: var(--neu-raised); }
+.btn-muted.active{ background: var(--admin-surface); box-shadow: var(--neu-pressed); color: var(--admin-text); font-weight:700; }
+.btn-muted:focus-visible{ outline: 2px solid var(--accent-cyan); outline-offset:2px; }
+
+/* Tables */
+.admin-dashboard table{ background:transparent; color: var(--admin-text); }
+.admin-dashboard th{ color: var(--admin-text); font-weight:700; }
+.admin-dashboard td, .admin-dashboard th{ border-bottom:1px solid var(--admin-border); }
+.admin-dashboard tr:hover{ background: rgba(242,243,244,0.03); }
+
+/* Inputs - inset/engraved, the neumorphic counterpart to a raised button,
+   so fields read as "in" the surface and buttons read as "on" it. */
+.admin-dashboard input[type="text"],
+.admin-dashboard input[type="number"],
+.admin-dashboard select{
+  background: var(--admin-surface); color: var(--admin-text); border:none; box-shadow: var(--neu-pressed);
+}
+
+/* Dropdown (<select>) - inset by default like the inputs above, but adds
+   its own hover/focus/chevron treatment since a select is clickable in a
+   way a text input isn't: it should read as "pressable" on hover (like the
+   neumorphic buttons) even though it stays visually inset. Locked-palette
+   mauve (#8B4C6C) marks focus/open state instead of the old accent-cyan
+   token. Native arrow replaced with a mauve chevron so it stays on-brand
+   in both the dark and light admin themes (chevron color is fixed since
+   the inset surface color barely changes between themes). */
+.admin-dashboard select,
+.admin .select{
+  border-radius: var(--radius-sm);
+  padding: 10px 36px 10px 14px;
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B4C6C' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 13px;
+  transition: box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+.admin-dashboard select:hover,
+.admin .select:hover{
+  box-shadow: var(--neu-pressed), 0 0 0 1px rgba(139,76,108,0.25);
+}
+.admin-dashboard select:focus-visible,
+.admin .select:focus-visible{
+  outline: 2px solid #8B4C6C;
+  outline-offset: 1px;
+}
+.admin-dashboard select:active,
+.admin .select:active{
+  transform: scale(0.99);
+}
+.admin-dashboard select option,
+.admin .select option{
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+/* Buttons */
+.admin .edit-btn{ background: var(--admin-primary-2) !important; }
+.admin .save-btn{ background: var(--admin-success) !important; }
+.admin .cancel-btn{ background: var(--admin-danger) !important; }
+
+/* Dashboard/quick-link action buttons - one deliberate 3-role system
+   (neutral primary, one accent highlight per group, danger for the one
+   destructive action) instead of a different hardcoded hex per link. */
+.admin-quick-link{ background: var(--admin-primary-2); color:#f2f3f4; padding:12px 20px; border-radius: var(--radius-sm); display:inline-block; margin:5px; text-decoration:none; box-shadow: var(--neu-raised-sm); transition: filter var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.admin-quick-link:hover{ filter: brightness(1.12); text-decoration:none; color:#f2f3f4; }
+.admin-quick-link:active{ transform: scale(0.97); box-shadow: var(--neu-pressed); }
+/* #6d6485 is #A77693 blended toward #174871 - both straight from the given
+   palette - just dark enough that off-white text on it clears 4.5:1 (the
+   raw accent-cyan only manages ~3.3-4.3:1 with white text, both themes). */
+.admin-quick-link--accent{ background: #6d6485; color:#f2f3f4; }
+.admin-quick-link--danger{ background: var(--admin-danger); color:#f2f3f4; }
+
+/* Login Page in admin */
+.auth-page .auth-btn{ background: var(--admin-primary-2); border:none; box-shadow:none; }
+.auth-page .auth-btn:hover{ filter: brightness(1.05); }
+
+/* Reusable admin UI classes for consistent styling */
+.admin .admin-container{ margin:0 auto; max-width:1200px; padding:24px; }
+.admin .card{ background: var(--admin-surface-2); border:none; border-radius: var(--radius-lg); padding:20px; box-shadow: var(--neu-raised); }
+.admin .section-title{ color: var(--admin-text); font-weight:700; margin:0 0 12px; }
+
+/* THE button. Raised by default; presses inward (inset shadow swap +
+   scale(0.97)) on :active instead of the old translateY hover trick -
+   that's the whole point of a neumorphic button: it looks pushable and
+   behaves like it. Secondary (.btn-muted) stays a plain neu surface;
+   .btn-primary/.btn-accent get an accent fill so primary actions don't get
+   lost in an all-one-color neumorphic page (a real usability risk of pure
+   neumorphism this deliberately avoids). */
+.admin .btn{ display:inline-block; padding:10px 14px; border-radius: var(--radius-sm); text-decoration:none; border:none; background: var(--admin-surface); color: var(--admin-text); box-shadow: var(--neu-raised-sm); transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out); }
+.admin .btn:hover{ box-shadow: var(--neu-raised); }
+.admin .btn:active{ box-shadow: var(--neu-pressed); transform: scale(0.97); }
+.admin .btn-primary{ background: var(--admin-primary-2); color:#f2f3f4; }
+.admin .btn-accent{ background: #6d6485; color:#f2f3f4; }
+.admin .btn-muted{ background: var(--admin-surface); color: var(--admin-text); }
+
+.admin .table{ width:100%; border-collapse:collapse; }
+.admin .table thead tr{ background: var(--admin-surface); }
+.admin .table th{ color: var(--admin-text); font-weight:700; padding:10px; border-bottom:1px solid var(--admin-border); text-align:left; }
+.admin .table td{ padding:10px; border-bottom:1px solid var(--admin-border); color: var(--admin-text); }
+
+.admin .field{ display:flex; flex-direction:column; gap:6px; }
+.admin .input, .admin .textarea{ width:100%; padding:10px; border:none; border-radius: var(--radius-sm); background: var(--admin-surface); color: var(--admin-text); box-shadow: var(--neu-pressed); transition: box-shadow var(--duration-fast) var(--ease-out); }
+.admin .select{ width:100%; border:none; }
+.admin .input::placeholder, .admin .textarea::placeholder{ color: var(--admin-muted); }
+.admin .input:focus, .admin .textarea:focus{ outline: 2px solid var(--accent-cyan); outline-offset:1px; }
+.admin .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* ---- Field-level validation -------------------------------------------
+   The admin theme had no input error state at all: every problem was joined
+   into one sentence and printed in a banner at the top of the card, which on
+   a form with two numeric fields does not say WHICH number is wrong. These
+   put the message under the field it belongs to.
+
+   Two strengths, matching config/product_validation.php:
+     .is-invalid / .field-error  a value that cannot be saved
+     .field-warn                 a value that can be saved once confirmed
+   The warn block is amber rather than red on purpose - nothing is wrong yet,
+   the system is only asking. */
+.admin .input.is-invalid,
+.admin .select.is-invalid,
+.admin .textarea.is-invalid{
+	box-shadow: var(--neu-pressed), 0 0 0 2px var(--admin-danger);
+}
+.admin .input.is-invalid:focus,
+.admin .select.is-invalid:focus,
+.admin .textarea.is-invalid:focus{ outline-color: var(--admin-danger); }
+
+.admin .field-error{
+	display:flex; align-items:flex-start; gap:6px;
+	margin-top:6px; font-size:13px; font-weight:600; color: var(--admin-danger);
+}
+
+.admin .field-warn{
+	display:flex; align-items:flex-start; gap:9px;
+	margin-top:8px; padding:10px 12px;
+	border-radius: var(--radius-sm);
+	background: rgba(217,119,6,.12);
+	border:1px solid rgba(217,119,6,.42);
+	color: var(--admin-text);
+	font-size:13px; line-height:1.5;
+	cursor:pointer;
+}
+/* Nudged down so it lines up with the first line of text rather than the
+   middle of a message that may wrap onto three lines. */
+.admin .field-warn input[type="checkbox"]{ margin-top:3px; flex:none; }
+.admin .field-warn strong{ font-weight:700; }
+
+/* Live "4 → 29" readout under the restock input. */
+.admin .field-hint{ margin-top:6px; font-size:13px; color: var(--admin-muted); }
+.admin .field-hint b{ color: var(--admin-text); font-weight:700; }
+
+/* ============================================================
+   Dashboard: welcome banner, KPI stat cards, data tables, progress
+   bars, status badges. Solid Mindful Palettes No.162 tokens only -
+   no hardcoded hex, no opacity-faded text. Neumorphic surfaces stay
+   the same color as the page; --neu-raised/--neu-pressed give them
+   their "extruded" shape via shadow, not a border.
+   ============================================================ */
+.dashboard-welcome{
+  text-align:center;
+  margin-bottom:30px;
+  padding:28px 24px;
+  background: var(--admin-surface-2);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--neu-raised);
+}
+.dashboard-welcome h1, .dashboard-welcome h2{ color: var(--admin-text); margin:0 0 10px; font-weight:800; }
+.dashboard-welcome p{ color: var(--admin-muted); margin:0; }
+
+.quick-stats{ display:grid; gap:16px; }
+.stat-card{
+  background: var(--admin-surface-2);
+  padding:22px 20px;
+  border-radius: var(--radius-lg);
+  text-align:center;
+  box-shadow: var(--neu-raised);
+}
+.stat-number{ font-size:32px; font-weight:800; margin-bottom:6px; color: var(--admin-text); line-height:1.1; }
+.stat-label{ color: var(--admin-muted); font-weight:600; font-size:13px; letter-spacing:.3px; }
+/* These GIF icons ship with a solid white square canvas. Every surface they
+   sit on in the admin/owner panels is a light neumorphic card (--admin-surface
+   #eef0f1), so mix-blend-mode:multiply drops the white (white x light = light)
+   while keeping the black/teal linework - same trick the customer floating
+   cart icon already uses. isolation:isolate keeps the blend scoped to the
+   card behind the icon, never anything further back. */
+.stat-icon{ width:48px; height:48px; object-fit:contain; margin:0 auto 10px; display:block; mix-blend-mode:multiply; }
+.nav-icon-gif{ width:20px; height:20px; object-fit:contain; flex-shrink:0; mix-blend-mode:multiply; }
+.action-card-icon-gif{ width:48px; height:48px; object-fit:contain; margin-bottom:15px; display:block; mix-blend-mode:multiply; }
+
+/* Neumorphic data table - replaces the hardcoded dark tables
+   (#0b1220 / #1f2937 / #e5e7eb) scattered across reports/logs pages */
+.admin-table-wrap{
+  background: var(--admin-surface-2);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--neu-raised);
+  overflow:hidden;
+}
+.admin-table-wrap table{ width:100%; border-collapse:collapse; }
+.admin-table-wrap thead tr{ background: var(--admin-surface); }
+.admin-table-wrap th{
+  color: var(--admin-text);
+  font-weight:700;
+  font-size:13px;
+  text-align:left;
+  padding:14px 16px;
+  border-bottom:1px solid var(--admin-border);
+}
+.admin-table-wrap td{
+  color: var(--admin-text);
+  padding:12px 16px;
+  border-bottom:1px solid var(--admin-border);
+  font-size:14px;
+}
+.admin-table-wrap tbody tr:hover{ background: var(--dropdown-hover); }
+.admin-table-wrap tfoot td{
+  color: var(--admin-text);
+  font-weight:700;
+  border-top:2px solid var(--admin-border);
+  background: var(--admin-surface);
+}
+.admin-table-empty{ padding:30px; text-align:center; color: var(--admin-muted); }
+
+/* Progress / percentage bars - accent mauve fill, inset track */
+.admin-progress-track{
+  background: var(--admin-surface);
+  box-shadow: var(--neu-pressed);
+  height:20px;
+  border-radius: var(--radius-sm);
+  overflow:hidden;
+}
+.admin-progress-fill{
+  background: var(--accent-cyan);
+  height:100%;
+  width:100%;
+  transform-origin:left;
+  transform: scaleX(calc(var(--progress-pct, 100) / 100));
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+/* Status badges - text is always var(--admin-text) (11+:1 contrast in both
+   themes); the semantic color only tints the background/border and shows as
+   a small dot, since colored text on its own tint measures ~2.8-3.6:1 here -
+   well under the 4.5:1 floor this redesign is required to hit. */
+.admin-badge{ display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; color: var(--admin-text); }
+.admin-badge::before{ content:''; width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.admin-badge--active{ background: rgba(95,168,138,0.18); border:1px solid rgba(95,168,138,0.45); }
+.admin-badge--active::before{ background: var(--admin-success); }
+.admin-badge--pending{ background: var(--accent-cyan-bg); border:1px solid rgba(167,118,147,0.45); }
+.admin-badge--pending::before{ background: var(--accent-cyan); }
+.admin-badge--danger{ background: rgba(194,104,111,0.18); border:1px solid rgba(194,104,111,0.45); }
+.admin-badge--danger::before{ background: var(--admin-danger); }
+
+/* Inset form controls used on report/log filter bars */
+.admin-form-input{ background: var(--admin-surface); color: var(--admin-text); border:none; box-shadow: var(--neu-pressed); border-radius: var(--radius-sm); padding:10px 12px; }
+.admin-form-input::placeholder{ color: var(--admin-muted); }
+.admin-form-label{ display:block; margin-bottom:6px; color: var(--admin-muted); font-weight:600; font-size:12px; }
+
+/* Icon + title + description + button "landing" cards, used by the
+   Product/Order/Customer/Reports management section pages. One consistent
+   neumorphic treatment instead of a different hardcoded rainbow gradient
+   (and unreadable #e5e7eb/#cbd5e1 text) per card. */
+.admin-grid{ align-items:stretch; }
+.action-card{
+  background: var(--admin-surface-2);
+  padding:25px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--neu-raised);
+  text-align:center;
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  flex:1; min-width:250px; max-width:300px;
+  /* Column layout with the description as the only flexible piece means
+     every card in a row ends the same height AND the button lands on the
+     same baseline, regardless of how long that card's description runs. */
+  display:flex; flex-direction:column; align-items:center;
+}
+.action-card:hover{ transform: translateY(-3px); }
+.action-card-icon{ font-size:40px; margin-bottom:15px; display:block; line-height:1; }
+.action-card h3{ margin:0 0 12px; color: var(--admin-text); font-size:20px; }
+.action-card p{ color: var(--admin-muted); margin:0 0 20px; flex:1; }
+
+/* ============================================================
+   Admin/Owner left sidebar drawer - shared by admin/includes/navigation.php
+   and super-admin/includes/navigation.php so both panels get one identical
+   component (same pull-tab toggle, hover-to-open, backdrop/Escape to close)
+   instead of duplicating ~90 lines of CSS per panel. Mirrors the customer
+   sidebar's UX (customer/includes/sidebar.php) using the --admin-* token set.
+   ============================================================ */
+.admin-menu-toggle{position:fixed;top:56px;left:0;z-index:2001;width:34px;height:56px;border-radius:0 14px 14px 0;background:var(--admin-surface);box-shadow:var(--neu-raised-sm);border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transform:translateY(-50%);transition:transform 160ms var(--ease-drawer,cubic-bezier(0.32,0.72,0,1)),box-shadow 160ms ease}
+@media (hover:hover) and (pointer:fine){.admin-menu-toggle:hover{box-shadow:var(--neu-raised)}}
+.admin-menu-toggle:active{transform:translateY(-50%) scale(0.95)}
+body.admin-menu-open .admin-menu-toggle{transform:translateY(-50%) translateX(min(280px,85vw))}
+body.admin-menu-open .admin-menu-toggle:active{transform:translateY(-50%) translateX(min(280px,85vw)) scale(0.95)}
+.admin-menu-toggle-bar{width:16px;height:2px;border-radius:2px;background:var(--admin-text);transition:transform 200ms var(--ease-in-out,cubic-bezier(0.77,0,0.175,1)),opacity 160ms var(--ease-out,cubic-bezier(0.23,1,0.32,1))}
+.admin-menu-toggle[aria-expanded="true"] .admin-menu-toggle-bar:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.admin-menu-toggle[aria-expanded="true"] .admin-menu-toggle-bar:nth-child(2){opacity:0}
+.admin-menu-toggle[aria-expanded="true"] .admin-menu-toggle-bar:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+@media (prefers-reduced-motion: reduce){.admin-menu-toggle,.admin-menu-toggle-bar{transition-duration:.01ms!important}}
+
+.admin-sidebar-backdrop{position:fixed;inset:0;z-index:1999;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity 220ms ease}
+body.admin-menu-open .admin-sidebar-backdrop{opacity:1;pointer-events:auto}
+/* display:flex + the nav's flex:1 (below) is what actually pins Logout to
+   the true bottom of the panel instead of just trailing the last nav item -
+   this container previously had no flex layout at all, so Logout only ever
+   sat directly under Promo Carousel. Scrolling now happens on the nav list
+   itself (min-height:0 + its own overflow-y), not the whole panel, so the
+   brand/profile header and the logout footer stay pinned in place. */
+.admin-sidebar{position:fixed;top:12px;left:12px;bottom:12px;z-index:2000;width:280px;max-width:85vw;display:flex;flex-direction:column;background:var(--admin-surface);border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.1);overflow:hidden;padding:24px 20px;transform:translateX(-120%);transition:transform 160ms var(--ease-drawer,cubic-bezier(0.32,0.72,0,1))}
+body.admin-menu-open .admin-sidebar{transform:translateX(0)}
+body.admin-menu-open{overflow:hidden}
+.admin-sidebar-brand{display:flex;align-items:center;gap:10px;text-decoration:none;padding-bottom:18px;margin-bottom:14px;border-bottom:1px solid var(--admin-border)}
+/* Brand row with the manual lock button beside it (admin/includes/navigation.php).
+   The divider and its spacing move up to this wrapper so the rule runs the full
+   width of the sidebar under both items instead of stopping at the brand link. */
+.admin-sidebar-head{display:flex;align-items:center;gap:8px;padding-bottom:18px;margin-bottom:14px;border-bottom:1px solid var(--admin-border);flex-shrink:0}
+.admin-sidebar-head .admin-sidebar-brand{flex:1;min-width:0;padding-bottom:0;margin-bottom:0;border-bottom:none}
+.admin-sidebar-lock{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:none;border-radius:10px;background:var(--admin-surface-2);box-shadow:var(--neu-raised);color:var(--admin-muted);font-size:15px;line-height:1;cursor:pointer;transition:color var(--duration-fast) var(--ease-out),transform var(--duration-fast) var(--ease-out)}
+.admin-sidebar-lock i{display:block}
+.admin-sidebar-lock:hover{color:var(--accent-cyan)}
+.admin-sidebar-lock:active{transform:scale(0.92);box-shadow:var(--neu-pressed)}
+.admin-sidebar-lock:focus-visible{outline:2px solid var(--accent-cyan);outline-offset:2px}
+.admin-sidebar-logo{width:36px;height:36px;border-radius:8px;flex-shrink:0}
+.admin-sidebar-brand-text{display:flex;flex-direction:column;gap:1px;max-width:160px;opacity:1;overflow:hidden;white-space:nowrap;transition:max-width 200ms ease,opacity 150ms ease}
+.admin-sidebar-brand-text strong{color:var(--admin-text);font-size:16px;font-weight:800;letter-spacing:0.3px}
+.admin-sidebar-brand-text span{color:var(--admin-muted);font-size:12px}
+.admin-sidebar-profile{display:flex;align-items:center;gap:10px;padding-top:16px;margin-top:16px;border-top:1px solid var(--admin-border)}
+.admin-sidebar-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--admin-accent),var(--admin-primary-2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;overflow:hidden;flex-shrink:0}
+.admin-sidebar-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.admin-sidebar-name{color:var(--admin-text);font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;opacity:1;transition:max-width 200ms ease,opacity 150ms ease}
+.admin-sidebar-divider{height:1px;background:var(--admin-border);margin:14px 4px}
+.admin-sidebar-logout{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);color:var(--admin-danger);text-decoration:none;font-size:14px;font-weight:600;transition:background var(--duration-fast) var(--ease-out),transform var(--duration-fast) var(--ease-out)}
+.admin-sidebar-logout:hover{background:rgba(194,104,111,0.14)}
+.admin-sidebar-logout:active{transform:scale(0.97)}
+.admin-sidebar-nav{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+.admin-sidebar-brand,.admin-sidebar-profile,.admin-sidebar-divider,.admin-sidebar-logout{flex-shrink:0}
+.admin-sidebar-nav .action-btn{display:flex;align-items:center;gap:12px;justify-content:flex-start;padding:11px 14px;font-size:14px}
+.admin-sidebar-nav .action-btn span:not(.notification-badge){max-width:180px;opacity:1;overflow:hidden;white-space:nowrap;transition:max-width 200ms ease,opacity 150ms ease}
+@media (prefers-reduced-motion: reduce){.admin-sidebar,.admin-sidebar-backdrop,.admin-sidebar-brand-text,.admin-sidebar-name,.admin-sidebar-lock,.admin-sidebar-nav .action-btn span{transition-duration:.01ms!important}}
+/* Section rows that carry a description under the label (Orders, Products,
+   Customers - see admin/includes/navigation.php). The label and its
+   description stack in a column so the icon still sits beside them as one
+   block, and the caret and badge stay where they were as siblings.
+
+   Both spans are still matched by the label rule directly above, which is what
+   makes them collapse to nothing in the 72px icon rail - so the description
+   needs no rail handling of its own.
+
+   SPECIFICITY: that label rule is `.admin-sidebar-nav .action-btn
+   span:not(.notification-badge)` = (0,3,1) - the :not() counts its argument.
+   Anything here that has to beat it needs a `span` in the selector too, which
+   is why the desc and track rules are written `span.admin-nav-desc` rather
+   than `.admin-nav-desc`. Without it they silently lose and the description
+   stays clipped to one nowrap line. */
+.admin-sidebar-nav .action-btn .admin-nav-text{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;max-width:180px}
+/* The description is a fixed window with a track inside it that slides.
+   The track holds the text TWICE, and the animation moves it exactly -50% -
+   one full copy - so the second copy lands where the first began and the loop
+   is seamless.
+
+   That -50% is the whole point: it is measured against the track itself, so
+   the animation never needs to know how wide the window is. An earlier version
+   translated by `calc(180px - 100%)`, and because the real window is nearer
+   155px than 180px, every description stopped ~25px short of its own ending -
+   "...catalog." lost its tail, and a line that nearly fit never moved at all. */
+.admin-sidebar-nav .action-btn .admin-nav-text span.admin-nav-desc{display:block;max-width:180px;overflow:hidden;white-space:nowrap;font-size:11px;line-height:1.35;font-weight:400;color:var(--admin-muted);letter-spacing:0}
+.admin-sidebar-nav .action-btn span.admin-nav-desc-track{display:flex;width:max-content;max-width:none;animation:adminNavDescScroll 13s linear infinite}
+/* padding-right is the gap between the end of one pass and the start of the
+   next; it belongs to the copy so it travels with it and -50% stays exact */
+.admin-sidebar-nav .action-btn span.admin-nav-desc-copy{flex:0 0 auto;max-width:none;white-space:nowrap;padding-right:30px}
+@keyframes adminNavDescScroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+/* Motion is decoration here - the text itself must still be readable in full,
+   so with reduced motion it wraps to two lines instead of sliding, and the
+   duplicate copy (which exists only to make the loop seamless) is dropped. */
+@media (prefers-reduced-motion: reduce){
+  .admin-sidebar-nav .action-btn span.admin-nav-desc-track{animation:none;display:block;width:auto}
+  .admin-sidebar-nav .action-btn span.admin-nav-desc-copy{white-space:normal;padding-right:0}
+  .admin-sidebar-nav .action-btn span.admin-nav-desc-copy + span.admin-nav-desc-copy{display:none}
+  .admin-sidebar-nav .action-btn .admin-nav-text span.admin-nav-desc{white-space:normal}
+}
+/* the row is two lines tall now, so it needs a little more breathing room than
+   the single-line rows it sits between */
+.admin-sidebar-nav .action-btn:has(.admin-nav-desc){padding-top:9px;padding-bottom:9px}
+/* Expandable nav group (Add Product / Categories / Edit Price under Product
+   Management - see admin/includes/navigation.php). Mirrors the customer
+   sidebar's .customer-sidebar-has-submenu pattern. The wrapper is its own
+   flex column because .admin-sidebar-nav's gap only applies between its
+   direct children, which the wrapper now is. */
+/* ---- Selected / hover states for nav rows -------------------------------
+   The problem this solves: .btn-muted.active marks "selected" with the
+   neumorphic PRESSED shadow, but every admin surface is the same colour as
+   the page behind it, so an inset shadow is a few percent of contrast - next
+   to a raised row it is genuinely hard to tell which one is current.
+
+   So selection gets three cues that don't depend on shadow at all:
+     1. a solid accent bar down the leading edge - the one unambiguous mark,
+        and the only cue that still works in the 72px icon rail where labels
+        are collapsed to nothing;
+     2. a stronger grey wash than any hover state can reach;
+     3. the bolder weight .btn-muted.active already applied.
+
+   Hover gets its own much fainter wash, so "the row under my cursor" and
+   "the row I am on" can never be mistaken for each other.
+
+   Scoped to the sidebar nav - the same .action-btn.active pill is used on
+   page bodies elsewhere in the admin, and those are not selection states. */
+.admin-sidebar-nav .action-btn{position:relative;}
+.admin-sidebar-nav .action-btn:not(.active):hover{background:var(--admin-nav-hover-tint);}
+.admin-sidebar-nav .action-btn.active{background:var(--admin-active-tint);}
+.admin-sidebar-nav .action-btn.active:hover{background:var(--admin-active-tint-hover);}
+
+/* The marker bar. Absolutely positioned so it never disturbs the flex row -
+   which matters because the rail centres these rows and zeroes their padding
+   when collapsed. Rounded on the inner edge only, so it reads as attached to
+   the panel edge rather than floating. */
+.admin-sidebar-nav .action-btn.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:58%;min-height:18px;border-radius:0 3px 3px 0;
+  background:var(--admin-accent);}
+
+/* A selected child also lights up its connector line, so the eye is led from
+   the section header straight to the row inside it. :has() is progressive -
+   where it is unsupported the bar above still marks the row on its own. */
+.admin-sidebar-submenu-item:has(.action-btn.active){border-left-color:var(--admin-accent);}
+
+.admin-sidebar-has-submenu{display:flex;flex-direction:column}
+/* Children start hidden and stay hidden until the parent row is hovered
+   (or focused, so the keyboard can still reach them). Collapsed in the base
+   rules rather than only inside the hover-capable media query below, so the
+   panel never opens with a group already spilled into the list - on any
+   device, and on the group's own pages too. */
+/* A section has ONE open state: `.is-open` on the wrapper. Pointing at a
+   section opens it, clicking pins it, and keyboard focus opens it - but all
+   three go through the same class (see the long note in navigation.php), so
+   nothing can be visibly open while the caret below says otherwise.
+
+   It used to have three states, and they fought:
+     .is-hover-open  what hover set, invisible to the caret rule;
+     :focus-within   declared on the WRAPPER, which contains the header button
+                     - so clicking the button to close a section re-opened it
+                     on the same gesture, since the click left the button
+                     focused;
+     .is-open        the only one the caret rule below ever followed, which is
+                     why the arrow pointed down at sections that were plainly
+                     open.
+   Hover still opens sections; it just sets .is-open like everything else
+   now, and the script owns it rather than the :hover pseudo-class - the
+   wrapper grows as the submenu expands, and a cursor moving toward the
+   children can fall outside the still-growing box for a frame and drop
+   :hover. A scripted grace timer cannot be raced that way.
+
+   The focus-within fallback below is scoped to the SUBMENU, not the wrapper:
+   the rows inside stay tabbable while the section is clipped, so with the
+   script unavailable they still reveal themselves when focus reaches them,
+   and the header button - which is not inside the submenu - cannot trigger it.
+
+   max-height is a generous cap rather than a fitted one: it only has to exceed
+   the tallest section, so sections can gain children later without anyone
+   remembering to raise it. */
+.admin-sidebar-submenu{display:flex;flex-direction:column;gap:10px;max-height:0;margin:0;overflow:hidden;
+  transition:max-height 240ms ease,margin-top 240ms ease,margin-bottom 240ms ease}
+.admin-sidebar-has-submenu.is-open > .admin-sidebar-submenu,
+.admin-sidebar-has-submenu > .admin-sidebar-submenu:focus-within{max-height:520px;margin:12px 0 4px}
+/* Reduced motion drops the travel, not the forgiveness: the section still
+   waits out the grace delay, it just snaps instead of sliding. */
+@media (prefers-reduced-motion: reduce){.admin-sidebar-submenu{transition-duration:.01ms!important}}
+
+/* Section headers are <button>s, so they need the type reset an <a> gets for
+   free from .action-btn. */
+.admin-nav-toggle{width:100%;font:inherit;font-size:14px;font-weight:inherit;text-align:left;cursor:pointer;border:none;}
+.admin-nav-caret{margin-left:auto;flex:0 0 auto;font-size:13px;line-height:1;
+  transition:transform 240ms var(--ease-out);}
+/* The arrow IS the state, not a control - there is nothing to click here, the
+   section is already open by the time you can see which way it points. It
+   points down when the section is closed and up when it is open, and it keys
+   off the same single class the submenu does, so the two cannot drift. Kept in
+   its own rule from the focus-within fallback below: :has() is unsupported in
+   older engines and would take this one down with it. */
+.admin-sidebar-has-submenu.is-open .admin-nav-caret{transform:rotate(180deg);}
+.admin-sidebar-has-submenu:has(> .admin-sidebar-submenu:focus-within) .admin-nav-caret{transform:rotate(180deg);}
+@media (prefers-reduced-motion: reduce){.admin-nav-caret{transition-duration:.01ms!important}}
+
+/* Count badge on a nav row (pending orders, pending cancellations). Sits at
+   the end of the row, after the label, so it reads as belonging to that row
+   and not to the section above it. */
+.admin-nav-badge{margin-left:auto;flex:0 0 auto;min-width:18px;height:18px;padding:0 5px;
+  border-radius:999px;background:var(--admin-danger);color:#fff;
+  font-size:10px;font-weight:700;line-height:18px;text-align:center;}
+/* A row with both a caret and a badge would fight over margin-left:auto. */
+.admin-nav-caret + .admin-nav-badge,.admin-nav-badge + .admin-nav-caret{margin-left:6px;}
+/* Roll-up badge on a section header: stands in for the badges on the rows
+   inside while they are hidden, and gets out of the way the moment they are
+   visible, so a count is never shown in two places at once. */
+.admin-sidebar-has-submenu.is-open .admin-nav-rollup{display:none;}
+.admin-sidebar-has-submenu:has(> .admin-sidebar-submenu:focus-within) .admin-nav-rollup{display:none;}
+/* Indented, with a visible left connector line - the same treatment the
+   customer sidebar gives .customer-sidebar-submenu-item. */
+.admin-sidebar-submenu-item{margin-left:18px;padding-left:12px;border-left:2px solid var(--admin-border)}
+.admin-sidebar-nav .admin-sidebar-submenu-item .action-btn{font-size:13px;padding-top:8px;padding-bottom:8px}
+/* Parent rows use a 20px .nav-icon-gif image; these use icon-font glyphs,
+   so give them the same 20px box to keep every row's label on one x. */
+.admin-sidebar-submenu-item .action-btn i{width:20px;font-size:15px;text-align:center;flex-shrink:0}
+
+/* Nav chooser dialog (Order Management -> Home Delivery / Store Pickup, see
+   admin/includes/navigation.php). Deliberately NOT named .modal-overlay /
+   .modal-container: those are re-declared by individual admin pages, and
+   this dialog ships on every one of them. Above the sidebar's z-index:2000,
+   matching the 9999 the page-level admin modals already use. */
+.admin-nav-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(15,45,77,.72);backdrop-filter:blur(4px)}
+.admin-nav-modal[hidden]{display:none}
+.admin-nav-modal-dialog{width:100%;max-width:640px;background:var(--admin-surface-2);border-radius:var(--radius-lg);box-shadow:var(--neu-raised);padding:32px 36px 36px;max-height:calc(100vh - 48px);overflow-y:auto}
+.admin-nav-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.admin-nav-modal-head h2{margin:0;color:var(--admin-text);font-size:27px;font-weight:800;line-height:1.2}
+.admin-nav-modal-close{background:transparent;border:none;color:var(--admin-muted);font-size:22px;line-height:1;cursor:pointer;padding:11px;margin:-11px -11px 0 0;border-radius:var(--radius-sm);flex-shrink:0}
+.admin-nav-modal-close:hover{color:var(--admin-text);background:var(--admin-surface)}
+.admin-nav-modal-lead{margin:10px 0 28px;color:var(--admin-muted);font-size:15px;line-height:1.55}
+.admin-nav-modal-choices{display:flex;flex-direction:column;gap:16px}
+.admin-nav-modal-choice{display:flex;align-items:center;gap:20px;padding:24px 26px;border-radius:var(--radius-sm);background:var(--admin-surface);box-shadow:var(--neu-raised-sm);color:var(--admin-text);text-decoration:none;transition:transform var(--duration-fast) var(--ease-out),box-shadow var(--duration-fast) var(--ease-out)}
+.admin-nav-modal-choice:hover{transform:translateY(-1px);box-shadow:var(--neu-raised);color:var(--admin-text);text-decoration:none}
+.admin-nav-modal-choice:active{transform:scale(0.99)}
+.admin-nav-modal-choice i{font-size:32px;color:var(--admin-accent);flex-shrink:0;width:40px;text-align:center}
+.admin-nav-modal-choice span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.admin-nav-modal-choice strong{font-size:19px;font-weight:700;line-height:1.25}
+.admin-nav-modal-choice small{font-size:14px;color:var(--admin-muted);line-height:1.45}
+@media (prefers-reduced-motion: reduce){.admin-nav-modal-choice{transition-duration:.01ms!important}}
+/* Phones: the dialog is already full-width by then, so the only thing left
+   to give back is its own padding - the type stays at the sizes above. */
+@media (max-width: 560px){
+  .admin-nav-modal{padding:16px}
+  .admin-nav-modal-dialog{padding:24px 20px 26px}
+  .admin-nav-modal-head h2{font-size:23px}
+  .admin-nav-modal-choice{padding:20px 18px;gap:16px}
+  .admin-nav-modal-choice i{font-size:28px;width:34px}
+  .admin-nav-modal-choice strong{font-size:17px}
+}
+
+/* ---------- Collapsed-by-default, hover-to-expand icon rail ----------
+   Hover-capable pointer devices only - on touch/small screens the pull-tab
+   + off-canvas drawer above still applies unchanged, since hover has no
+   equivalent there. Shared by admin/includes/navigation.php and
+   super-admin/includes/navigation.php (both use these same .admin-sidebar*
+   classes), so this one block covers both panels. Mirrors the identical
+   pattern in customer/includes/sidebar.php. */
+@media (hover:hover) and (pointer:fine) {
+  .admin-menu-toggle{display:none}
+  .admin-sidebar{transform:translateX(0);width:72px;padding:20px 12px;transition:width 200ms ease,padding 200ms ease}
+  .admin-sidebar.is-hover-expanded{width:280px;padding:24px 20px}
+  /* gap:0 while collapsed - the label text still exists as a flex item
+     (collapsed to max-width:0), and flexbox gap reserves space between
+     items regardless of their content width, so without this the icon/logo
+     sits visibly off-center (shifted left by half the gap) even though
+     justify-content:center is set. */
+  .admin-sidebar .admin-sidebar-brand{justify-content:center;gap:0}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-brand{justify-content:flex-start;gap:10px}
+  .admin-sidebar .admin-sidebar-brand-text{max-width:0;opacity:0;margin:0}
+  /* The lock button leaves the rail entirely rather than collapsing like the
+     labels do - a second 34px control cannot share a 72px row with the logo,
+     and the rail is one hover away from expanded either way. */
+  .admin-sidebar .admin-sidebar-head{gap:0}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-head{gap:8px}
+  .admin-sidebar .admin-sidebar-lock{display:none}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-lock{display:inline-flex}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-brand-text{max-width:160px;opacity:1}
+  .admin-sidebar .admin-sidebar-profile{justify-content:center;gap:0}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-profile{justify-content:flex-start;gap:10px}
+  .admin-sidebar .admin-sidebar-name{max-width:0;opacity:0}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-name{max-width:180px;opacity:1}
+  .admin-sidebar .admin-sidebar-nav .action-btn{justify-content:center;padding-left:0;padding-right:0;gap:0}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-nav .action-btn{justify-content:flex-start;padding-left:14px;padding-right:14px;gap:12px}
+  .admin-sidebar .admin-sidebar-nav .action-btn span:not(.notification-badge){max-width:0;opacity:0}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-nav .action-btn span:not(.notification-badge){max-width:180px;opacity:1}
+  /* ...but NOT the marquee track or its copies. That rule is (0,4,1) and
+     matches every span in the row, so it was capping the track at the same
+     180px as its own window - no overflow, nothing to scroll, description
+     frozen mid-sentence. Both the track and the two copies inside it have to
+     keep their full natural width for the slide to have anywhere to go. */
+  .admin-sidebar .admin-sidebar-nav .action-btn span.admin-nav-desc-track,
+  .admin-sidebar .admin-sidebar-nav .action-btn span.admin-nav-desc-copy,
+  .admin-sidebar.is-hover-expanded .admin-sidebar-nav .action-btn span.admin-nav-desc-track,
+  .admin-sidebar.is-hover-expanded .admin-sidebar-nav .action-btn span.admin-nav-desc-copy{max-width:none}
+  /* The description must leave the layout entirely in the rail, not just
+     collapse like the labels do - its marquee track is a wide nowrap line that
+     would still push the row out behind a 72px icon. (span. in the selector
+     for the same specificity reason noted further up.) */
+  .admin-sidebar .admin-sidebar-nav .action-btn .admin-nav-text span.admin-nav-desc{display:none}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-nav .action-btn .admin-nav-text span.admin-nav-desc{display:block}
+  /* The caret and the count both belong to a label that isn't rendered while
+     the rail is collapsed; showing them alone would read as noise next to the
+     icons. The badge comes back as a dot so a pending count is still visible.
+     Section open/closed state is unaffected - only its chrome is hidden. */
+  .admin-sidebar .admin-nav-caret{display:none;}
+  .admin-sidebar.is-hover-expanded .admin-nav-caret{display:inline-flex;}
+  .admin-sidebar .admin-nav-badge{position:absolute;top:6px;right:6px;margin-left:0;
+    min-width:8px;width:8px;height:8px;padding:0;font-size:0;line-height:0;overflow:hidden;}
+  .admin-sidebar.is-hover-expanded .admin-nav-badge{position:static;width:auto;min-width:18px;height:18px;
+    padding:0 5px;font-size:10px;line-height:18px;margin-left:auto;overflow:visible;}
+
+  /* Only the indent is rail-dependent - the connector line would hang off
+     the left edge of a 72px icon rail. Visibility is handled by the base
+     .is-open rules above, which apply in every context. */
+  .admin-sidebar .admin-sidebar-submenu-item{margin-left:0;padding-left:0;border-left:none}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-submenu-item{margin-left:18px;padding-left:12px;border-left:2px solid var(--admin-border)}
+  .admin-sidebar .admin-sidebar-logout span{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width 200ms ease,opacity 150ms ease}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-logout span{max-width:120px;opacity:1}
+  .admin-sidebar .admin-sidebar-logout{justify-content:center;padding-left:0;padding-right:0;gap:0}
+  .admin-sidebar.is-hover-expanded .admin-sidebar-logout{justify-content:flex-start;padding-left:14px;padding-right:14px;gap:12px}
+  .admin-sidebar #pendingOrdersBadge{top:6px!important;right:6px!important}
+  /* Scrim behind the floating expanded panel - reuses the mobile drawer's
+     backdrop element, triggered by a different state. Non-blocking
+     (pointer-events:none): a hover preview, not a modal. */
+  body.admin-sidebar-hover-expanded .admin-sidebar-backdrop{opacity:1}
+  .admin-sidebar-backdrop{pointer-events:none}
+}
+
+/* ---------- Admin order-queue table ----------
+   The row layout shared by the two order queues: admin/Home_Delivery_Orders.php
+   and admin/store_pickup_orders.php. Lived in the delivery page's own <style>
+   until the pickup queue adopted the same shape - kept here instead of copied
+   so the two can't drift apart.
+
+   The .hdo- prefix is historical (Home Delivery Orders, where it was written).
+   It is a shared component now; the name is left alone only because renaming it
+   would churn every row in both pages' markup for no behavioural gain.
+
+   One panel, hairline row separators, generous row height. Every column has a
+   bold primary line and a muted secondary line under it, which is what lets six
+   columns carry twelve facts without feeling dense. */
+/* --- Orders table ------------------------------------------------------
+   One panel, hairline row separators, generous row height. Every column
+   has a bold primary line and a muted secondary line under it, which is
+   what lets six columns carry twelve facts without feeling dense. */
+.hdo-table-wrap{background:var(--admin-surface-2);border-radius:var(--radius-lg);
+  box-shadow:var(--neu-raised);overflow-x:auto;}
+.hdo-table{width:100%;border-collapse:collapse;font-size:14px;min-width:900px;}
+.hdo-table thead th{position:sticky;top:0;z-index:1;text-align:left;white-space:nowrap;
+  padding:14px 18px;background:var(--admin-surface);color:var(--admin-muted);
+  font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  border-bottom:1px solid var(--admin-border);}
+.hdo-table td{padding:14px 18px;border-bottom:1px solid var(--admin-border);vertical-align:middle;}
+.hdo-table tbody tr:last-child td{border-bottom:0;}
+.hdo-row{cursor:pointer;transition:background var(--duration-fast) var(--ease-out);}
+.hdo-row:hover{background:var(--admin-surface);}
+.hdo-row:focus-visible{outline:2px solid var(--admin-primary-2);outline-offset:-2px;}
+
+.hdo-cell-media{display:flex;align-items:center;gap:12px;min-width:0;}
+.hdo-cell-text{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.hdo-strong{color:var(--admin-text);font-weight:600;font-size:14px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hdo-sub{color:var(--admin-muted);font-size:12px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Tabular figures: amounts and ids only line up column-wise if the digits
+   are the same width. */
+.hdo-mono,.hdo-amount{font-variant-numeric:tabular-nums;}
+.hdo-amount{font-size:15px;font-weight:700;}
+
+.hdo-thumb{flex:0 0 auto;width:42px;height:42px;border-radius:10px;overflow:hidden;
+  background:var(--admin-surface);box-shadow:var(--neu-pressed);
+  display:flex;align-items:center;justify-content:center;color:var(--admin-muted);}
+.hdo-thumb img{width:100%;height:100%;object-fit:cover;}
+.hdo-avatar{flex:0 0 auto;width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--admin-accent),var(--admin-primary-2));
+  color:#fff;font-size:12px;font-weight:700;letter-spacing:.02em;}
+
+.hdo-badge{display:inline-block;padding:5px 12px;border-radius:999px;color:#fff;
+  font-size:12px;font-weight:700;line-height:1.4;white-space:nowrap;}
+
+.hdo-col-action{width:1%;white-space:nowrap;}
+.hdo-actions{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
+.hdo-details-btn{padding:7px 16px;border:none;border-radius:var(--radius-sm);cursor:pointer;
+  background:var(--admin-surface);color:var(--admin-text);box-shadow:var(--neu-raised-sm);
+  font:inherit;font-size:13px;font-weight:600;
+  transition:filter var(--duration-fast) var(--ease-out),transform var(--duration-fast) var(--ease-out);}
+.hdo-details-btn:hover{filter:brightness(1.08);}
+.hdo-details-btn:active{transform:scale(.97);box-shadow:var(--neu-pressed);}
+
+.hdo-menu-wrap{position:relative;}
+.hdo-more-btn{width:32px;height:32px;border:none;border-radius:var(--radius-sm);cursor:pointer;
+  background:transparent;color:var(--admin-muted);font:inherit;font-size:16px;line-height:1;
+  display:flex;align-items:center;justify-content:center;}
+.hdo-more-btn:hover{background:var(--admin-surface);color:var(--admin-text);}
+.hdo-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:190px;padding:6px;
+  background:var(--admin-surface-2);border:1px solid var(--admin-border);border-radius:var(--radius-sm);
+  box-shadow:var(--neu-raised);}
+.hdo-menu[hidden]{display:none;}
+.hdo-menu > *{display:block;width:100%;text-align:left;padding:9px 10px;border:none;cursor:pointer;
+  background:transparent;color:var(--admin-text);font:inherit;font-size:13px;
+  border-radius:calc(var(--radius-sm) - 2px);text-decoration:none;}
+.hdo-menu > *:hover{background:var(--admin-surface);text-decoration:none;color:var(--admin-text);}
+
+/* Phones: the same rows as stacked cards. Each cell carries its column
+   name from the data-label attribute, so nothing needs duplicating in
+   the markup. */
+@media (max-width: 900px){
+  .hdo-table-wrap{background:transparent;box-shadow:none;overflow-x:visible;}
+  .hdo-table{min-width:0;}
+  .hdo-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  .hdo-table tbody tr{display:block;margin-bottom:14px;padding:6px 4px;
+    background:var(--admin-surface-2);border-radius:var(--radius-lg);box-shadow:var(--neu-raised);}
+  .hdo-table td{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:10px 16px;border-bottom:1px solid var(--admin-border);}
+  .hdo-table tbody tr td:last-child{border-bottom:0;}
+  .hdo-table td::before{content:attr(data-label);flex:0 0 auto;
+    color:var(--admin-muted);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}
+  .hdo-cell-media,.hdo-cell-text{align-items:flex-end;text-align:right;}
+  .hdo-cell-media{flex-direction:row-reverse;}
+  .hdo-col-action{width:auto;}
+}

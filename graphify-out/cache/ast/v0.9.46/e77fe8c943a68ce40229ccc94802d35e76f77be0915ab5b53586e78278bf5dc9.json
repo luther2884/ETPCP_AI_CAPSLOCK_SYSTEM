@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_add_qr_columns_sql", "label": "add_qr_columns.sql", "file_type": "code", "source_file": "add_qr_columns.sql", "source_location": null}, {"id": "orders", "label": "`orders`", "file_type": "code", "source_file": "", "source_location": "", "origin_file": "$graphify-root$/add_qr_columns.sql"}], "edges": []}

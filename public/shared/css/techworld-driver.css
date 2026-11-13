@@ -1,0 +1,484 @@
+/* techworld-driver.css — driver delivery report skin
+   ------------------------------------------------------------------
+   Repaints the driver's Delivery Report page in the TechWorld dark
+   language, and paints the animated background itself (no partial
+   include needed). Reference: TechWorld Driver Delivery Report.dc.html
+
+   INSTALL
+   1. Copy into the same css folder as your other stylesheets.
+   2. Link it LAST in the driver page — after every sheet the shared
+      header pulls in.
+   3. Add class "tw-page tw-driver" to <body>.
+   No markup restructuring required.
+   ------------------------------------------------------------------ */
+
+/* ---- 0. Tokens + selector map ----------------------------------------
+   Tokens are declared locally so this sheet never depends on
+   techworld-anim.css load order.
+   MAP (resolved against admin/Delivery_Report.php + shared/admin.css):
+     .stat-card         -> .stat-card                       (already matched)
+     .stats-row         -> .delivery-stats-grid             (.quick-stats grid)
+     .stat-value        -> .stat-number
+     .tw-panel          -> .admin-table-wrap                (the panel div)
+     .panel-head        -> .admin-table-wrap > div:first-child
+     .orders-table      -> .orders-table table              (.orders-table is
+                           the PANEL wrapper here, not the <table>)
+     .filter-tab        -> .orders-filter-btn
+     .filter-tabs       -> .orders-filter-tabs
+     .sort-select       -> .orders-sort-wrap select
+     .status-badge      -> .admin-badge (+ --active/--pending/--danger)
+     .btn-action        -> td[data-label="Actions"] button
+     .order-id/.customer-name/.amount/.order-date -> these are REAL classes
+                           on the page now (added in the redesign), so the
+                           original names are used directly again
+     .sidebar           -> .admin-sidebar / -backdrop / .admin-menu-toggle
+   NO MATCH on this page (rules left in place, inert): .tw-shift,
+     .gps-notice/.safety-notice, .order-time, .panel-foot, .btn-primary,
+     .stat-illustration.
+   ---------------------------------------------------------------------- */
+html body.tw-driver {
+  --tw-bg: #060d18;
+  --tw-panel-2: #0a1422;
+  --tw-ink: #e8eef7;
+  --tw-ink-dim: #a9bcd4;
+  --tw-ink-mute: #9db1cb;
+  --tw-ink-faint: #7f95b3;
+  --tw-line: rgba(120, 170, 230, .16);
+  --tw-pink: #e0567a;
+  --tw-pink-lt: #ff9ab5;
+  --tw-violet: #7f6ae0;
+  --tw-cyan-lt: #67e8f9;
+  --tw-green-lt: #9df3d0;
+  --tw-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --tw-panel-grad: linear-gradient(180deg, rgba(20, 36, 60, .9), rgba(11, 22, 38, .96));
+}
+
+/* Bridge admin.css's own tokens inside the report only. Dozens of inline
+   `color:var(--admin-muted)` / `var(--admin-border)` attributes are baked
+   into this page's markup and win over any stylesheet rule, so the only way
+   to darken them without editing the PHP is to re-point the token. Scoped to
+   .admin-dashboard so the sidebar, the lock overlay and all four modals keep
+   the normal light admin theme. */
+html body.tw-driver .admin-dashboard {
+  --admin-text: var(--tw-ink);
+  --admin-muted: var(--tw-ink-faint);
+  --admin-border: var(--tw-line);
+  --admin-surface: rgba(8, 16, 29, .55);
+  --admin-surface-2: var(--tw-panel-2);
+  --dropdown-hover: rgba(103, 232, 249, .05);
+}
+
+/* ---- 1. Ground + animated layers ------------------------------------- */
+html body.tw-driver {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) #060d18 !important;
+  background-attachment: fixed !important;
+  color: var(--tw-ink) !important;
+  font-family: Figtree, system-ui, sans-serif;
+  position: relative;
+}
+html body.tw-driver::before,
+html body.tw-driver::after {
+  content: ""; position: fixed; inset: -20vh -20vw; pointer-events: none; z-index: 0;
+}
+html body.tw-driver::before {
+  background-image:
+    linear-gradient(to right, rgba(120,170,230,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120,170,230,.055) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px;
+  animation: tw-drvGrid 26s linear infinite;
+}
+html body.tw-driver::after {
+  background-image:
+    radial-gradient(38vw 38vw at 74% 8%, rgba(224,86,122,.20), transparent 62%),
+    radial-gradient(34vw 34vw at 8% 88%, rgba(56,189,248,.13), transparent 65%);
+  background-repeat: no-repeat;
+  filter: blur(30px);
+  animation: tw-drvAurora 24s ease-in-out infinite;
+}
+@keyframes tw-drvGrid { from { background-position: 0 0, 0 0; } to { background-position: 120px 120px, 120px 120px; } }
+@keyframes tw-drvAurora {
+  0%, 100% { transform: translate3d(-1.5%, -1%, 0) scale(1); }
+  50%      { transform: translate3d(2%, 1.5%, 0) scale(1.12); }
+}
+html body.tw-driver > *:not(script):not(style) { position: relative; z-index: 1; }
+/* body > * above gives every direct child z-index:1, which would drop the
+   fixed sidebar (2000), its backdrop (1999) and the hamburger (2001) behind
+   <main>. Restore their relative order instead of a single flat value; the
+   modals carry z-index:9999 in a style attribute, so they are unaffected. */
+html body.tw-driver .admin-sidebar-backdrop { z-index: 2; }
+html body.tw-driver .admin-sidebar { z-index: 3; }
+html body.tw-driver .admin-menu-toggle { z-index: 4; }
+
+/* every light wrapper must let the ground through — this is what kills
+   the off-white sheet in the current build */
+html body.tw-driver .page-wrapper,
+html body.tw-driver .content,
+html body.tw-driver .container,
+html body.tw-driver .container-fluid,
+html body.tw-driver .row,
+html body.tw-driver main,
+html body.tw-driver section,
+html body.tw-driver .dashboard-wrapper,
+html body.tw-driver .admin-dashboard {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0;
+}
+html body.tw-driver .admin-dashboard {
+  max-width: 1400px; margin: 0 auto;
+  padding: 26px clamp(16px, 3.5vw, 44px) 80px !important;
+}
+/* Reserve the width of the collapsed sidebar rail.
+   .admin-sidebar is position:fixed at left:12px, width:72px - it covers
+   x=12..84 and nothing in admin.css ever reserved that space. .container is
+   max-width:1400 with 20px of padding, so on any viewport under ~1528px the
+   content column starts underneath the rail and the rail sits on top of the
+   stat cards, the panel and the header. It went unnoticed while both were
+   light; a light rail over a near-black panel does not go unnoticed.
+   92px and the media query match the identical reservation the customer
+   sidebar already makes in shared/style.css - the outer element reserves the
+   space and the inner auto-margin re-centres in what is left. Hover-capable
+   pointers only: below that the rail is off-canvas behind the hamburger.
+   The rail's 280px hover expansion floats over deliberately (its backdrop is
+   pointer-events:none), so it is not reflowed for. */
+@media (hover: hover) and (pointer: fine) {
+  html body.tw-driver main.container { padding-left: 92px !important; }
+}
+
+/* ---- 2. Header --------------------------------------------------------
+   The old header sat in its own tall white card, which spent 170px of
+   screen on two lines of text. It's now type on the ground. */
+html body.tw-driver .dashboard-welcome {
+  background: transparent !important; box-shadow: none !important;
+  border: 0; border-bottom: 1px solid rgba(120,170,230,.12) !important;
+  border-radius: 0 !important; padding: 0 0 22px !important; margin-bottom: 22px;
+}
+/* identity + title on the left, safety notice + primary action on the right */
+html body.tw-driver .tw-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+}
+html body.tw-driver .tw-head-main { min-width: 0; flex: 1 1 380px; }
+html body.tw-driver .tw-head-actions {
+  display: flex; align-items: center; gap: 14px;
+  flex-wrap: wrap; justify-content: flex-end; padding-bottom: 2px;
+}
+html body.tw-driver .dashboard-welcome h1 {
+  font-size: clamp(28px, 3.3vw, 44px); font-weight: 800;
+  letter-spacing: -.03em; line-height: 1; color: var(--tw-ink) !important; margin: 12px 0 0;
+}
+html body.tw-driver .dashboard-welcome p {
+  margin: 9px 0 0; font-size: 14.5px; color: var(--tw-ink-dim) !important; max-width: 54ch; text-wrap: pretty;
+}
+/* on-shift eyebrow: <div class="tw-shift"><span></span>ON SHIFT · R. CRUZ</div> */
+html body.tw-driver .tw-shift {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--tw-mono); font-size: 10px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--tw-ink-faint);
+}
+html body.tw-driver .tw-shift > span:first-child {
+  width: 7px; height: 7px; border-radius: 50%; background: #34d399;
+  animation: tw-drvPulse 2.2s ease-in-out infinite;
+}
+@keyframes tw-drvPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+
+/* ---- 3. The GPS safety notice ----------------------------------------
+   It was 12px grey centred text — the one line with legal weight on the
+   page and the least visible. Now an amber-bordered chip.
+   LIVE as of the redesign: the notice carries class="gps-notice", its
+   inline styles are gone, and it sits in the header's right-hand column. */
+html body.tw-driver .gps-notice,
+html body.tw-driver .safety-notice {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 0; max-width: 34ch;
+  padding: 11px 14px; border-radius: 12px;
+  background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.32);
+  color: #fcd34d !important;
+  font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .1em;
+  text-transform: uppercase; line-height: 1.4; text-align: left;
+}
+
+/* ---- 4. Count cards ---------------------------------------------------
+   Change from the current version: the 44px illustrated icons are gone.
+   Four identical big icons carry no information — the numbers do. Label
+   above, number large in mono, a progress hairline under it. */
+html body.tw-driver .delivery-stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 12px; margin-top: 22px;
+}
+html body.tw-driver .stat-card {
+  position: relative; overflow: hidden;
+  padding: 16px 18px !important; border-radius: 16px !important;
+  background: var(--tw-panel-grad) !important;
+  border: 1px solid var(--tw-line) !important;
+  box-shadow: 0 16px 36px rgba(3,8,16,.42) !important;
+  text-align: left !important; min-width: 0; opacity: 1;
+  transition: transform .4s cubic-bezier(.2,.8,.2,1), border-color .35s;
+}
+html body.tw-driver .stat-card:hover { transform: translateY(-5px); border-color: rgba(224,86,122,.42) !important; }
+/* hide the decorative icon; comment this out to keep it */
+html body.tw-driver .stat-card > img { display: none !important; }
+/* The redesigned card is written in reading order, so the column-reverse
+   trick this used to need is gone:
+     .stat-head (label + flag) / .stat-number / .stat-sub / .stat-bar */
+html body.tw-driver .stat-card { display: flex; flex-direction: column; align-items: stretch; gap: 6px; min-width: 0; }
+html body.tw-driver .stat-card .stat-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+}
+html body.tw-driver .stat-card .stat-flag {
+  flex: none; font-family: var(--tw-mono); font-size: 8.5px;
+  letter-spacing: .14em; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 999px;
+  background: rgba(120,170,230,.1); border: 1px solid rgba(120,170,230,.18);
+  color: var(--tw-ink-faint);
+}
+html body.tw-driver .stat-card.is-shipped .stat-flag { color: #a5f3fc; border-color: rgba(103,232,249,.3); }
+html body.tw-driver .stat-card.is-completed .stat-flag { color: var(--tw-green-lt); border-color: rgba(52,211,153,.3); }
+html body.tw-driver .stat-card.is-pending .stat-flag { color: #fcd34d; border-color: rgba(251,191,36,.3); }
+html body.tw-driver .stat-card .stat-sub {
+  font-size: 11px; color: var(--tw-ink-faint); letter-spacing: .01em;
+}
+html body.tw-driver .stat-card .stat-number {
+  font-family: var(--tw-mono) !important;
+  font-size: clamp(26px, 2.4vw, 34px) !important; font-weight: 700 !important;
+  line-height: 1 !important; letter-spacing: -.03em;
+  color: #f2f6fc !important; margin: 0 !important; white-space: nowrap;
+}
+html body.tw-driver .stat-card .stat-label {
+  font-family: var(--tw-mono) !important;
+  font-size: 9px !important; letter-spacing: .2em; text-transform: uppercase;
+  color: #8fa6c4 !important; margin: 0 !important;
+}
+/* colour the meaningful counts: 0 shipped is good news, pending is not */
+html body.tw-driver .stat-card.is-shipped .stat-number { color: #a5f3fc !important; }
+html body.tw-driver .stat-card.is-completed .stat-number { color: var(--tw-green-lt) !important; }
+html body.tw-driver .stat-card.is-pending .stat-number { color: #fcd34d !important; }
+html body.tw-driver .stat-card .stat-bar { width: 100%; height: 3px; margin-top: 4px; border-radius: 999px; background: rgba(120,170,230,.14); overflow: hidden; }
+html body.tw-driver .stat-card .stat-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--tw-pink), var(--tw-violet)); }
+
+/* ---- 5. Orders panel + tabs ------------------------------------------ */
+html body.tw-driver .admin-table-wrap {
+  border-radius: 20px !important; margin-top: 14px; overflow: hidden;
+  background: var(--tw-panel-grad) !important;
+  border: 1px solid var(--tw-line) !important;
+  box-shadow: 0 20px 46px rgba(3,8,16,.45) !important;
+  color: var(--tw-ink);
+}
+html body.tw-driver .admin-table-wrap > div:first-child {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; padding: 16px 20px;
+  border-bottom: 1px solid rgba(120,170,230,.12);
+}
+/* the real heading is an <h3> carrying inline `margin:0 0 12px 0`, hence
+   the !important - without it the title sits 6px high in the flex row */
+html body.tw-driver .admin-table-wrap > div:first-child > h3 {
+  font-family: var(--tw-mono); font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; font-weight: 400;
+  color: var(--tw-ink-faint) !important; margin: 0 !important;
+}
+html body.tw-driver .orders-filter-tabs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+html body.tw-driver .orders-filter-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; border-radius: 999px; cursor: pointer;
+  font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .12em;
+  background: rgba(8,16,29,.6); border: 1px solid rgba(120,170,230,.2);
+  color: var(--tw-ink-mute); transition: transform .3s, background .3s, color .3s;
+}
+html body.tw-driver .orders-filter-btn:hover { transform: translateY(-2px); color: #fff; }
+html body.tw-driver .orders-filter-btn.active {
+  background: linear-gradient(120deg, rgba(224,86,122,.9), rgba(127,106,224,.9)) !important;
+  border-color: transparent !important; color: #fff !important;
+}
+html body.tw-driver .orders-filter-count { opacity: .65; }
+
+html body.tw-driver .orders-sort-wrap select {
+  background: rgba(8,16,29,.6) !important;
+  border: 1px solid rgba(120,170,230,.22) !important;
+  border-radius: 11px; padding: 10px 13px;
+  color: var(--tw-cyan-lt) !important;
+  font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .12em;
+  outline: none; cursor: pointer; box-shadow: none !important;
+}
+html body.tw-driver .orders-sort-wrap select option { color: #0a1424; }
+html body.tw-driver .orders-sort-wrap label { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .12em; color: var(--tw-ink-faint); }
+
+/* ---- 6. The table ---------------------------------------------------- */
+html body.tw-driver .orders-table table { width: 100%; border-collapse: collapse; background: transparent !important; }
+html body.tw-driver .orders-table th {
+  text-align: left; padding: 12px 20px;
+  font-family: var(--tw-mono); font-size: 8.5px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--tw-ink-faint) !important;
+  background: rgba(8,16,29,.5) !important;
+  border-bottom: 1px solid rgba(120,170,230,.12);
+}
+html body.tw-driver .orders-table td {
+  padding: 14px 20px; font-size: 13px; color: var(--tw-ink) !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(120,170,230,.07);
+  vertical-align: middle;
+}
+html body.tw-driver .orders-table tbody tr { transition: background .3s; }
+html body.tw-driver .orders-table tbody tr:hover td { background: rgba(103,232,249,.05) !important; }
+
+/* these are real classes on the markup again, added in the redesign */
+html body.tw-driver .order-id { font-family: var(--tw-mono); font-size: 12.5px; font-weight: 600; color: #f2f6fc !important; }
+html body.tw-driver .order-tracking,
+html body.tw-driver .tracking {
+  display: block; margin-top: 4px;
+  font-family: var(--tw-mono); font-size: 10px; letter-spacing: .06em;
+  color: var(--tw-ink-faint) !important;
+}
+html body.tw-driver .customer-name { font-size: 13px; font-weight: 600; color: #eaf1fa !important; }
+html body.tw-driver .customer-email { display: block; margin-top: 2px; font-size: 11px; color: var(--tw-ink-faint) !important; }
+/* customer initials avatar: <span class="tw-avatar">LR</span> before the name */
+html body.tw-driver .tw-avatar {
+  flex: none; width: 30px; height: 30px; border-radius: 9px;
+  display: inline-grid; place-items: center; margin-right: 10px;
+  background: linear-gradient(140deg, rgba(224,86,122,.3), rgba(127,106,224,.3));
+  color: #ffd7e2; font-family: var(--tw-mono); font-size: 10px; font-weight: 700;
+  /* the name cell is a plain <div>, not a flex row - keep the chip on the
+     text's optical centre rather than its baseline */
+  vertical-align: middle;
+}
+html body.tw-driver .amount,
+html body.tw-driver .order-amount {
+  font-family: var(--tw-mono); font-size: 13.5px; font-weight: 700;
+  color: #f2f6fc !important; white-space: nowrap;
+}
+html body.tw-driver .order-date { font-family: var(--tw-mono); font-size: 11.5px; color: #cfe0f5 !important; white-space: nowrap; }
+html body.tw-driver .order-time { display: block; margin-top: 3px; font-family: var(--tw-mono); font-size: 9.5px; color: var(--tw-ink-faint) !important; }
+/* an em dash where there is no value yet - never blank, never a wrapped word */
+html body.tw-driver .tw-empty { color: var(--tw-ink-faint) !important; opacity: .55; }
+
+/* Status column: state chip over money chip, plus the small caveat line */
+html body.tw-driver .tw-chips { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+html body.tw-driver .tw-chip-note {
+  font-family: var(--tw-mono); font-size: 8.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--tw-ink-faint);
+}
+
+/* status + payment chips. Scoped under .admin-dashboard because the same
+   .admin-badge classes are re-used inside #orderDetailsModal, which stays on
+   the light admin theme - unscoped, these translucent chips would go
+   unreadable there. */
+html body.tw-driver .admin-dashboard .admin-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--tw-mono); font-size: 8.5px; letter-spacing: .13em;
+  padding: 6px 10px; border-radius: 999px; white-space: nowrap; text-transform: uppercase;
+}
+html body.tw-driver .admin-dashboard .admin-badge--active { background: rgba(52,211,153,.13) !important; color: var(--tw-green-lt) !important; border: 1px solid rgba(52,211,153,.38) !important; }
+/* admin-badge--pending is doing double duty - "Shipped" as a state and
+   "Unpaid" as a payment - and both now sit in the same cell, so the split is
+   by the .status-badge / .payment-badge classes the redesign added. */
+html body.tw-driver .admin-dashboard .status-badge.admin-badge--pending { background: rgba(103,232,249,.13) !important; color: #a5f3fc !important; border: 1px solid rgba(103,232,249,.4) !important; }
+html body.tw-driver .admin-dashboard .payment-badge.admin-badge--pending { background: rgba(251,191,36,.13) !important; color: #fcd34d !important; border: 1px solid rgba(251,191,36,.4) !important; }
+html body.tw-driver .admin-dashboard .admin-badge--danger { background: rgba(224,86,122,.16) !important; color: #ffc2d3 !important; border: 1px solid rgba(224,86,122,.48) !important; }
+
+/* proof photos — real thumbnails beat a "View proof (3)" link, because the
+   photo IS the driver's receipt. Wrap them in <span class="proof-thumbs">. */
+html body.tw-driver .proof-thumbs { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+html body.tw-driver .proof-thumbs img,
+html body.tw-driver .proof-thumb {
+  flex: none; width: 26px; height: 26px; border-radius: 7px; object-fit: cover;
+  background-color: var(--tw-panel-2);
+  background-image: repeating-linear-gradient(135deg, rgba(120,170,230,.16) 0 6px, rgba(120,170,230,.04) 6px 12px);
+  border: 1px solid rgba(120,170,230,.2); cursor: pointer;
+  transition: transform .3s, border-color .3s;
+}
+html body.tw-driver .proof-thumbs img:hover,
+html body.tw-driver .proof-thumb:hover { transform: translateY(-3px) scale(1.12); border-color: rgba(103,232,249,.6); }
+html body.tw-driver .view-proof,
+html body.tw-driver .proof-link {
+  display: inline-block; background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--tw-mono); font-size: 9px; letter-spacing: .1em;
+  color: var(--tw-cyan-lt) !important; white-space: nowrap; text-transform: uppercase;
+}
+html body.tw-driver .view-proof:hover { color: var(--tw-pink-lt) !important; }
+
+/* ---- 7. Row actions --------------------------------------------------
+   "Completed ✓" repeated six times is noise next to a COMPLETED chip.
+   Finished rows get a quiet RECEIPT ghost; open work gets the gradient,
+   so the driver's eye lands on what is left to do. Add .is-open to rows
+   still in progress. */
+/* the inline padding/font-size these buttons used to carry is gone as of
+   the redesign, so no !important is needed here any more */
+html body.tw-driver .tw-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+html body.tw-driver .tw-action-note {
+  font-family: var(--tw-mono); font-size: 8.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--tw-ink-faint);
+}
+html body.tw-driver .admin-dashboard td[data-label="Actions"] button {
+  padding: 9px 13px; border-radius: 10px;
+  border: 1px solid rgba(120,170,230,.26); background: transparent;
+  color: var(--tw-ink-mute); font-family: var(--tw-mono);
+  font-size: 8.5px; letter-spacing: .12em; font-weight: 700;
+  white-space: nowrap; cursor: pointer; text-transform: uppercase;
+  transition: transform .3s, box-shadow .3s, background .3s;
+}
+html body.tw-driver .admin-dashboard td[data-label="Actions"] button:hover { transform: translateY(-2px); background: rgba(103,232,249,.08); }
+/* Receipt is on every row, so the gradient is reserved for the row's real
+   next action - :not(.btn-receipt) - otherwise two buttons compete. */
+html body.tw-driver .admin-dashboard tr.is-open td[data-label="Actions"] button:not(.btn-receipt) {
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-violet)) !important;
+  border-color: transparent !important; color: #fff !important;
+}
+html body.tw-driver .admin-dashboard tr.is-open td[data-label="Actions"] button:not(.btn-receipt):hover { box-shadow: 0 12px 26px rgba(224,86,122,.42); }
+html body.tw-driver .btn-receipt { color: var(--tw-ink-faint) !important; }
+html body.tw-driver .btn-receipt:hover { color: var(--tw-cyan-lt) !important; border-color: rgba(103,232,249,.4); }
+/* the Upload proof button flashes the rows it would act on */
+@keyframes tw-drvFlash { 0%,100% { box-shadow: 0 0 0 0 rgba(103,232,249,0); } 50% { box-shadow: 0 0 0 6px rgba(103,232,249,.28); } }
+html body.tw-driver .tw-flash { animation: tw-drvFlash 600ms ease-in-out 3; }
+/* LIVE as of the redesign: this is the header's "Upload proof" button. The
+   modal submit buttons are .admin-quick-link and stay on the light theme. */
+html body.tw-driver .btn-primary {
+  padding: 13px 18px; border-radius: 12px; border: none;
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-violet));
+  color: #fff; font-family: var(--tw-mono); font-size: 10px;
+  letter-spacing: .14em; font-weight: 700; cursor: pointer;
+  transition: transform .3s, box-shadow .3s;
+}
+html body.tw-driver .btn-primary { display: inline-flex; align-items: center; gap: 8px; text-transform: uppercase; }
+html body.tw-driver .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(224,86,122,.42); }
+html body.tw-driver .btn-primary:disabled {
+  background: rgba(8,16,29,.6); border: 1px solid rgba(120,170,230,.2);
+  color: var(--tw-ink-faint); cursor: default;
+}
+
+/* ---- 8. Panel footer + page footer ----------------------------------- */
+html body.tw-driver .panel-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; padding: 15px 20px;
+  font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .12em;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(120,170,230,.12);
+  color: var(--tw-ink-faint);
+}
+html body.tw-driver .panel-foot b { color: var(--tw-ink); font-weight: 700; }
+html body.tw-driver .panel-foot .is-ok { color: var(--tw-green-lt); }
+html body.tw-driver .panel-foot .is-warn { color: #fcd34d; }
+html body.tw-driver footer,
+html body.tw-driver .admin-footer {
+  background: rgba(6,13,24,.85) !important; border-top: 1px solid var(--tw-line);
+  color: var(--tw-ink-faint) !important;
+  font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .12em;
+}
+
+/* ---- 9. Narrow screens ----------------------------------------------- */
+@media (max-width: 900px) {
+  html body.tw-driver .orders-table table { display: block; overflow-x: auto; }
+  html body.tw-driver .delivery-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  /* only the header's action column survives on phones - see the page's own
+     mobile block, which hides .tw-head-main and shows the greeting instead */
+  html body.tw-driver .tw-head { padding-bottom: 0 !important; border-bottom: 0 !important; margin-bottom: 0; }
+  html body.tw-driver .tw-head-actions { width: 100%; justify-content: stretch; padding-left: 42px; }
+  html body.tw-driver .gps-notice { max-width: none; }
+  html body.tw-driver .btn-primary { width: 100%; justify-content: center; min-height: 48px; }
+  html body.tw-driver .panel-foot { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body.tw-driver::before, html body.tw-driver::after { animation: none; }
+  html body.tw-driver .stat-card, html body.tw-driver .orders-filter-btn { transition: none; }
+  html body.tw-driver .tw-shift > span:first-child { animation: none; }
+}

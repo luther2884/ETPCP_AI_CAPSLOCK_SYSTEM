@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_vendor_composer_autoload_namespaces_php", "label": "autoload_namespaces.php", "file_type": "code", "source_file": "vendor/composer/autoload_namespaces.php", "source_location": "L1"}], "edges": [], "raw_calls": []}

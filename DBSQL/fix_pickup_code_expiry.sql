@@ -1,0 +1,36 @@
+-- Stop pickup codes expiring the instant anything touches the order.
+-- File: DBSQL/fix_pickup_code_expiry.sql
+--
+-- orders.pickup_code_expires_at was declared:
+--
+--     timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+--
+-- which is the definition of a "last modified" column, not an expiry.
+-- customer/process_order.php passes a correct value into the INSERT
+-- (created_at + 60 minutes), but ON UPDATE current_timestamp() means ANY later
+-- UPDATE of that order row silently rewrites the expiry to the moment of the
+-- update - so the code is expired from then on. process_order.php itself
+-- updates the row twice right after inserting it (credit_applied, and
+-- payment_status = 'paid' for a store-credit order), so some orders were
+-- expired before the customer ever saw the QR.
+--
+-- api/verify_pickup.php rejects an expired code when the order still has money
+-- outstanding, which is exactly the pay-at-the-counter case: the staff scan
+-- failed with "Pickup code expired on <the order's own creation time>".
+--
+-- Observed before this fix: order 108 created 16:38:26 with expiry 16:38:26;
+-- order 103 created 15:37:30 with expiry 15:38:37.
+--
+-- NULL is now allowed because a delivery order has no pickup window at all -
+-- process_order.php passes NULL for those, and a NOT NULL TIMESTAMP column
+-- with a current_timestamp() default silently turned that NULL into "now"
+-- too, giving 61 delivery orders a meaningless expiry.
+--
+-- Existing rows keep whatever value they currently hold; customer/payment_qr.php
+-- already issues a fresh code and window when it finds an expired one, so a
+-- pickup order still waiting to be collected heals on its next view.
+--
+-- Safe to re-run.
+
+ALTER TABLE `orders`
+    MODIFY COLUMN `pickup_code_expires_at` TIMESTAMP NULL DEFAULT NULL;

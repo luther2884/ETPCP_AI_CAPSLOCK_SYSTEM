@@ -1,0 +1,1195 @@
+/* ============================================================================
+   techworld-anim.css — neon "gaming rig" landing-page redesign
+   ----------------------------------------------------------------------------
+   Loads LAST in <head> on public/guest/index.php and
+   public/authenticated/customer/index.php so it wins on source order.
+
+   Every class here is prefixed `tw-` so nothing collides with style.css
+   (the sitewide sheet, still loaded first) or with customer-home.css /
+   th-hero-anim.css (the previous `.th-*` redesign — no longer loaded on
+   these two pages, but still used by customer/ai_builder.php).
+
+   RULES followed throughout this file:
+   - Pure CSS @keyframes for every looping / ambient motion. JS (techworld.js)
+     only owns the coverflow index and the scroll-reveal fallback.
+   - A single @media (prefers-reduced-motion: reduce) block at the very end
+     disables every animation and resets opacity/transform to visible.
+   - Body text >= 13.5px and >= 4.5:1 on its background. No mid-grey text on
+     pink or on photos.
+   - Fluid: max-width + minmax(0,1fr) tracks, no fixed heights on anything
+     holding text. Works down to 380px wide.
+   Figtree + JetBrains Mono are pulled in via <link> tags in each page's
+   <head> (not @import here) so this stays link/script-tags only.
+   ========================================================================= */
+
+/* ----------------------------------------------------------------------------
+   1. Tokens — the site's neon palette (locked; do not add new hues)
+   ------------------------------------------------------------------------- */
+.tw-home {
+  --tw-bg: #060d18;
+  --tw-bg-2: #0a1424;
+  --tw-bg-3: #16283f;
+  --tw-panel: #0b1626;
+
+  --tw-ink: #e8eef7;
+  --tw-ink-dim: #a9bcd4;
+  --tw-ink-faint: #7f95b3;
+
+  --tw-pink: #e0567a;
+  --tw-pink-lt: #ff9ab5;
+  --tw-cyan: #67e8f9;
+  --tw-violet: #7f6ae0;
+
+  /* Added for the bento + AI configurator sections ported from handoff/.
+     Handoff declared these at :root; they live on .tw-home here so they
+     stay scoped to the two landing pages, same as every token above. */
+  --tw-cyan-lt: #a5eefb;
+  --tw-green: #4ade80;
+  --tw-green-lt: #9df3d0;
+  --tw-ink-mute: #9db1cb;
+  --tw-accent: linear-gradient(90deg, #e0567a, #67e8f9);
+  --tw-gutter: clamp(18px, 4vw, 56px);
+  --tw-pink-pale: #f3b3c4;
+  /* The magenta end of the primary-CTA gradient. --tw-violet (#7f6ae0) was
+     filling that slot and reads as lavender rather than magenta, which
+     washed the buttons out. --tw-violet itself is unchanged - the bento
+     cart badge and the chat bubble still use it. */
+  --tw-magenta: #c2185b;
+  --tw-amber-lt: #fcd34d;
+
+  --tw-line: rgba(120, 170, 230, .12);
+
+  --tw-panel-grad: linear-gradient(180deg, rgba(20, 36, 60, .85), rgba(12, 23, 39, .85));
+  --tw-radius: 18px;
+
+  --tw-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --tw-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+
+  --tw-ease: cubic-bezier(.2, .85, .2, 1);
+}
+
+/* ----------------------------------------------------------------------------
+   2. Page shell
+   ------------------------------------------------------------------------- */
+
+/* The two homepages keep data-theme="light" for style.css's anti-FOUC, then
+   paint their own dark ground here. Scoped with :has() so this sheet only
+   ever repaints the body on a page that actually renders .tw-home. */
+body:has(.tw-home) {
+  background: radial-gradient(1200px 700px at 70% -10%, var(--tw-bg-3, #16283f) 0%, var(--tw-bg-2, #0a1424) 45%, var(--tw-bg, #060d18) 100%) !important;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  animation: none !important;               /* kill style.css's bgDrift */
+  color: var(--tw-ink, #e8eef7);
+}
+
+.tw-home {
+  position: relative;
+  z-index: 1;                               /* content sits above .tw-bg-* */
+  font-family: var(--tw-font);
+  color: var(--tw-ink);
+  line-height: 1.6;
+  overflow-x: clip;
+}
+
+/* Guest homepage has no sidebar -> no rail reservation. The customer
+   homepage keeps the sidebar's collapsed 92px icon-rail gap, but only on
+   the hover-capable breakpoint the sidebar itself uses for that mode
+   (touch / small screens keep it fully off-canvas until opened).
+
+   The width half of the query matters as much as the hover half: hover and
+   pointer describe the input device, so a desktop browser narrowed to phone
+   width still matched, and the landing page kept a 92px inset for a rail
+   that mobile_nav.php had already set to display:none - which is what put
+   the hero's centred column 46px right of centre on the phone layout.
+   768px is mobile_nav.php's own 767.98px cutoff. */
+.tw-home { padding-left: 0; }
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  body:has(.customer-sidebar) .tw-home { padding-left: 92px; }
+}
+
+.tw-home *,
+.tw-home *::before,
+.tw-home *::after { box-sizing: border-box; }
+
+/* Sections reuse style.css's .container (max-width 1400, 20px gutters). */
+
+.tw-home a { color: inherit; }
+
+.tw-home section { position: relative; }
+
+/* Shared eyebrow / small-caps label — JetBrains Mono, pink tint */
+.tw-eyebrow {
+  font-family: var(--tw-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--tw-pink-lt);
+}
+
+/* Shared section heading block */
+.tw-head {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto clamp(28px, 5vw, 44px);
+}
+.tw-head h2 {
+  font-family: var(--tw-font);
+  font-weight: 800;
+  font-size: clamp(26px, 4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  margin: 10px 0 10px;
+  color: var(--tw-ink);
+}
+.tw-head p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--tw-ink-dim);
+  margin: 0;
+}
+
+.tw-home .tw-section {
+  padding: clamp(44px, 8vw, 80px) 0;
+}
+
+/* Reusable panel surface */
+.tw-panel {
+  background: var(--tw-panel-grad);
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-radius);
+}
+
+/* Guest-only chrome: floating "Login / Sign In" pill, top-right. (Only the
+   guest homepage renders .tw-login-fab; the customer homepage has its own
+   floating cart button from includes/header.php.) */
+.tw-login-fab {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--tw-line);
+  background: rgba(var(--tw-panel3-rgb, 11, 22, 38), .72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  color: var(--tw-ink);
+  font-family: var(--tw-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(var(--tw-shadow-rgb, 0, 0, 0), .4);
+  transition: transform .2s var(--tw-ease), box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+.tw-login-fab:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(var(--tw-pink-rgb, 224, 86, 122), .85), rgba(var(--tw-violet-rgb, 127, 106, 224), .85));
+  border-color: transparent;
+  box-shadow: 0 14px 34px rgba(var(--tw-pink-rgb, 224, 86, 122), .38);
+}
+.tw-login-fab:active { transform: scale(.97); }
+.tw-login-fab i { font-size: 13px; }
+@media (max-width: 600px) {
+  .tw-login-fab { top: 12px; right: 12px; padding: 9px 14px; font-size: 11px; }
+}
+
+/* ----------------------------------------------------------------------------
+   3. Animated background — three fixed, non-interactive layers
+   ------------------------------------------------------------------------- */
+.tw-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* 3a. faint 120px grid of crossing 1px lines, panning diagonally, 26s loop */
+.tw-bg-grid {
+  background-image:
+    linear-gradient(to right, var(--tw-line, rgba(var(--tw-line-rgb, 120, 170, 230), .12)) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--tw-line, rgba(var(--tw-line-rgb, 120, 170, 230), .12)) 1px, transparent 1px);
+  background-size: 120px 120px;
+  opacity: .5;
+  animation: tw-grid-pan 26s linear infinite;
+  will-change: background-position;
+}
+@keyframes tw-grid-pan {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 120px 120px, 120px 120px; }
+}
+
+/* 3b. large pink radial blur blob drifting, 22s ease-in-out loop */
+.tw-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  will-change: transform;
+}
+.tw-bg-blob-pink {
+  width: 46vw;
+  height: 46vw;
+  min-width: 340px;
+  min-height: 340px;
+  top: -12vw;
+  left: -8vw;
+  background: radial-gradient(circle, rgba(var(--tw-pink-rgb, 224, 86, 122), .38), rgba(var(--tw-pink-rgb, 224, 86, 122), 0) 70%);
+  animation: tw-drift-pink 22s ease-in-out infinite alternate;
+}
+/* 3c. cyan blob drifting the opposite way, 28s */
+.tw-bg-blob-cyan {
+  width: 42vw;
+  height: 42vw;
+  min-width: 320px;
+  min-height: 320px;
+  bottom: -14vw;
+  right: -10vw;
+  background: radial-gradient(circle, rgba(var(--tw-cyan-rgb, 103, 232, 249), .30), rgba(var(--tw-cyan-rgb, 103, 232, 249), 0) 70%);
+  animation: tw-drift-cyan 28s ease-in-out infinite alternate;
+}
+@keyframes tw-drift-pink {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(9vw, 7vw, 0) scale(1.12); }
+}
+@keyframes tw-drift-cyan {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-8vw, -6vw, 0) scale(1.1); }
+}
+
+/* ============================================================================
+   (hero, marquee, coverflow, featured cards, why-choose, footer, AI section
+    are appended below in subsequent build steps)
+   ========================================================================= */
+
+/* ----------------------------------------------------------------------------
+   Z. Reduced motion — kills every animation, resets to the visible end state.
+   Kept last so it overrides everything above.
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .tw-home *,
+  .tw-home *::before,
+  .tw-home *::after,
+  .tw-bg,
+  .tw-bg *,
+  .tw-bg *::before,
+  .tw-bg *::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  .tw-home [data-tw-reveal],
+  .tw-home [style*="--d"] {
+    opacity: 1 !important;
+  }
+  .tw-bg-grid { animation: none !important; }
+}
+
+/* ============================================================================
+   PORTED FROM handoff/assets/css/techworld-anim.css
+   Only the selectors the two new sections need - the bento (handoff sec. 10)
+   and the AI configurator band (handoff sec. 9), plus their keyframes and the
+   numbered section-head children.
+
+   Deliberately NOT ported, because they collide with rules above:
+     .tw-bg-grid   - our background shell owns it
+     .tw-eyebrow   - ours already defined
+     .tw-head / .tw-head h2 / .tw-head p - ours already defined; only the
+                     __eyebrow / __rule children below are new, so the
+                     numbered eyebrow lands on OUR heading type scale.
+   Nothing here is scoped under .tw-home: every class is unique to these two
+   sections (verified against the whole file), and leaving them unscoped keeps
+   them byte-comparable with the handoff source. The one rule that DID depend
+   on the old .tw-main wrapper is .tw-band - see the note on it below.
+   ------------------------------------------------------------------------- */
+
+@keyframes tw-auroraA { 0%,100% { transform: translate3d(-6%, -4%, 0) scale(1); } 50% { transform: translate3d(8%, 6%, 0) scale(1.25); } }
+@keyframes tw-auroraB { 0%,100% { transform: translate3d(6%, 5%, 0) scale(1.1); } 50% { transform: translate3d(-8%, -6%, 0) scale(.9); } }
+@keyframes tw-blink   { 0%,45% { opacity: 1; } 50%,95% { opacity: .25; } 100% { opacity: 1; } }
+@keyframes tw-typing  { 0%,60%,100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
+@keyframes tw-meter   { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes tw-bar     { from { transform: scaleY(.15); } to { transform: scaleY(1); } }
+@keyframes tw-bob     { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes tw-hairline{ 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes tw-shine   { 0% { transform: translateX(-120%) skewX(-18deg); } 60%,100% { transform: translateX(320%) skewX(-18deg); } }
+
+/* Section rhythm + the numbered eyebrow that sits above our .tw-head h2. */
+.tw-sec--xl    { max-width: 1240px; margin: 0 auto; padding: clamp(52px, 8vh, 104px) 0 clamp(40px, 6vh, 80px); }
+.tw-head__eyebrow { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.tw-head__eyebrow b { font-family: var(--tw-mono); font-size: 10.5px; font-weight: 400; letter-spacing: .28em; color: var(--tw-pink-lt); }
+.tw-head__rule { width: 46px; height: 2px; border-radius: 2px; background: var(--tw-accent); }
+.tw-shine { position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, rgba(var(--tw-veil-rgb, 255, 255, 255), .32), transparent); animation: tw-shine 3.4s ease-in-out infinite; }
+
+/* ---- 9. AI configurator (full-bleed band) -------------------------------
+   TRANSLATED: the handoff .tw-main wrapper carries `padding: 0 var(--tw-gutter)`,
+   so the band cancelled that gutter with `margin: ... calc(-1 * var(--tw-gutter))`
+   to reach the viewport edge. Our .tw-home has no horizontal gutter - sections
+   get their width from .container - so the negative margin becomes 0 and the
+   band is already full-bleed inside the wrapper. On the customer page that
+   correctly starts after the sidebar rail, which is .tw-home's own
+   padding-left. The inner padding is kept as-is. */
+.tw-band {
+  position: relative; overflow: hidden;
+  margin: clamp(64px, 11vh, 140px) 0 0;
+  padding: clamp(44px, 7vh, 96px) var(--tw-gutter);
+  /* Transparent instead of handoff's own slab gradient
+     (linear-gradient(160deg, rgba(34,20,44,.92), rgba(10,20,36,.92) 60%,
+     rgba(12,28,44,.92))), so the band shares the page's ground rather than
+     sitting on a different one: the body radial from body:has(.tw-home) plus
+     the fixed .tw-bg grid and drifting blobs now read straight through it.
+     Its two edges still mark where the band starts and ends, without
+     reintroducing a background - see the .tw-hairline pair below. */
+  background: transparent;
+  /* No border-top/border-bottom: both edges are now .tw-hairline elements
+     inside the section, so they carry the traveling sweep. A border cannot -
+     it has no inner element to animate. */
+}
+/* The band's two edges. .tw-band is already position:relative and
+   overflow:hidden, so absolute placement pins them to the exact top and bottom
+   of the section, outside its padding, and clips the sweep at the edges.
+   :first-of-type / :last-of-type pick them out among the div children -
+   .tw-band__inner is the only other one, and it sits between them. */
+.tw-band > .tw-hairline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+.tw-band > .tw-hairline:first-of-type { top: 0; }
+.tw-band > .tw-hairline:last-of-type { bottom: 0; }
+.tw-band__glow-a { position: absolute; top: -30%; left: 8%; width: 46%; height: 170%; background: radial-gradient(circle, rgba(var(--tw-violet-rgb, 127, 106, 224), .26), transparent 62%); filter: blur(26px); animation: tw-auroraA 20s ease-in-out infinite; }
+.tw-band__glow-b { position: absolute; bottom: -40%; right: 4%; width: 40%; height: 160%; background: radial-gradient(circle, rgba(var(--tw-cyan-rgb, 103, 232, 249), .16), transparent 64%); filter: blur(30px); animation: tw-auroraB 24s ease-in-out infinite; }
+.tw-band__inner { position: relative; max-width: 1240px; margin: 0 auto; }
+.tw-band h2 { margin: 16px 0 0; text-align: center; font-size: clamp(32px, 4.6vw, 64px); font-weight: 800; letter-spacing: -.035em; line-height: 1; }
+.tw-band h2 em { font-style: normal; background: linear-gradient(100deg, var(--tw-pink-lt), var(--tw-cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tw-band__lede { margin: 14px auto 0; max-width: 58ch; text-align: center; color: var(--tw-ink-mute-2, #b6c5da); font-size: clamp(14.5px, 1.15vw, 17px); line-height: 1.7; }
+.tw-ai { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 38px; align-items: start; }
+
+/* left: mock session */
+.tw-chatcard { border-radius: 22px; border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .16); background: rgba(var(--tw-deep-rgb, 8, 16, 29), .72); backdrop-filter: blur(10px); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.tw-chatcard__bar { display: flex; align-items: center; justify-content: space-between; font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .2em; color: var(--tw-ink-faint); }
+.tw-live { display: flex; align-items: center; gap: 6px; }
+.tw-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--tw-green); animation: tw-blink 2s ease-in-out infinite; }
+.tw-bubble { max-width: 92%; padding: 13px 16px; font-size: 14px; line-height: 1.6; }
+.tw-bubble--me  { align-self: flex-end; max-width: 88%; border-radius: 16px 16px 4px 16px; background: linear-gradient(120deg, rgba(var(--tw-pink-rgb, 224, 86, 122), .9), rgba(var(--tw-violet-rgb, 127, 106, 224), .9)); color: #fff; }
+.tw-bubble--ai  { align-self: flex-start; border-radius: 16px 16px 16px 4px; background: rgba(var(--tw-panel-rgb, 20, 36, 60), .9); border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .16); color: var(--tw-ink-bright, #dbe6f5); }
+.tw-typing { align-self: flex-start; display: flex; gap: 5px; padding: 12px 15px; border-radius: 16px; background: rgba(var(--tw-panel-rgb, 20, 36, 60), .7); border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .14); }
+.tw-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--tw-cyan); animation: tw-typing 1.3s ease-in-out infinite; }
+.tw-typing i:nth-child(2) { animation-delay: .18s; }
+.tw-typing i:nth-child(3) { animation-delay: .36s; }
+.tw-checks { margin-top: 4px; display: flex; flex-direction: column; gap: 10px; }
+.tw-checks__t { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .2em; color: var(--tw-ink-faint); }
+.tw-check__row { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--tw-ink-bright-2, #cfe0f5); }
+.tw-check__row > span:first-child { display: flex; align-items: center; gap: 9px; }
+.tw-tick { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--tw-green); display: grid; place-items: center; color: var(--tw-green); font-size: 9px; font-weight: 700; }
+.tw-check__val { font-family: var(--tw-mono); font-size: 11px; color: var(--tw-green-lt); }
+.tw-meter { height: 3px; margin-top: 7px; border-radius: 3px; background: rgba(var(--tw-line-rgb, 120, 170, 230), .14); overflow: hidden; }
+.tw-meter i {
+  display: block; height: 100%; border-radius: 3px; transform-origin: left;
+  background: linear-gradient(90deg, var(--tw-green), var(--tw-cyan));
+  animation: tw-meter 1.3s cubic-bezier(.2,.8,.2,1) both;
+  animation-timeline: view(); animation-range: entry 0% cover 30%;
+}
+
+/* right: generated build (gradient-framed, the section's focal panel) */
+.tw-buildframe { position: relative; border-radius: 22px; padding: 1.5px; background: linear-gradient(150deg, var(--tw-pink-lt), rgba(var(--tw-pink-rgb, 224, 86, 122), .35) 40%, var(--tw-cyan)); box-shadow: 0 40px 90px rgba(var(--tw-shadow-rgb, 0, 0, 0), .5); }
+.tw-build { border-radius: 21px; background: var(--tw-bg-2); padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.tw-build__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.tw-build__kicker { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .2em; color: var(--tw-ink-faint); }
+.tw-build__name { font-size: 19px; font-weight: 800; letter-spacing: -.02em; margin-top: 7px; }
+.tw-match { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .14em; padding: 6px 10px; border-radius: 999px; background: rgba(var(--tw-cyan-rgb, 103, 232, 249), .14); color: var(--tw-cyan-lt); border: 1px solid rgba(var(--tw-cyan-rgb, 103, 232, 249), .4); white-space: nowrap; }
+.tw-parts { display: flex; flex-direction: column; gap: 1px; border-radius: 14px; overflow: hidden; background: rgba(var(--tw-line-rgb, 120, 170, 230), .12); }
+.tw-part {
+  display: grid; grid-template-columns: 62px minmax(0,1fr) auto; gap: 12px; align-items: center;
+  padding: 12px 14px; background: rgba(var(--tw-panel5-rgb, 13, 25, 43), .96); transition: background .3s, transform .3s;
+}
+.tw-part:hover { background: rgba(var(--tw-pink-rgb, 224, 86, 122), .12); transform: translateX(3px); }
+.tw-part__k { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .16em; color: var(--tw-ink-faint); }
+.tw-part__v { font-size: 13.5px; color: var(--tw-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tw-part__p { font-family: var(--tw-mono); font-size: 12px; color: var(--tw-pink-lt); }
+.tw-build__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 4px; }
+.tw-total { font-family: var(--tw-mono); font-size: clamp(26px, 3vw, 36px); font-weight: 700; color: #fff; letter-spacing: -.02em; margin-top: 6px; }
+.tw-note { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .16em; color: var(--tw-green-lt); }
+.tw-note--mute { color: var(--tw-ink-faint); margin-top: 6px; }
+/* Single column since the dead TWEAK button was removed. Left as `1fr auto`
+   the CTA would have stayed in the first track with an empty second one
+   plus its gap still reserved, so it stopped ~10px short of full width. */
+.tw-build__btns { display: grid; grid-template-columns: 1fr; gap: 10px; }
+/* Ports as <a> as well as <button>: the CTA is a link on the customer page.
+   display/text-align/text-decoration keep an <a> identical to the original. */
+.tw-btn-addall {
+  position: relative; overflow: hidden; padding: 16px 18px; border-radius: 14px; border: none;
+  display: block; text-align: center; text-decoration: none;
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-magenta)); color: #fff;
+  font: 700 14px Figtree, sans-serif; cursor: pointer; transition: transform .3s, box-shadow .3s;
+}
+.tw-btn-addall:hover { transform: translateY(-3px); box-shadow: 0 20px 46px rgba(var(--tw-violet-rgb, 127, 106, 224), .5); color: #fff; }
+.tw-btn-tweak {
+  padding: 16px 18px; border-radius: 14px; border: 1px solid rgba(var(--tw-cyan-rgb, 103, 232, 249), .4);
+  background: rgba(var(--tw-cyan-rgb, 103, 232, 249), .08); color: var(--tw-cyan-lt); font-family: var(--tw-mono);
+  font-size: 11px; letter-spacing: .14em; cursor: pointer; transition: background .3s, transform .3s;
+}
+.tw-btn-tweak:hover { background: rgba(var(--tw-cyan-rgb, 103, 232, 249), .18); transform: translateY(-3px); }
+
+/* ---- 10. Why choose - bento --------------------------------------------- */
+.tw-bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 32px; }
+.tw-bento__cell {
+  min-width: 0; position: relative; overflow: hidden; border-radius: 22px;
+  border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .14);
+  background: linear-gradient(180deg, rgba(var(--tw-panel-rgb, 20, 36, 60), .8), rgba(var(--tw-panel2-rgb, 12, 23, 39), .8));
+  padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px;
+  transition: border-color .4s, transform .45s cubic-bezier(.2,.8,.2,1);
+}
+.tw-bento__cell:hover { border-color: rgba(var(--tw-cyan-rgb, 103, 232, 249), .5); transform: translateY(-6px); }
+.tw-bento__cell--pink:hover { border-color: rgba(var(--tw-pink-rgb, 224, 86, 122), .5); }
+.tw-bento__cell--wide {
+  grid-column: span 2; padding: clamp(22px, 3vw, 34px); gap: 22px;
+  background: linear-gradient(160deg, rgba(22,38,62,.85), rgba(var(--tw-panel3-rgb, 11, 22, 38), .85));
+}
+.tw-bento__glow { position: absolute; top: -40%; right: -10%; width: 55%; height: 180%; background: radial-gradient(circle, rgba(var(--tw-cyan-rgb, 103, 232, 249), .14), transparent 62%); filter: blur(22px); }
+.tw-bento__kicker { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .2em; color: var(--tw-ink-faint); }
+.tw-bento__title { font-size: clamp(20px, 2.4vw, 30px); font-weight: 800; letter-spacing: -.025em; margin-top: 10px; }
+.tw-bento__body { margin: 12px 0 0; max-width: 46ch; font-size: 14px; line-height: 1.7; color: var(--tw-ink-mute); }
+.tw-bento__copy { font-size: 13.5px; color: var(--tw-ink-mute); line-height: 1.6; }
+
+/* engine rows (wide cell) */
+.tw-engine { position: relative; display: flex; flex-direction: column; gap: 12px; }
+.tw-engine__row { display: grid; grid-template-columns: 96px minmax(0,1fr) auto; gap: 14px; align-items: center; }
+.tw-engine__k { font-family: var(--tw-mono); font-size: 10px; letter-spacing: .16em; color: var(--tw-ink-soft, #8fa6c4); }
+.tw-engine__track { display: block; height: 6px; border-radius: 4px; background: rgba(var(--tw-line-rgb, 120, 170, 230), .14); overflow: hidden; }
+.tw-engine__track i {
+  display: block; height: 100%; border-radius: 4px; background: var(--tw-accent); transform-origin: left;
+  animation: tw-meter 1.4s cubic-bezier(.2,.8,.2,1) both;
+  animation-timeline: view(); animation-range: entry 0% cover 32%;
+}
+.tw-engine__v { font-family: var(--tw-mono); font-size: 11px; color: var(--tw-cyan-lt); }
+
+/* inventory bars */
+.tw-bars { display: flex; align-items: flex-end; gap: 7px; height: 96px; }
+.tw-bars span {
+  flex: 1; min-width: 0; border-radius: 3px; background: rgba(var(--tw-line-rgb, 120, 170, 230), .3); transform-origin: bottom;
+  animation: tw-bar 1s cubic-bezier(.2,.8,.2,1) both;
+  animation-timeline: view(); animation-range: entry 0% cover 30%;
+}
+.tw-bars span.is-cyan { background: linear-gradient(180deg, var(--tw-cyan), rgba(var(--tw-cyan-rgb, 103, 232, 249), .35)); }
+.tw-bars span.is-pink { background: linear-gradient(180deg, var(--tw-pink), rgba(var(--tw-pink-rgb, 224, 86, 122), .35)); }
+.tw-bignum { font-size: 30px; font-weight: 800; letter-spacing: -.03em; color: #fff; }
+
+/* cart cell */
+.tw-cartmark { position: relative; width: 62px; height: 62px; border-radius: 18px; border: 1px solid rgba(var(--tw-pink-rgb, 224, 86, 122), .4); display: grid; place-items: center; background: rgba(var(--tw-pink-rgb, 224, 86, 122), .10); }
+.tw-cartmark i { width: 22px; height: 17px; border: 2px solid var(--tw-pink-lt); border-radius: 3px 3px 9px 9px; }
+.tw-cartmark b {
+  position: absolute; top: -8px; right: -8px; min-width: 26px; height: 26px; border-radius: 9px;
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-magenta)); color: #fff;
+  font-family: var(--tw-mono); font-size: 12px; display: grid; place-items: center;
+  border: 2px solid var(--tw-panel); animation: tw-bob 2.6s ease-in-out infinite;
+}
+.tw-partlist { font-family: var(--tw-mono); font-size: 11px; line-height: 2; color: var(--tw-ink-soft, #8fa6c4); }
+
+/* delivery cell */
+.tw-hours { display: flex; align-items: baseline; gap: 8px; }
+.tw-hours b { font-size: clamp(44px, 5vw, 62px); font-weight: 800; letter-spacing: -.04em; background: linear-gradient(120deg, var(--tw-pink-lt), var(--tw-cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tw-hours span { font-family: var(--tw-mono); font-size: 13px; letter-spacing: .18em; color: var(--tw-ink-soft, #8fa6c4); }
+/* overflow-clip-margin, not plain hidden. This box is 1px TALL, and the
+   traveling light inside it carries box-shadow: 0 0 12px - so `hidden` cut a
+   12px glow down to 1px, leaving a hard-edged sliver instead of a bloom. That
+   is the "light that is cut" under the brand marquee.
+   `clip` still stops the 40%-wide sweep escaping sideways; the 14px margin
+   lets the glow bleed. `hidden` stays first as the fallback for browsers
+   without overflow-clip-margin - there the glow is clipped as before, which
+   is the current behaviour, not a regression. */
+.tw-hairline { position: relative; height: 1px; background: rgba(var(--tw-line-rgb, 120, 170, 230), .16); overflow: hidden; overflow: clip; overflow-clip-margin: 14px; }
+.tw-hairline i { position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, var(--tw-cyan), transparent); animation: tw-hairline 3.6s ease-in-out infinite; }
+
+/* Responsive: only the two rules from handoff sec. 13 that touch these
+   sections. The rest of that block names classes we did not port. */
+@media (max-width: 900px) {
+  .tw-bento__cell--wide { grid-column: auto; }
+}
+@media (max-width: 560px) {
+  .tw-engine__row { grid-template-columns: 78px minmax(0,1fr) auto; }
+}
+
+/* Reduced motion: same treatment the rest of this file uses - ambient loops
+   stop, and the meters/bars resolve to their final width/height rather than
+   freezing at scaleX(0) / scaleY(.15), which would render them empty. */
+@media (prefers-reduced-motion: reduce) {
+  .tw-band__glow-a, .tw-band__glow-b, .tw-typing i, .tw-live i,
+  .tw-meter i, .tw-engine__track i, .tw-bars span, .tw-cartmark b,
+  .tw-hairline i, .tw-shine {
+    animation: none !important;
+  }
+  .tw-meter i, .tw-engine__track i, .tw-bars span { transform: none !important; }
+}
+
+/* ============================================================================
+   PORTED FROM handoff/ - carousel head controls + product card details.
+   Collision check against all four of our stylesheets found ZERO overlapping
+   selectors for handoff sections 7 and 8, so every class below is new.
+
+   Deliberately NOT ported: .tw-tile*, .tw-stage*, .tw-progress and .tw-grid-4
+   belong to the handoff's own carousel engine and card grid. We keep our
+   DB-backed carousel (.th-cat-*) and product grid (.th-product-*) and restyle
+   them, so those selectors would be dead weight.
+   .tw-badge--value is omitted: no column in `products` signals "best value"
+   (no discount, compare-at or featured flag), and inventing one would be
+   fabrication. .tw-card__media / .tw-card__ph are omitted too - our cards use
+   .th-pimg for the image well.
+   ------------------------------------------------------------------------- */
+
+/* Head row: [spacer] [centered head] [controls]. Lets the heading stay
+   optically centred in the panel while the counter and arrows sit right. */
+.tw-head-row { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 16px; }
+.tw-head-row__ctrl { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+.tw-counter { flex: none; white-space: nowrap; font-family: var(--tw-mono); font-size: 12.5px; letter-spacing: .14em; color: var(--tw-ink-soft, #8fa6c4); }
+
+/* Our existing .th-cat-arrow buttons move into the head row's control cell.
+   They keep their ids and classes so the carousel JS and every other rule
+   still bind; only their box is re-sized to sit beside the counter. */
+.tw-head-row__ctrl .th-cat-arrow { width: 46px; height: 46px; border-radius: 14px; font-size: 17px; }
+
+/* Reduced coverflow height, per the design. Base was 510px and the three
+   breakpoints 470 / 390 / 330. Scoped to .tw-home and set here rather than
+   edited in customer-home.css so the carousel's own rules stay untouched. */
+.tw-home .th-cat-stage { height: 410px; }
+@media (max-width: 1100px) { .tw-home .th-cat-stage { height: 380px; } }
+@media (max-width: 768px)  { .tw-home .th-cat-stage { height: 320px; } }
+@media (max-width: 480px)  { .tw-home .th-cat-stage { height: 275px; } }
+
+/* ---- Product card details ------------------------------------------------
+   Restyling our .th-product-card, not replacing it: the cart and buy-now
+   handlers, the stock logic and the guest sign-in variant are all untouched.
+   These classes are added alongside the existing ones in the markup, and win
+   on source order because this file is linked last. */
+.tw-card__kind { font-family: var(--tw-mono); font-size: 9.5px; letter-spacing: .2em; color: var(--tw-ink-faint); }
+.tw-card__spec { font-family: var(--tw-mono); font-size: 10px; letter-spacing: .1em; color: var(--tw-ink-faint); line-height: 1.85; }
+
+/* Badge anchor: the badge is absolutely positioned inside the image well. */
+.tw-home .th-pimg { position: relative; }
+.tw-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 2; font-family: var(--tw-mono);
+  font-size: 9.5px; letter-spacing: .14em; padding: 5px 9px; border-radius: 999px;
+}
+.tw-badge--new   { background: rgba(var(--tw-cyan-rgb, 103, 232, 249), .14); color: var(--tw-cyan-lt); border: 1px solid rgba(var(--tw-cyan-rgb, 103, 232, 249), .4); }
+.tw-badge--stock { background: rgba(var(--tw-ok-rgb, 52, 211, 153), .14);  color: var(--tw-green-lt); border: 1px solid rgba(var(--tw-ok-rgb, 52, 211, 153), .4); }
+/* Low stock is a warning, not a healthy state, so it gets its own amber
+   modifier rather than borrowing --stock's green. --value's pink is left
+   alone: that badge was dropped for lack of data, and reusing its tone
+   would be misleading if "best value" is ever reinstated. */
+.tw-badge--low   { background: rgba(var(--tw-warn-rgb, 251, 191, 36), .16);  color: var(--tw-amber-lt); border: 1px solid rgba(var(--tw-warn-rgb, 251, 191, 36), .45); }
+
+/* ADD TO CART / BUY NOW as an equal-width pair. Handoff used 1fr auto; an
+   even 1fr 1fr is what the approved design shows for these two. */
+/* The card now carries stock in the .tw-card__spec mono line, so the older
+   coloured pill is redundant. customer/index.php wraps it in
+   .stock-indicator, guest/index.php in .stock-indicator-wrap - both are
+   hidden here so neither page shows stock twice. Markup is untouched. */
+.tw-home .th-product-card .stock-indicator,
+.tw-home .th-product-card .stock-indicator-wrap { display: none; }
+
+.tw-home .product-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Pin the card's lower block to the bottom so ADD TO CART / BUY NOW line up
+   across the row. The grid already stretches every .th-product-card to the
+   same height (427px measured), and the card is already a flex column - but
+   nothing absorbed the slack, so the action row floated at whatever height
+   the content above happened to end. A two-line h3 is 46px and a one-line
+   h3 is 23px, which put the buttons 23px out of line between neighbouring
+   cards.
+
+   The auto margin goes on .price-stock-section, not on .product-actions:
+   putting it on the actions alone would align the buttons but leave the
+   price hanging at a ragged height with a gap under it. From here up, the
+   slack collects after .th-rating, so price, stock line and both buttons
+   all share one baseline down the row. */
+.tw-home .th-product-card .price-stock-section { margin-top: auto; }
+/* The out-of-stock state renders a single wishlist button - let it span. */
+.tw-home .product-actions .wishlist-action-btn { grid-column: 1 / -1; }
+.tw-btn-outline {
+  padding: 12px 8px; border-radius: 11px; border: 1px solid rgba(var(--tw-pink-rgb, 224, 86, 122), .4);
+  background: transparent; color: var(--tw-pink-pale); font-family: var(--tw-mono);
+  font-size: 10px; letter-spacing: .12em; cursor: pointer; transition: background .3s, transform .3s;
+}
+.tw-btn-outline:hover { background: rgba(var(--tw-pink-rgb, 224, 86, 122), .18); transform: translateY(-2px); }
+.tw-btn-buy {
+  position: relative; overflow: hidden; padding: 12px 16px; border-radius: 11px; border: none;
+  background: linear-gradient(120deg, var(--tw-pink), var(--tw-magenta)); color: #fff;
+  font-family: var(--tw-mono); font-size: 10px; letter-spacing: .12em; font-weight: 700;
+  cursor: pointer; transition: transform .3s, box-shadow .3s;
+}
+.tw-btn-buy:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(var(--tw-pink-rgb, 224, 86, 122), .45); }
+.tw-btn-outline:focus-visible, .tw-btn-buy:focus-visible { outline: 2px solid var(--tw-cyan); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-btn-outline, .tw-btn-buy, .tw-head-row__ctrl .th-cat-arrow { transition: none !important; }
+  .tw-btn-outline:hover, .tw-btn-buy:hover { transform: none !important; }
+}
+
+/* Head row collapses to a single centred column on narrow screens, where
+   there is no room for a spacer cell beside the heading. */
+@media (max-width: 900px) {
+  .tw-head-row { grid-template-columns: 1fr; }
+  .tw-head-row__ctrl { justify-content: center; }
+}
+
+/* ============================================================================
+   Auth modal, landing-page treatment.
+
+   Scoped with body:has(.tw-home) so it only repaints the modal on the two
+   landing pages - the same guard this file already uses for the page shell.
+   guest/product.php, guest/products.php and anywhere else that includes
+   auth-modal.php keep style.css's existing look untouched.
+
+   Literal colours, not var(--tw-*): #loginModal is rendered by footer.php as
+   a SIBLING of .tw-home, not a descendant, so it inherits none of the tokens
+   declared on that wrapper. This is the same trap that left the footer light
+   (see the .tw-home ~ .main-footer note in customer-home.css) - using var()
+   here would silently resolve to nothing. Values are copied from the .tw-home
+   token block above; keep them in step if that palette changes.
+
+   Markup is untouched: every rule below targets classes auth-modal.php
+   already ships, so the login / forgot / OTP / reset panes and their JS
+   handlers are unaffected.
+   ------------------------------------------------------------------------- */
+
+body:has(.tw-home) .modal > .modal-content {
+  /* Token overrides, and the reason half this modal was unreadable: several
+     panes style themselves INLINE through var() - the reset icon's gradient,
+     the highlighted email addresses, the "Change Email" button, the
+     .password-rules panel - and those tokens resolve from style.css's LIGHT
+     theme. --bg-card-hover is #e6e9eb and --bg-card-solid #eef0f1 (near-white
+     blocks inside a dark panel), --border-color is rgba(23,72,113,.08)
+     (invisible on dark), --text-primary is #17324a (dark navy text), and
+     --accent-cyan is actually #a05f80, a mauve. Redefining them locally here
+     fixes every inline var() at once without touching auth-modal.php, the
+     same technique the footer uses. */
+  --accent-cyan: #67e8f9;
+  --accent-blue: #7f6ae0;
+  --text-primary: #e8eef7;
+  --text-secondary: rgba(206, 221, 238, .78);
+  --text-muted: #7f95b3;
+  --border-color: rgba(120, 170, 230, .22);
+  --bg-card: rgba(8, 16, 29, .72);
+  --bg-card-solid: #0c1a2c;
+  --bg-card-hover: rgba(103, 232, 249, .10);
+
+  background: linear-gradient(180deg, var(--tw-panel-3, #0f1e33) 0%, var(--tw-bg-2, #0a1424) 100%);
+  border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .18);
+  border-radius: 22px;
+  box-shadow: 0 40px 90px rgba(var(--tw-shadow-rgb, 0, 0, 0), .55);
+  color: var(--tw-ink, #e8eef7);
+}
+body:has(.tw-home) .modal .close {
+  color: var(--tw-ink-dim, #a9bcd4);
+  background: transparent;
+  border: none;
+  transition: color .3s;
+}
+body:has(.tw-home) .modal .close:hover { color: #fff; }
+
+body:has(.tw-home) .auth-form h2 {
+  color: var(--tw-ink, #e8eef7);
+  letter-spacing: -.02em;
+}
+body:has(.tw-home) .auth-form p { color: var(--tw-ink-dim, #a9bcd4); }
+
+/* Fields: dark wells with a cyan focus ring, mono floating labels so they
+   read as the same family as the section eyebrows on the page behind. */
+body:has(.tw-home) .auth-form .form-field input,
+body:has(.tw-home) .auth-form .password-field input {
+  background: rgba(var(--tw-deep-rgb, 8, 16, 29), .72);
+  border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .18);
+  border-radius: 12px;
+  color: var(--tw-ink, #e8eef7);
+  transition: border-color .3s, box-shadow .3s;
+}
+body:has(.tw-home) .auth-form .form-field input:focus,
+body:has(.tw-home) .auth-form .password-field input:focus {
+  border-color: rgba(var(--tw-cyan-rgb, 103, 232, 249), .55);
+  box-shadow: 0 0 0 3px rgba(var(--tw-cyan-rgb, 103, 232, 249), .14);
+  outline: none;
+}
+body:has(.tw-home) .auth-form .form-field label {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: var(--tw-ink-faint, #7f95b3);
+}
+body:has(.tw-home) .auth-form .form-field input:focus + label,
+body:has(.tw-home) .auth-form .form-field input:not(:placeholder-shown) + label {
+  color: var(--tw-cyan, #67e8f9);
+  background: var(--tw-panel-2, #0c1a2c);
+  padding: 0 6px;
+  border-radius: 4px;
+}
+body:has(.tw-home) .auth-form .password-toggle { color: var(--tw-ink-faint, #7f95b3); }
+body:has(.tw-home) .auth-form .password-toggle:hover { color: var(--tw-cyan, #67e8f9); }
+
+/* Submit: the same pink -> violet fill the AI band's primary CTA uses, so the
+   modal's main action matches the page's. */
+body:has(.tw-home) .auth-btn {
+  background: linear-gradient(120deg, var(--tw-pink, #e0567a), var(--tw-magenta, #c2185b));
+  border-radius: 14px;
+  letter-spacing: .12em;
+  box-shadow: none;
+  transition: transform .3s, box-shadow .3s;
+}
+body:has(.tw-home) .auth-btn:hover {
+  background: linear-gradient(120deg, var(--tw-pink, #e0567a), var(--tw-magenta, #c2185b));
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(var(--tw-violet-rgb, 127, 106, 224), .45);
+}
+body:has(.tw-home) .auth-btn:focus-visible { outline: 2px solid var(--tw-cyan, #67e8f9); outline-offset: 2px; }
+
+body:has(.tw-home) .auth-link { color: var(--tw-ink-dim, #a9bcd4); }
+body:has(.tw-home) .auth-link a { color: var(--tw-cyan, #67e8f9); text-decoration: none; }
+body:has(.tw-home) .auth-link a:hover { color: var(--tw-cyan-lt, #a5eefb); text-decoration: underline; }
+
+/* OTP boxes, used by the forgot-password verify pane. */
+body:has(.tw-home) .otp-input {
+  background: rgba(var(--tw-deep-rgb, 8, 16, 29), .72);
+  border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .18);
+  border-radius: 10px;
+  color: var(--tw-ink, #e8eef7);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+body:has(.tw-home) .otp-input:focus {
+  border-color: rgba(var(--tw-cyan-rgb, 103, 232, 249), .55);
+  box-shadow: 0 0 0 3px rgba(var(--tw-cyan-rgb, 103, 232, 249), .14);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(.tw-home) .auth-btn { transition: none !important; }
+  body:has(.tw-home) .auth-btn:hover { transform: none !important; }
+}
+
+/* ---- Carousel: active label + progress segments -------------------------
+   Both sit inside .tw-home, so the tokens declared on that wrapper resolve
+   normally here - unlike the footer and the auth modal, which are siblings
+   of it and need literal colours. */
+.tw-home .tw-active-label {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  /* Pulled up into the stage rather than sitting under it.
+     .th-cat-slide is absolutely positioned at top:50% of a 410px stage, so the
+     tile finishes well above the stage's own bottom edge and leaves ~90px of
+     empty stage beneath it. Laid out normally the label therefore began ~100px
+     below the tile but only 22px above the progress bars, so it read as
+     belonging to the bars. The negative margin re-centres it in that gap.
+     Tracks the stage's own breakpoints below: a shorter stage has less slack,
+     so it needs a smaller pull. */
+  margin-top: -30px;
+}
+@media (max-width: 1100px) { .tw-home .tw-active-label { margin-top: -24px; } }
+@media (max-width: 768px)  { .tw-home .tw-active-label { margin-top: -16px; } }
+@media (max-width: 480px)  { .tw-home .tw-active-label { margin-top: -8px; } }
+/* Pink rule on the left, cyan on the right, each fading outward. */
+.tw-home .tw-active-label span:first-child {
+  height: 1px; width: 44px; flex: none;
+  background: linear-gradient(90deg, transparent, rgba(var(--tw-pink-rgb, 224, 86, 122), .8));
+}
+.tw-home .tw-active-label span:last-child {
+  height: 1px; width: 44px; flex: none;
+  background: linear-gradient(90deg, rgba(var(--tw-cyan-rgb, 103, 232, 249), .8), transparent);
+}
+.tw-home .tw-active-label b {
+  font-family: var(--tw-mono);
+  font-size: clamp(15px, 1.9vw, 24px);
+  font-weight: 700;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* The existing .th-cat-dot pips become the progress row: one per category
+   already, and render() already toggles .is-active on the right one, so this
+   is purely a restyle - no markup and no JS contract changes.
+   Handoff morphs the active segment to a fixed 48px, which makes it a
+   different width from its neighbours; these stay evenly spaced and only the
+   fill changes. width/height/border-radius are all overridden explicitly
+   because the base rule draws an 8px circle. */
+.tw-home .th-cat-dots {
+  flex-wrap: nowrap;
+  gap: 5px;
+  margin-top: 22px;
+}
+.tw-home .th-cat-dot {
+  flex: 1 1 0;
+  width: auto;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(150, 180, 215, .2);
+  transition: background .5s, box-shadow .5s;
+}
+.tw-home .th-cat-dot.is-active {
+  background: var(--tw-accent);
+  box-shadow: 0 0 14px rgba(var(--tw-pink-rgb, 224, 86, 122), .45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-home .th-cat-dot { transition: none !important; }
+}
+
+/* ---- Active carousel tile: continuous gradient frame ---------------------
+   customer-home.css sets `border-color: var(--th-mauve-tint)` on the active
+   frame. That token is declared only on .th-home, a class that does not exist
+   in the markup, so the var() is invalid at computed-value time and
+   border-color falls back to its initial value, currentColor - a flat single
+   colour, never the mauve the rule intends. (Same dead-palette root cause as
+   the caret and the footer.)
+
+   Handoff gets its frame from .tw-tile's `padding: 4px` plus a gradient
+   background, with .tw-tile__inner painting an opaque centre over it. That
+   would change this tile's inner image area, so the equivalent double-
+   background form is used instead: the fill is clipped to the padding box and
+   the gradient to the border box, which paints the same frame without
+   altering layout or sizing. Angle and stops are handoff's exactly - 140deg,
+   pink-lt into pink at 45% into cyan, so pink leads at the top-left corner
+   and has become cyan by the bottom-right. */
+.tw-home .th-cat-slide.is-active .th-cat-slide-frame {
+  /* No fill: the page shows through behind the product image. backdrop-filter
+     goes too - it is a background effect, and with nothing painted over it it
+     would still frost whatever sits behind the tile. */
+  background: transparent;
+  backdrop-filter: none;
+  /* The 2px box stays so nothing resizes, but it is transparent: the visible
+     ring is drawn by ::before below. */
+  border: 2px solid transparent;
+}
+/* The gradient ring.
+
+   It cannot go on .th-cat-slide-frame itself: painting a transparent-centred
+   gradient border needs a mask, and a mask applies to an element AND its
+   descendants - it would erase the product image along with the fill. It also
+   cannot hang off .th-cat-slide, because the frame runs its own
+   translateY/scale float animation and a ring anchored to the slide would
+   drift out of register with it.
+
+   So it goes on the frame's own ::before, which has no children (safe to mask)
+   and inherits the float transform (stays aligned). That pseudo previously
+   drew a top-edge light streak - itself a background effect, removed here
+   along with the fill.
+
+   inset:-2px reaches the border box, which the frame's overflow:hidden then
+   clips to exactly the rounded outer edge. */
+.tw-home .th-cat-slide.is-active .th-cat-slide-frame::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  left: -2px;
+  right: -2px;
+  top: -2px;
+  height: auto;
+  z-index: 3;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  background: linear-gradient(140deg, var(--tw-pink-lt), var(--tw-pink) 45%, var(--tw-cyan)) border-box;
+  -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  -webkit-mask-clip: padding-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-clip: padding-box, border-box;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ---- Carousel tiles: the product card's electric border ------------------
+   Ports .th-product-card's border treatment onto .th-cat-slide-frame: the
+   same local --eb-* tokens (declared on the element, so unlike the --th-*
+   palette they actually resolve), the same 1.5px muted-mauve line, the same
+   soft halo, and the same hover lift in colour and glow. */
+.tw-home .th-cat-slide-frame {
+  --eb: #9c7a90;
+  --eb-light: #b593a7;
+  --eb-dim: rgba(179, 123, 152, 0.28);
+  --eb-glow: rgba(139, 76, 108, 0.26);
+  border: 1.5px solid var(--eb-dim);
+  box-shadow: 0 4px 14px rgba(var(--tw-shadow-rgb, 0, 0, 0), 0.25), 0 0 12px -10px var(--eb-glow);
+  transition: border-color 250ms ease, box-shadow 250ms ease;
+}
+.tw-home .th-cat-slide:hover .th-cat-slide-frame {
+  border-color: var(--eb);
+  box-shadow: 0 14px 32px rgba(var(--tw-shadow-rgb, 0, 0, 0), 0.3), 0 0 20px -10px var(--eb-glow);
+}
+
+/* The crackle ring. On the card this is .th-product-card::after at inset:-2px,
+   displaced on hover by the shared #eb-turbulence filter (defined once in the
+   Featured Products section - SVG filters resolve by document-wide id, so the
+   carousel sitting earlier in the DOM does not matter).
+
+   It cannot live on .th-cat-slide-frame::after here: that frame is
+   overflow:hidden - needed to clip the product image to the rounded corners -
+   which would crop the displacement the filter creates just outside the edge.
+   So it hangs off .th-cat-slide::after instead, which is unused and not
+   clipped.
+
+   Applied to every tile, active included. The active frame floats on its own
+   translateY/scale loop (th-cat-active-live) which this pseudo does not
+   inherit - it is a child of the slide, not of the frame - so the ring is
+   given the same animation below to stay locked to it. Without that it drifts
+   up to 4px out of register on every cycle. The active tile's gradient ring
+   on ::before is unaffected; the two coexist. */
+.tw-home .th-cat-slide::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  aspect-ratio: 1 / 1;
+  border: 1.5px solid var(--eb-light, var(--tw-pink-pale-2, #b593a7));
+  border-radius: 18px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 4;
+}
+.tw-home .th-cat-slide:hover::after {
+  opacity: 0.65;
+  filter: url(#eb-turbulence);
+}
+/* Locks the ring to the active frame's float so it cannot drift off the edge
+   it is meant to trace. Same keyframe the frame itself runs. */
+.tw-home .th-cat-slide.is-active::after {
+  animation: th-cat-active-live 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-home .th-cat-slide:hover::after { filter: none; }
+  .tw-home .th-cat-slide.is-active::after { animation: none !important; }
+  .tw-home .th-cat-slide-frame { transition: none !important; }
+}
+
+/* ---- Bento: four equal cards on one row ---------------------------------
+   The grid was repeat(auto-fit, minmax(260px, 1fr)) with the first cell
+   spanning two columns, so inside .tw-sec--xl's 1240px the four cells laid
+   out as three-then-one across two rows. Four fixed columns with the wide
+   cell dropped back to a single track puts them on one row, each about
+   292px at full width.
+
+   The wide cell's contents were sized for a half-width card, so they are
+   compressed to survive a quarter: smaller title, tighter padding and gap,
+   and a narrower label column in the engine rows (96px of "CLEARANCE" plus
+   a track plus "162 / 165mm" does not fit 292px otherwise). */
+.tw-home .tw-bento {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.tw-home .tw-bento__cell--wide {
+  grid-column: auto;
+  padding: 20px;
+  gap: 16px;
+}
+.tw-home .tw-bento__cell--wide .tw-bento__title {
+  font-size: clamp(17px, 1.35vw, 21px);
+  margin-top: 8px;
+}
+.tw-home .tw-bento__cell--wide .tw-bento__body {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.tw-home .tw-engine { gap: 9px; }
+.tw-home .tw-engine__row {
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.tw-home .tw-engine__k { font-size: 8.5px; letter-spacing: .1em; }
+.tw-home .tw-engine__v { font-size: 9.5px; white-space: nowrap; }
+/* The other three cells carry less, but match the tighter padding so the row
+   reads as one set rather than one compressed card beside three roomy ones. */
+.tw-home .tw-bento__cell { padding: 20px; gap: 14px; }
+.tw-home .tw-bars { height: 76px; }
+
+/* Two rows of two before dropping to a single column - four 292px cards do
+   not survive below roughly 1240px. */
+@media (max-width: 1180px) {
+  .tw-home .tw-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tw-home .tw-engine__row { grid-template-columns: 88px minmax(0, 1fr) auto; }
+  .tw-home .tw-engine__k { font-size: 10px; }
+}
+@media (max-width: 620px) {
+  .tw-home .tw-bento { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Panes the first pass missed. The field rules there were keyed to
+   .form-field / .password-field, but the forgot-password and reset panes put
+   inputs straight in the form, so those stayed light-themed. This covers every
+   text input in the modal regardless of wrapper. */
+body:has(.tw-home) .auth-form input[type="email"],
+body:has(.tw-home) .auth-form input[type="text"],
+body:has(.tw-home) .auth-form input[type="password"] {
+  background: rgba(var(--tw-deep-rgb, 8, 16, 29), .72);
+  border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .18);
+  border-radius: 12px;
+  color: var(--tw-ink, #e8eef7);
+}
+body:has(.tw-home) .auth-form input::placeholder { color: var(--tw-ink-faint, #7f95b3); opacity: 1; }
+body:has(.tw-home) .auth-form input[type="email"]:focus,
+body:has(.tw-home) .auth-form input[type="text"]:focus,
+body:has(.tw-home) .auth-form input[type="password"]:focus {
+  border-color: rgba(var(--tw-cyan-rgb, 103, 232, 249), .55);
+  box-shadow: 0 0 0 3px rgba(var(--tw-cyan-rgb, 103, 232, 249), .14);
+  outline: none;
+}
+
+/* The password-rules checklist reads its panel fill from --bg-card-hover, so
+   the token override above already darkens it; these set the two text states
+   explicitly so unmet and met rules both stay legible on it. */
+body:has(.tw-home) .password-rules li { color: var(--tw-danger-lt, #ffa8a8); }
+body:has(.tw-home) .password-rules li.valid { color: var(--tw-ok, #9df3d0); }
+
+/* The modal's own status/notification line. */
+body:has(.tw-home) .modal .notification { color: var(--tw-ink, #e8eef7); }
+
+/* ---- Auth modal: beating style.css's light-theme !important block --------
+   The two landing pages set data-theme="light" on <html> deliberately, for
+   style.css's anti-FOUC (see the note on body:has(.tw-home) above). That opts
+   them into this, at style.css:3379 and 3401:
+
+     [data-theme="light"] .modal-content   { background:#ffffff !important;
+                                             color:#0f172a !important; ... }
+     [data-theme="light"] .modal-content h2 { color:#0f172a !important; }
+
+   !important beats any specificity, so the earlier modal rules lost the panel
+   surface and the headings even though the fields, buttons and links (which
+   that block does not name) took their styling. That is why the modal rendered
+   as dark inputs and a gradient button on a white card with near-black
+   headings. These have to be !important to win.
+
+   The panel also needs --bg-card-alpha-80: auth-modal.php's own inline <style>
+   paints .auth-container with it, and it resolves to rgba(238,240,241,0.92) -
+   near-white - so the card stayed light even where .modal-content did not. */
+body:has(.tw-home) .modal > .modal-content {
+  --bg-card-alpha-80: rgba(10, 20, 34, 0.88);
+  background: linear-gradient(180deg, var(--tw-panel-3, #0f1e33) 0%, var(--tw-bg-2, #0a1424) 100%) !important;
+  border: 1px solid rgba(var(--tw-line-rgb, 120, 170, 230), .18) !important;
+  color: var(--tw-ink, #e8eef7) !important;
+  box-shadow: 0 40px 90px rgba(var(--tw-shadow-rgb, 0, 0, 0), .55) !important;
+}
+body:has(.tw-home) .modal > .modal-content h1,
+body:has(.tw-home) .modal > .modal-content h2,
+body:has(.tw-home) .modal > .modal-content h3 {
+  color: var(--tw-ink, #e8eef7) !important;
+}
+/* .auth-container carries its own translucent card over the Vanta mesh; the
+   token above darkens it, and backdrop-filter keeps the mesh readable behind. */
+body:has(.tw-home) .modal-content .auth-container {
+  background: rgba(var(--tw-panel4-rgb, 10, 20, 34), 0.88);
+}
+
+/* ---- Product card polish -------------------------------------------------
+   Scoped to .tw-home. .th-product-card also appears on ai_builder.php, which
+   sits in its own .aib-wrap theme; leaving it out keeps that page as it is.
+   Styling only - no markup, no data source, no cart or buy handler touched. */
+
+/* 1. Category kicker: uppercase and spaced, matching the design's
+      "ALL-IN-ONE" / "DESKTOP" treatment. text-transform only - the value is
+      still whatever category_name the query returns. */
+.tw-home .th-product-card .tw-card__kind {
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+
+/* 2. The "No reviews" line is not in the approved card. Hidden rather than
+      removed from the markup, so nothing that looks for .th-rating breaks. */
+.tw-home .th-product-card .th-rating { display: none; }
+
+/* 3. Card frame, ported from handoff .tw-card:
+        border: 1px solid var(--tw-line); border-radius: 20px;
+        :hover { border-color: rgba(224,86,122,.5);
+                 box-shadow: 0 30px 70px rgba(0,0,0,.55); }
+      This replaces the 1.5px mauve var(--eb-dim) line the card carried. The
+      electric ::after crackle ring is deliberately left in place - it is the
+      card's hover signature and was not part of this change. Only the border
+      is ported, not .tw-card's translateY(-10px): our card already lifts -5px,
+      and that is motion rather than border treatment. */
+.tw-home .th-product-card {
+  border: 1px solid var(--tw-line);
+  border-radius: 20px;
+  transition: transform 250ms var(--ease-out, cubic-bezier(0.23,1,0.32,1)),
+              box-shadow .45s, border-color .35s;
+}
+.tw-home .th-product-card:hover {
+  border-color: rgba(var(--tw-pink-rgb, 224, 86, 122), .5);
+  box-shadow: 0 30px 70px rgba(var(--tw-shadow-rgb, 0, 0, 0), .55);
+}
+
+/* 4. Stock line in the same mono/badge typography as .tw-badge and the
+      category kicker above it, instead of reading as plain body text. Kept as
+      a text line rather than a real pill - the card already carries an actual
+      .tw-badge on the image, and a second pill would compete with it. */
+.tw-home .th-product-card .tw-card__spec {
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-home .th-product-card { transition: none !important; }
+}
+
+/* ---- Section head rhythm and scale ---------------------------------------
+   The eyebrow sat flush against its heading everywhere except the AI band,
+   which gets its breathing room from .tw-band h2's `margin: 16px 0 0`. That
+   16px is the reference; this applies it to every numbered eyebrow, so
+   "01 - THE CATALOG" / "02 - SELECTED BUILDS" now sit off their headings the
+   same way "03 - THE CONFIGURATOR" already did. */
+.tw-home .tw-head__eyebrow + h2 { margin-top: 16px; }
+
+/* One heading scale across the sections. They were three different sizes:
+   .th-cat-head h2 clamp(32px, 5vw, 56px) for "Explore Computer Components",
+   .th-section-head h2 clamp(26px, 3.4vw, 38px) for "Featured Products", and
+   .tw-head h2 clamp(26px, 4vw, 40px) for "Why choose TechWorld". The carousel's
+   is the reference, so the other two adopt it.
+
+   The bento's heading is targeted through .tw-sec--xl rather than .tw-head
+   alone on purpose: the AI band's head is also a .tw-head, and a bare
+   `.tw-home .tw-head h2` (0,3,1) would outrank `.tw-band h2` (0,2,1) and
+   shrink "Build smarter with AI" from its own clamp(32px, 4.6vw, 64px). That
+   heading is deliberately the largest on the page and is not part of this
+   change. */
+.tw-home .th-section-head h2,
+.tw-home .tw-sec--xl .tw-head h2 {
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+/* ---- Product card: value badge + tightened price row ---------------------
+   .tw-badge--value was the one badge omitted when section 8 was ported, for
+   want of a rule to drive it: nothing in `products` signals "best value".
+   There is one now - cheapest of the already-fetched featured set, decided in
+   PHP - so the handoff's pink treatment is ported to match. */
+.tw-badge--value { background: rgba(var(--tw-pink-rgb, 224, 86, 122), .20); color: var(--tw-danger, #ffc2d3); border: 1px solid rgba(var(--tw-pink-rgb, 224, 86, 122), .55); }
+
+/* The stock line moved into .price-stock-section, which is already
+   justify-content:space-between - so price sits left and stock right on one
+   row with no further layout work. It only needs to stop stretching and to
+   stay on a single line. */
+.tw-home .th-product-card .price-stock-section .tw-card__spec {
+  flex: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+/* The gap under the price row was .price-stock-section's 20px bottom margin
+   plus .product-actions' 15px top margin - 35px of empty space between the
+   price and the buttons. */
+.tw-home .th-product-card .price-stock-section { margin-bottom: 0; }
+.tw-home .th-product-card .product-actions { margin-top: 12px; }
+
+/* More air between a section's subheading and the content under it.
+   .th-section-head is 32px; the carousel's own head raises that to 64px via
+   .th-cat-head, so that one is excluded rather than overridden - a bare
+   `.tw-home .th-section-head` (0,2,0) would outrank .th-cat-head (0,1,0) and
+   quietly pull the carousel's spacing down to this value too. */
+.tw-home .th-section-head:not(.th-cat-head) { margin-bottom: 52px; }

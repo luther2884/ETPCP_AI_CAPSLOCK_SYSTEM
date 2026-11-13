@@ -1,0 +1,930 @@
+/* ============================================================================
+   order-success-skin.css - dark redesign for customer/order_success.php
+   ----------------------------------------------------------------------------
+   Linked LAST on that page (after the footer include), so it wins on source
+   order over style.css, customer-dark.css and the page's own <style> block.
+
+   SCOPE. Every rule is under `body:has(.ords)`. order_success.php has no
+   <body> tag of its own to hang a class on - it includes header.php, which
+   starts mid-document - so :has() on a class added to the page's <section>
+   is what gives body-level scoping here. Same mechanism techworld-anim.css
+   already uses for the two landing pages (`body:has(.tw-home)`).
+
+   TOKENS are copied verbatim from techworld-anim.css section 1 so this page
+   and the landing page cannot drift apart. No new hues.
+
+   LOGIC IS UNTOUCHED. Nothing here or in the markup changes a query, a
+   computed value, an id, an onclick, a form action or an href. Two things
+   in the brief therefore could not be met and are called out where they
+   apply: the QR (this page only links to pickup.php, it does not render a
+   code) and the cancellation timer's live colour switch / expired state,
+   both of which are written by the page's existing inline script.
+   ========================================================================= */
+
+body:has(.ords) {
+  --os-bg: #060d18;
+  --os-bg-2: #0a1424;
+  --os-bg-3: #16283f;
+
+  --os-ink: #e8eef7;
+  --os-ink-dim: #a9bcd4;
+  --os-ink-faint: #7f95b3;
+  --os-ink-mute: #9db1cb;
+  --os-ink-soft: #8fa6c4;
+
+  --os-pink: #e0567a;
+  --os-pink-lt: #ff9ab5;
+  --os-pink-pale: #ffd7e2;
+  --os-cyan: #67e8f9;
+  --os-cyan-lt: #a5f3fc;
+  --os-violet: #7f6ae0;
+  --os-green-lt: #9df3d0;
+  --os-amber-lt: #fcd34d;
+
+  --os-line: rgba(120, 170, 230, .16);
+  --os-line-soft: rgba(120, 170, 230, .08);
+
+  --os-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --os-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+  --os-ease: cubic-bezier(.2, .85, .2, 1);
+}
+
+/* ----------------------------------------------------------------------------
+   1. The ground
+   ------------------------------------------------------------------------- */
+/* !I: style.css paints and animates <body> (bgDrift) and customer/includes/
+   header.php sets `body{background:transparent !important}` for its video
+   layer. Both have to be beaten to put a ground here at all. */
+body:has(.ords) {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  animation: none !important;
+  color: var(--os-ink);
+  font-family: var(--os-font);
+}
+
+/* The two ambient layers. Fixed, inert, behind everything. */
+body:has(.ords)::before,
+body:has(.ords)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 120px grid of crossing 1px lines, drifting one full cell over 26s. */
+body:has(.ords)::before {
+  background-image:
+    linear-gradient(to right, rgba(120, 170, 230, .05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 170, 230, .05) 1px, transparent 1px);
+  background-size: 120px 120px;
+  animation: ords-grid 26s linear infinite;
+  will-change: background-position;
+}
+@keyframes ords-grid {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 120px, 0 120px; }
+}
+
+/* Two blurred blooms - pink upper right, cyan lower left. */
+body:has(.ords)::after {
+  background:
+    radial-gradient(38vw 38vw at 82% 12%, rgba(224, 86, 122, .20), transparent 70%),
+    radial-gradient(34vw 34vw at 14% 88%, rgba(56, 189, 248, .13), transparent 70%);
+  filter: blur(30px);
+  animation: ords-bloom 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes ords-bloom {
+  from { transform: scale(1); }
+  to   { transform: scale(1.12); }
+}
+
+/* Content above the layers.
+   Named explicitly rather than `body:has(.ords) > *`. This page emits no
+   <body> tag of its own, so EVERY top-level element is a direct child of the
+   implicit body - the floating cart button, the confirm <dialog>, the sidebar
+   and the modals included. A blanket `> *` at (0,1,1) beat each of their own
+   (0,1,0) rules and forced position:relative on them: the cart fell out of
+   its fixed corner into normal flow at the foot of the document, the confirm
+   dialog lost its full-viewport positioning, and the sidebar's z-index went
+   from 2000 to 1. Only the two things that actually sit behind the ambient
+   layers need lifting, and neither is position:fixed. */
+body:has(.ords) .confirmation-page,
+body:has(.ords) .main-footer {
+  position: relative;
+  z-index: 1;
+}
+/* header.php's fixed video ground would sit on top of our gradient. */
+body:has(.ords) > .site-bg-video,
+body:has(.ords) > .site-bg-video-scrim { display: none; }
+
+/* Every wrapper between body and the content goes transparent. */
+body:has(.ords) .confirmation-page,
+body:has(.ords) .confirmation-page .container {
+  background: transparent !important;
+}
+
+/* ----------------------------------------------------------------------------
+   2. Page shell
+   ------------------------------------------------------------------------- */
+/* min-height:calc(100vh - 200px) in the page's own <style> is what left the
+   tall dead area under the buttons. Content ends, footer follows. */
+body:has(.ords) .confirmation-page {
+  min-height: 0 !important;
+  padding-bottom: 0 !important;
+}
+body:has(.ords) .confirmation-page .container {
+  max-width: 720px !important;
+  margin: 0 auto !important;
+  padding: 48px clamp(16px, 3.5vw, 44px) 80px !important;
+}
+body:has(.ords) .ords * { box-sizing: border-box; }
+
+/* Dark scrollbars, so the chrome matches the page. */
+body:has(.ords) ::-webkit-scrollbar { width: 12px; height: 12px; }
+body:has(.ords) ::-webkit-scrollbar-track { background: rgba(8, 16, 29, .6); }
+body:has(.ords) ::-webkit-scrollbar-thumb {
+  background: rgba(120, 170, 230, .28);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+body:has(.ords) ::-webkit-scrollbar-thumb:hover { background: rgba(120, 170, 230, .45); background-clip: content-box; }
+
+/* Keyboard focus is visible on every control. */
+body:has(.ords) .ords a:focus-visible,
+body:has(.ords) .ords button:focus-visible {
+  outline: 2px solid var(--os-cyan);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* ----------------------------------------------------------------------------
+   3. The success moment
+   ------------------------------------------------------------------------- */
+body:has(.ords) .confirmation-header {
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto 28px;
+}
+
+body:has(.ords) .confirmation-page .success-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--os-green-lt);
+  background: rgba(52, 211, 153, .14);
+  border: 1px solid rgba(52, 211, 153, .4);
+  box-shadow: 0 0 40px rgba(52, 211, 153, .18);
+  animation: ords-pop 220ms var(--os-ease) both;
+}
+@keyframes ords-pop {
+  from { transform: scale(.8); opacity: 0; }
+  to   { transform: scale(1);  opacity: 1; }
+}
+
+body:has(.ords) .ords-eyebrow {
+  display: block;
+  font-family: var(--os-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--os-green-lt);
+  margin: 0 0 10px;
+}
+
+/* !I: the page's own <style> sets these at (0,2,0); this needs to win without
+   relying on the two sheets' relative order changing later. */
+body:has(.ords) .confirmation-page .confirmation-header h1 {
+  font-family: var(--os-font) !important;
+  font-size: clamp(26px, 3vw, 40px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  color: #ffffff !important;
+  margin: 0 0 12px !important;
+  animation: ords-fade 220ms var(--os-ease) 80ms both;
+}
+@keyframes ords-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+body:has(.ords) .confirmation-page .confirmation-header p {
+  font-family: var(--os-mono) !important;
+  font-size: 10.5px !important;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--os-ink-soft) !important;
+  margin: 0 !important;
+  line-height: 1.7;
+}
+body:has(.ords) .ords-inv { color: var(--os-pink-lt); }
+
+/* The cancelled variant keeps its own red heading - this page has a third
+   state the redesign brief did not cover, and turning it green would be a
+   lie. Only the type scale is inherited. */
+body:has(.ords) .confirmation-page .confirmation-header h1[style*="dc2626"] {
+  color: #ff8b8b !important;
+}
+
+/* ----------------------------------------------------------------------------
+   4b. Estimated arrival card
+   ----------------------------------------------------------------------------
+   Sits between the hero and Order Summary. Reads as information, not as a
+   promise: cyan/violet rather than the hero's pink, a quieter surface, and the
+   caveat line in --os-ink-faint at the bottom of the stack.
+
+   Tokens only - no new hues, same set section 1 declares.
+   ------------------------------------------------------------------------- */
+body:has(.ords) .ords-eta {
+  background: linear-gradient(140deg, rgba(103, 232, 249, .10), rgba(127, 106, 224, .10));
+  border: 1px solid rgba(103, 232, 249, .28);
+  border-radius: 20px;
+  padding: 20px 24px;
+  margin: 0 0 18px;
+  box-shadow: 0 18px 40px rgba(3, 8, 16, .38);
+}
+/* An unpaid online order: the dates are real but the clock has not started, so
+   the card steps back to amber-neutral rather than looking confirmed. */
+body:has(.ords) .ords-eta.is-provisional {
+  background: linear-gradient(140deg, rgba(245, 158, 11, .10), rgba(127, 106, 224, .08));
+  border-color: rgba(245, 158, 11, .30);
+}
+body:has(.ords) .ords-eta-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 8px;
+}
+body:has(.ords) .ords-eta-head i {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--os-cyan);
+}
+body:has(.ords) .ords-eta.is-provisional .ords-eta-head i { color: #fbbf24; }
+body:has(.ords) .ords-eta-label {
+  font-family: var(--os-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--os-cyan-lt);
+}
+body:has(.ords) .ords-eta.is-provisional .ords-eta-label { color: #fde68a; }
+/* The date range is the one thing being answered here, so it carries the
+   weight the tracking code carries in the hero - a step down, not a whisper. */
+body:has(.ords) .ords-eta-value {
+  margin: 0;
+  font-family: var(--os-font);
+  font-size: clamp(20px, 2.6vw, 27px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  color: #ffffff;
+}
+body:has(.ords) .ords-eta-provisional {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #fde68a;
+}
+body:has(.ords) .ords-eta-provisional i { font-size: 13px; line-height: 1.3; flex: none; }
+body:has(.ords) .ords-eta-note {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--os-ink-dim);
+}
+body:has(.ords) .ords-eta-basis {
+  margin: 8px 0 0;
+  font-family: var(--os-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--os-ink-mute);
+}
+/* The km reading is a separate fact from the place name - a dot keeps them
+   from reading as one sentence when both are present. */
+body:has(.ords) .ords-eta-km::before { content: " b7"; margin: 0 6px; opacity: .7; }
+body:has(.ords) .ords-eta-basis > .ords-eta-km:first-child::before { content: none; margin: 0; }
+body:has(.ords) .ords-eta-fine {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--os-ink-faint);
+}
+
+/* ----------------------------------------------------------------------------
+   4. Hero: the one value that matters (variant A code / variant B tracking)
+   ------------------------------------------------------------------------- */
+body:has(.ords) .ords-hero {
+  background: linear-gradient(140deg, rgba(224, 86, 122, .18), rgba(127, 106, 224, .14));
+  border: 1px solid rgba(224, 86, 122, .4);
+  border-radius: 20px;
+  padding: 24px;
+  margin: 0 0 18px;
+  box-shadow: 0 22px 48px rgba(3, 8, 16, .48);
+}
+body:has(.ords) .ords-hero-label {
+  display: block;
+  font-family: var(--os-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--os-pink-pale);
+  margin: 0 0 12px;
+}
+body:has(.ords) .ords-hero-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+body:has(.ords) .ords-hero-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--os-mono);
+  font-size: clamp(30px, 4.2vw, 48px);
+  font-weight: 700;
+  letter-spacing: .18em;
+  line-height: 1.05;
+  color: #ffffff;
+  /* .18em tracking on a 48px code is wide - let it wrap rather than run off
+     the card at ~900px and below. */
+  overflow-wrap: anywhere;
+}
+/* When the value has not been assigned yet the page prints a sentence, not a
+   code; it must not be set at 48px. */
+body:has(.ords) .ords-hero-value.is-pending {
+  font-family: var(--os-font);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--os-ink-dim);
+}
+
+body:has(.ords) .ords-copy {
+  flex: 0 0 auto;
+  font-family: var(--os-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--os-pink-pale);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background .2s var(--os-ease), color .2s var(--os-ease), border-color .2s var(--os-ease);
+}
+body:has(.ords) .ords-copy:hover {
+  background: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .45);
+  color: #ffffff;
+}
+body:has(.ords) .ords-copy.is-done {
+  color: var(--os-green-lt);
+  border-color: rgba(52, 211, 153, .5);
+  background: rgba(52, 211, 153, .12);
+}
+
+/* Variant A: the pickup deadline, as a chip rather than buried in a sentence. */
+/* The plain-language line under the code. Sits between the number and the
+   Track link, because that is the order it is read in: what this is, what it
+   is for, then where to go. Sized as prose, not as a caption - it is the one
+   part of this panel a first-time shopper actually needs to read, so it takes
+   a readable size and line-height rather than the small-caps mono treatment
+   the labels around it use. */
+body:has(.ords) .ords-hero-note {
+  max-width: 54ch;
+  margin: 14px 0 0;
+  font-family: var(--os-font);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--os-ink-dim);
+}
+
+body:has(.ords) .ords-deadline {
+  display: inline-block;
+  margin: 14px 0 0;
+  font-family: var(--os-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--os-amber-lt);
+  background: rgba(251, 191, 36, .14);
+  border: 1px solid rgba(251, 191, 36, .38);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+/* Variant B: straight to tracking. */
+body:has(.ords) .ords-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0 0;
+  font-family: var(--os-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--os-pink-lt);
+  text-decoration: none;
+}
+body:has(.ords) .ords-track:hover { color: var(--os-cyan); }
+
+/* ----------------------------------------------------------------------------
+   5. Summary card
+   ------------------------------------------------------------------------- */
+body:has(.ords) .confirmation-page .order-details-card {
+  background: linear-gradient(180deg, rgba(20, 36, 60, .9), rgba(11, 22, 38, .96)) !important;
+  border: 1px solid var(--os-line) !important;
+  border-radius: 20px !important;
+  padding: 22px 24px !important;
+  margin: 0 0 18px !important;
+  box-shadow: 0 18px 42px rgba(3, 8, 16, .45);
+}
+body:has(.ords) .ords-summary-head {
+  display: block;
+  font-family: var(--os-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--os-ink-faint);
+  margin: 0 0 6px;
+}
+body:has(.ords) .confirmation-page .detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 18px;
+  padding: 11px 0 !important;
+  border-bottom: 1px solid var(--os-line-soft) !important;
+}
+body:has(.ords) .confirmation-page .detail-row:last-child { border-bottom: none !important; }
+body:has(.ords) .confirmation-page .detail-label {
+  font-family: var(--os-font) !important;
+  font-size: 12.5px !important;
+  color: var(--os-ink-dim) !important;
+  white-space: nowrap;
+}
+body:has(.ords) .confirmation-page .detail-value {
+  font-family: var(--os-mono) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--os-ink) !important;
+  text-align: right;
+  white-space: nowrap;
+  /* A long payment-method label must shrink, not push its label off the row. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Total is the exception. */
+body:has(.ords) .confirmation-page .detail-row.ords-total {
+  border-top: 1px solid rgba(120, 170, 230, .14);
+  border-bottom: none !important;
+  margin-top: 6px;
+  padding-top: 16px !important;
+}
+body:has(.ords) .confirmation-page .ords-total .detail-label {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #f2f6fc !important;
+}
+body:has(.ords) .confirmation-page .detail-value.total-amount {
+  font-family: var(--os-mono) !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: var(--os-pink-lt) !important;
+}
+
+/* Cancellation rows on the third variant - readable, not shouting. */
+body:has(.ords) .confirmation-page .detail-row[style*="dc2626"] {
+  border-top: 1px solid rgba(224, 86, 122, .35) !important;
+}
+body:has(.ords) .confirmation-page .detail-label[style*="dc2626"] { color: #ff9ab5 !important; }
+body:has(.ords) .confirmation-page .detail-value[style*="fca5a5"] {
+  color: #ffc2d3 !important;
+  white-space: normal;
+}
+
+/* ----------------------------------------------------------------------------
+   6. Actions - one row, one ranking
+   ------------------------------------------------------------------------- */
+body:has(.ords) .ords-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+body:has(.ords) .ords-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--os-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .2s var(--os-ease), background .2s var(--os-ease),
+              box-shadow .2s var(--os-ease), color .2s var(--os-ease), border-color .2s var(--os-ease);
+}
+body:has(.ords) .ords-btn i { font-size: 14px; color: inherit; }
+
+body:has(.ords) .ords-btn-primary {
+  background: linear-gradient(120deg, #e0567a, #7f6ae0);
+  color: #ffffff;
+}
+body:has(.ords) .ords-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(224, 86, 122, .45);
+}
+body:has(.ords) .ords-btn-primary[disabled] {
+  background: rgba(20, 36, 60, .7);
+  border-color: var(--os-line);
+  color: var(--os-ink-faint);
+  opacity: .55;
+  cursor: not-allowed;
+}
+body:has(.ords) .ords-btn-primary[disabled]:hover { transform: none; box-shadow: none; }
+
+/* TWO tiers, not three.
+   There used to be a filled gradient, a filled dark pill and an invisible one.
+   Three treatments for three buttons reads as three unrelated controls, and
+   the third - transparent background AND transparent border - did not read as
+   a button at all, just underlined-looking text sitting beside two buttons.
+   Now: one filled primary, and a shared outlined style for everything else.
+
+   Surface comes from --tw-surface-2, not --os-bg-2: theme-light.css maps the
+   --tw-* set in BOTH modes, while --os-bg-2 is deliberately left at its dark
+   literal (that sheet records it as dead - nothing read it). Reading it here
+   would have painted a navy button on the light page. */
+body:has(.ords) .ords-btn-secondary {
+  background: var(--tw-surface-2, rgba(20, 36, 60, .7));
+  border-color: var(--os-line);
+  color: var(--os-ink);
+}
+body:has(.ords) .ords-btn-secondary:hover {
+  border-color: var(--os-pink-lt);
+  color: var(--os-pink-lt);
+  transform: translateY(-2px);
+}
+
+/* Kept so any other markup still using it matches the pair above rather than
+   rendering as invisible text. */
+body:has(.ords) .ords-btn-tertiary {
+  background: var(--tw-surface-2, rgba(20, 36, 60, .7));
+  border-color: var(--os-line);
+  color: var(--os-ink);
+}
+body:has(.ords) .ords-btn-tertiary:hover {
+  border-color: var(--os-pink-lt);
+  color: var(--os-pink-lt);
+  transform: translateY(-2px);
+}
+
+/* ----------------------------------------------------------------------------
+   7. Variant A - pickup, folded into one card
+   ------------------------------------------------------------------------- */
+body:has(.ords) .ords-pickup {
+  background: linear-gradient(180deg, rgba(20, 36, 60, .9), rgba(11, 22, 38, .96));
+  border: 1px solid var(--os-line);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin: 0 0 18px;
+  box-shadow: 0 18px 42px rgba(3, 8, 16, .45);
+}
+/* "Show Pickup QR" as the card's primary action.
+
+   NOTE: this page does not render a QR - the control is a link to
+   pickup.php, which generates it. There is no image here to put on a white
+   tile, and inlining one would be a logic change. The white-tile rule below
+   is therefore defensive only: if a QR is ever rendered into this card it
+   lands on a light quiet zone rather than being inverted. */
+body:has(.ords) .ords-qr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(120deg, #e0567a, #7f6ae0);
+  color: #ffffff;
+  font-family: var(--os-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform .2s var(--os-ease), box-shadow .2s var(--os-ease);
+}
+body:has(.ords) .ords-qr-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(224, 86, 122, .45);
+}
+body:has(.ords) .ords-qr-btn i { font-size: 14px; color: inherit; }
+
+body:has(.ords) .ords-qr-tile {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 16px auto 0;
+  width: fit-content;
+}
+body:has(.ords) .ords-qr-tile img,
+body:has(.ords) .ords-qr-tile canvas,
+body:has(.ords) .ords-qr-tile svg { display: block; }
+
+/* ----------------------------------------------------------------------------
+   8. Info strips - amber (pickup instructions) and cyan (invoice notice)
+   ------------------------------------------------------------------------- */
+body:has(.ords) .ords-strip {
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 16px 0 0;
+  text-align: left;
+}
+body:has(.ords) .ords-strip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--os-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+body:has(.ords) .ords-strip p {
+  margin: 0;
+  font-family: var(--os-font);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+body:has(.ords) .ords-strip i { font-size: 13px; }
+
+/* Measured on the new ground: #d9c9a4 on rgba(251,191,36,.08) over #0a1424
+   is 9.83:1. (The brief called the old amber copy a contrast failure; that
+   was true against the old light grey-mauve sheet, but #f59e0b measures
+   7.48:1 once the page is dark - so this swap is for legibility and tone,
+   not to clear the 4.5 floor, which it already would.) */
+body:has(.ords) .ords-strip-amber {
+  background: rgba(251, 191, 36, .08);
+  border: 1px solid rgba(251, 191, 36, .28);
+}
+body:has(.ords) .ords-strip-amber .ords-strip-head { color: var(--os-amber-lt); }
+body:has(.ords) .ords-strip-amber p { color: #d9c9a4; }
+
+body:has(.ords) .ords-strip-cyan {
+  background: rgba(103, 232, 249, .07);
+  border: 1px solid rgba(103, 232, 249, .22);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+body:has(.ords) .ords-strip-cyan p,
+body:has(.ords) .ords-strip-cyan i { color: var(--os-cyan-lt); }
+
+/* Green - the pickup order that has already been collected. Same shape as the
+   cyan strip (icon beside copy, no head row), green because it reports a
+   finished step rather than a pending one. */
+body:has(.ords) .ords-strip-green {
+  background: rgba(16, 185, 129, .08);
+  border: 1px solid rgba(16, 185, 129, .26);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+body:has(.ords) .ords-strip-green p,
+body:has(.ords) .ords-strip-green i { color: var(--os-green-lt); }
+
+/* ----------------------------------------------------------------------------
+   9. Variant B - the cancellation window, calm and self-contained
+   ------------------------------------------------------------------------- */
+body:has(.ords) .ords-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: rgba(8, 16, 29, .5);
+  border: 1px solid rgba(120, 170, 230, .18);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 0 0 18px;
+}
+body:has(.ords) .ords-cancel-label {
+  display: block;
+  font-family: var(--os-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--os-ink-soft);
+  margin: 0 0 6px;
+}
+
+/* THE TIMER. #cancellation-timer is rewritten every second by the page's own
+   inline script, which emits the whole sentence:
+       You have <strong>29m 48s</strong> to cancel this order
+   So the element cannot be reduced to a bare figure without editing that
+   script. What it CAN do is style the <strong> the script re-emits on every
+   tick - that is the 20px mono readout - and quiet the words around it. */
+body:has(.ords) #cancellation-timer {
+  display: block;
+  font-family: var(--os-font);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--os-ink-soft);
+}
+body:has(.ords) #cancellation-timer strong {
+  display: block;
+  font-family: var(--os-mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--os-green-lt);
+}
+/* Under five minutes. Set from PHP's already-computed $timeRemaining at
+   render time - the inline script never touches a class, so this is correct
+   on load but does not flip live when the boundary is crossed mid-session.
+   Changing that needs one line of JS, which was out of scope. */
+body:has(.ords) .ords-cancel.is-urgent #cancellation-timer strong { color: var(--os-amber-lt); }
+
+/* Expired: PHP renders a different block entirely (no timer, no button). */
+body:has(.ords) .ords-cancel.is-closed .ords-cancel-label { color: var(--os-ink-faint); }
+body:has(.ords) .ords-cancel.is-closed #cancellation-timer,
+body:has(.ords) .ords-cancel.is-closed p { color: var(--os-ink-faint); }
+
+/* Destructive, but a ghost - this is a success page. */
+body:has(.ords) .ords-cancel-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid rgba(224, 86, 122, .45);
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-family: var(--os-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #ffc2d3;
+  cursor: pointer;
+  transition: background .2s var(--os-ease), border-color .2s var(--os-ease);
+}
+body:has(.ords) .ords-cancel-btn:hover {
+  background: rgba(224, 86, 122, .16);
+  border-color: rgba(224, 86, 122, .7);
+}
+body:has(.ords) .ords-cancel-btn i { font-size: 13px; color: inherit; }
+
+/* ----------------------------------------------------------------------------
+   10. What happens next
+   ------------------------------------------------------------------------- */
+body:has(.ords) .ords-next {
+  background: linear-gradient(180deg, rgba(20, 36, 60, .9), rgba(11, 22, 38, .96));
+  border: 1px solid var(--os-line);
+  border-radius: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 18px 42px rgba(3, 8, 16, .45);
+}
+body:has(.ords) .ords-next h2 {
+  font-family: var(--os-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--os-ink-faint);
+  margin: 0 0 14px;
+}
+body:has(.ords) .ords-next ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+body:has(.ords) .ords-next li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-family: var(--os-font);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--os-ink-dim);
+}
+body:has(.ords) .ords-next li::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: var(--os-green-lt);
+}
+
+/* ----------------------------------------------------------------------------
+   11. Session flash messages
+   ------------------------------------------------------------------------- */
+body:has(.ords) .confirmation-page .container > div[style*="16, 185, 129"] {
+  background: rgba(52, 211, 153, .1) !important;
+  border: 1px solid rgba(52, 211, 153, .3) !important;
+  border-radius: 12px !important;
+}
+body:has(.ords) .confirmation-page .container > div[style*="16, 185, 129"] p { color: var(--os-green-lt) !important; }
+body:has(.ords) .confirmation-page .container > div[style*="239, 68, 68"] {
+  background: rgba(224, 86, 122, .1) !important;
+  border: 1px solid rgba(224, 86, 122, .3) !important;
+  border-radius: 12px !important;
+}
+body:has(.ords) .confirmation-page .container > div[style*="239, 68, 68"] p { color: #ffc2d3 !important; }
+
+/* ----------------------------------------------------------------------------
+   12. Footer
+   ------------------------------------------------------------------------- */
+body:has(.ords) .main-footer {
+  background: rgba(6, 13, 24, .85) !important;
+  border-top: 1px solid var(--os-line) !important;
+  font-family: var(--os-font);
+}
+body:has(.ords) .main-footer h1,
+body:has(.ords) .main-footer h2,
+body:has(.ords) .main-footer h3,
+body:has(.ords) .main-footer h4 { color: #cfe0f5 !important; }
+body:has(.ords) .main-footer,
+body:has(.ords) .main-footer p,
+body:has(.ords) .main-footer li,
+body:has(.ords) .main-footer span { color: var(--os-ink-soft) !important; }
+body:has(.ords) .main-footer a { color: var(--os-pink-lt) !important; text-decoration: none; }
+body:has(.ords) .main-footer a:hover { color: var(--os-cyan) !important; }
+
+/* ----------------------------------------------------------------------------
+   13. Responsive
+   ------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  body:has(.ords) .ords-hero-value { font-size: clamp(26px, 6.5vw, 38px); letter-spacing: .14em; }
+}
+@media (max-width: 560px) {
+  body:has(.ords) .ords-cancel { flex-direction: column; align-items: stretch; }
+  body:has(.ords) .ords-cancel-btn { justify-content: center; }
+  body:has(.ords) .ords-actions { flex-direction: column; align-items: stretch; }
+  body:has(.ords) .ords-btn { justify-content: center; }
+  body:has(.ords) .ords-hero-row { flex-direction: column; align-items: flex-start; }
+  /* A code at .18em tracking has nowhere to go on a 360px screen. */
+  body:has(.ords) .ords-hero-value { letter-spacing: .1em; }
+}
+
+/* ----------------------------------------------------------------------------
+   Z. Reduced motion
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  body:has(.ords)::before,
+  body:has(.ords)::after,
+  body:has(.ords) .confirmation-page .success-icon,
+  body:has(.ords) .confirmation-page .confirmation-header h1,
+  body:has(.ords) .ords * {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  body:has(.ords) .confirmation-page .success-icon,
+  body:has(.ords) .confirmation-page .confirmation-header h1 {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  body:has(.ords) .ords-btn:hover,
+  body:has(.ords) .ords-qr-btn:hover { transform: none !important; }
+}

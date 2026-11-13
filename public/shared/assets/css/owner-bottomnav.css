@@ -1,0 +1,196 @@
+/* ============================================================================
+   owner-bottomnav.css - phone navigation for the Owner (super-admin) panel.
+
+   On a phone the owner panel's left drawer is replaced by a fixed bottom bar,
+   the pattern every app on the device already uses: the four sections are one
+   thumb-reach away instead of behind a pull-tab most people never find.
+
+   Scoped to `body.sa` throughout (set in super-admin/includes/header.php), so
+   the Admin panel and the courier board - which share every .admin-sidebar*
+   class through admin.css - are untouched.
+
+   Loaded after admin.css, so these rules win the cascade against the drawer
+   and the hover rail without needing !important.
+   ========================================================================= */
+
+/* Desktop and tablet keep the sidebar; the bar is phone-only. */
+.sa-bottomnav,
+.sa-sheet { display: none; }
+
+@media (max-width: 767px) {
+
+  /* --- 1. The drawer steps aside ------------------------------------------
+     The pull-tab, the off-canvas panel and its scrim all go. Everything the
+     panel held is either in the bar below or in its More sheet, so nothing
+     becomes unreachable. display:none also takes them out of the tab order,
+     which visibility/opacity would not. */
+  body.sa .admin-menu-toggle,
+  body.sa .admin-sidebar,
+  body.sa .admin-sidebar-backdrop { display: none; }
+  /* The drawer locks scroll while open; with no drawer to open, a stale
+     .admin-menu-open class must not freeze the page. */
+  body.sa.admin-menu-open { overflow: auto; }
+
+  /* --- 2. Room for the bar ------------------------------------------------
+     The bar is fixed, so the end of the page would otherwise sit under it.
+     The spacer goes on the footer rather than on <body>: header.php pins
+     `html, body.admin { height: 100% }`, which makes body padding unreliable
+     once the content overflows the viewport, while the footer is in flow and
+     is genuinely the last thing on every page that renders this nav.
+     :has() keeps it off the pages that skip the nav entirely (login, index -
+     they `return` early on $hideNav) and so have no bar to clear. */
+  body.sa:has(.sa-bottomnav) .super-admin-footer {
+    padding-bottom: calc(20px + 64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* --- 3. The bar --------------------------------------------------------- */
+  body.sa .sa-bottomnav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1998;          /* under the drawer's old z-indexes, over content */
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    align-items: stretch;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--admin-surface);
+    border-top: 1px solid var(--admin-border);
+    /* Lifts the bar off the content it scrolls over. */
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, .18);
+  }
+
+  body.sa .sa-bn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    /* 48px clears the tap-target minimum on its own, before the padding. */
+    min-height: 48px;
+    padding: 6px 2px;
+    border: none;
+    background: none;
+    font: inherit;
+    text-decoration: none;
+    color: var(--admin-muted);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 160ms var(--ease-out, ease), transform 160ms var(--ease-out, ease);
+  }
+  body.sa .sa-bn-item i {
+    font-size: 19px;
+    line-height: 1;
+    display: block;
+  }
+  body.sa .sa-bn-item span {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .2px;
+    line-height: 1;
+    /* Five labels on a 320px screen: let the longest ellipsize rather than
+       wrap and push the bar taller than its neighbours. */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  body.sa .sa-bn-item:active { transform: scale(.94); }
+
+  /* Current section: accent colour plus a short bar above the icon, so the
+     state survives for anyone who can't separate the two colours. */
+  body.sa .sa-bn-item.active {
+    color: var(--admin-accent);
+    position: relative;
+  }
+  body.sa .sa-bn-item.active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 22px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: var(--admin-accent);
+  }
+  body.sa .sa-bn-item:focus-visible {
+    outline: 2px solid var(--admin-accent);
+    outline-offset: -2px;
+    border-radius: 12px;
+  }
+
+  /* --- 4. The More sheet --------------------------------------------------
+     A <dialog> opened with showModal(), for the same reason the confirm
+     dialog is one: the top layer puts it above the fixed bar with no z-index
+     arithmetic, and Escape and focus trapping come for free. */
+  body.sa .sa-sheet {
+    display: block;
+    position: fixed;
+    inset: auto 0 0 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 80vh;
+    margin: 0;
+    padding: 10px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+    border: none;
+    border-radius: 20px 20px 0 0;
+    box-sizing: border-box;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, .45);
+    overflow-y: auto;
+  }
+  body.sa .sa-sheet:not([open]) { display: none; }
+  body.sa .sa-sheet[open] { animation: sa-sheet-up 220ms var(--ease-drawer, cubic-bezier(0.32, 0.72, 0, 1)); }
+  body.sa .sa-sheet::backdrop { background: rgba(8, 16, 29, .55); }
+  @keyframes sa-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+
+  /* The drag handle is decoration - the sheet closes by tapping outside, by
+     Escape, or by choosing something. */
+  body.sa .sa-sheet-grip {
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: var(--admin-border);
+  }
+  body.sa .sa-sheet-title {
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+  }
+  /* The sidebar's profile block and logout row are reused verbatim, so they
+     keep their styling from admin.css; only the spacing is restated here now
+     that they sit in a sheet rather than at the foot of a tall panel. */
+  body.sa .sa-sheet .admin-sidebar-profile { padding-top: 0; margin-top: 0; border-top: none; }
+  body.sa .sa-sheet .admin-sidebar-logout { padding: 14px; font-size: 15px; }
+
+  /* Sheet rows that are <button> rather than <a> - currently just Lock panel
+     (includes/navigation.php). .admin-sidebar-logout was written for a link,
+     so a button wearing it arrives with the UA's own border, grey background,
+     centred text and 13px system font. These five declarations are the whole
+     difference; everything else - the flex row, the gap, the radius, the
+     press animation - already comes from the shared class. */
+  body.sa .sa-sheet button.sa-sheet-action {
+    width: 100%;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+  body.sa .sa-sheet button.sa-sheet-action:hover { background: rgba(127, 127, 127, .12); }
+
+  @media (prefers-reduced-motion: reduce) {
+    body.sa .sa-bn-item { transition-duration: .01ms; }
+    body.sa .sa-bn-item:active { transform: none; }
+    body.sa .sa-sheet[open] { animation: none; }
+  }
+}

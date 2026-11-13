@@ -1,0 +1,827 @@
+/* ===========================================================================
+   admin-flat.css - the flat admin skin.
+
+   Loaded after admin.css from admin/includes/header.php. Everything here is
+   scoped to `html body.admin main`, which is the page content and nothing
+   else:
+
+     - the customer and guest areas never carry `body.admin`, so no rule here
+       can reach them;
+     - the sidebar is <aside class="admin-sidebar">, a SIBLING of <main>
+       (admin/includes/navigation.php is self-contained and closes its own
+       aside), so it is outside this scope by construction rather than by a
+       :not() that could be out-manoeuvred later.
+
+   The one deliberate exception is the page ground, which has to sit on <body>
+   because that is the element that paints the viewport. `body.admin` still
+   cannot match the customer area, and the sidebar paints its own
+   var(--admin-surface) over it, so the sidebar is unaffected.
+
+   Written in batches; this file currently covers batches 1-3 (page ground,
+   shadows, header row, cards). The Products / Orders / Reports pickers in
+   navigation.php sit outside <main> and are batch 4.
+   ======================================================================== */
+
+
+/* ---------------------------------------------------------------------------
+   1. PAGE GROUND
+   style.css sets --bg-primary to a beige gradient (lines 37 and 98) and
+   admin.css:82 paints it with `body.admin{background:var(--bg-primary)}`.
+   Overriding the variable itself is not an option: the customer area and the
+   sidebar read the same one. So the gradient is replaced here instead, on the
+   same element, with a flat fill. `background` (not `background-color`) is
+   what clears the gradient image the shorthand installed.
+   ------------------------------------------------------------------------ */
+html body.admin {
+    background: #f2f5fa;
+}
+
+
+/* ---------------------------------------------------------------------------
+   2. THE NEUMORPHIC SHADOWS, TURNED OFF IN ONE PLACE
+
+   style.css builds every soft shadow in the theme from two colours:
+
+       --neu-shadow-light: rgba(255,255,255,.9)
+       --neu-shadow-dark:  rgba(163,150,138,.45)
+
+   and composes them into --neu-raised / --neu-raised-sm / --neu-pressed
+   (style.css:82-86, repeated at 137-141). Around forty admin rules consume
+   those three.
+
+   Custom properties inherit, so redefining them HERE - on the content
+   wrapper - reaches every one of those rules at once and cannot reach the
+   sidebar, which is not a descendant. That is the whole "one place" fix; no
+   individual box-shadow rule is touched.
+
+   Why a zero-size transparent shadow rather than the keyword `none`:
+   three rules compose a neu shadow with a second, real one -
+
+       style.css:558   box-shadow: var(--neu-pressed), 0 0 0 1px rgba(139,76,108,.25)
+       admin.css:162   (the same focus ring, admin copy)
+       admin.css:245   box-shadow: var(--neu-pressed), 0 0 0 2px var(--admin-danger)
+
+   - and `none, 0 0 0 1px ...` is not valid CSS. The browser would drop the
+   whole declaration and take the input's focus ring and the error outline
+   with it. `0 0 #0000` is a legal shadow that paints nothing, so those three
+   keep their ring and lose only the softness.
+   ------------------------------------------------------------------------ */
+html body.admin main {
+    --neu-shadow-light: transparent;
+    --neu-shadow-dark: transparent;
+    --neu-raised: 0 0 #0000;
+    --neu-raised-sm: 0 0 #0000;
+    --neu-pressed: 0 0 #0000;
+    --shadow-color: transparent;
+}
+
+
+/* ---------------------------------------------------------------------------
+   3. THE TWO SHADOWS THAT ARE ALLOWED TO STAY
+
+   Modals and dropdown menus need depth to read as floating above the page.
+   They sit inside <main> on most pages, so the override above would otherwise
+   flatten them too; these put the intended shadow back.
+
+   (The Products / Orders / Reports pickers in navigation.php are outside
+   <main> entirely and were never in scope - they are restyled in batch 4.)
+   ------------------------------------------------------------------------ */
+html body.admin main .modal-overlay > .modal-container,
+html body.admin main .modal-content,
+html body.admin main .pickup-modal-panel,
+html body.admin main [role="dialog"] {
+    box-shadow: 0 24px 60px rgba(15, 26, 44, .28);
+}
+
+html body.admin main .dropdown-menu,
+html body.admin main .admin-dropdown-menu {
+    box-shadow: 0 8px 24px rgba(15, 26, 44, .12);
+}
+
+
+/* ===========================================================================
+   BATCH 2 - page header row, and the content box it sits in.
+   ======================================================================== */
+
+/* ---------------------------------------------------------------------------
+   4. CONTENT BOX
+   .container is 1400px in style.css and shared with the customer area, so the
+   cap is set here on the admin content only. Pages that declare their own
+   width do it from a <style> block in <body>, which lands after this file and
+   wins at equal specificity - that is what keeps product_management.php's
+   four-card row at min(1560px,96vw) without an exception being coded here.
+   ------------------------------------------------------------------------ */
+html body.admin main.container {
+    max-width: 1240px;
+    padding: 28px 32px;
+}
+
+/* ---------------------------------------------------------------------------
+   5. BREADCRUMB + TITLE
+   Replaces the 44px dark button that used to float in the left gutter. The
+   first crumb is that button's link, with its href and onclick carried over
+   untouched, so Back still goes wherever each page sent it.
+   ------------------------------------------------------------------------ */
+html body.admin main .adm-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 0 0 18px;
+}
+
+html body.admin main .adm-crumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #5d6f86;
+}
+html body.admin main .adm-crumb a { color: #5d6f86; text-decoration: none; }
+html body.admin main .adm-crumb a:hover,
+html body.admin main .adm-crumb a:focus-visible { color: #16233a; text-decoration: underline; }
+/* #9aa8ba read 2.21:1 on the page ground; the muted ink clears 4.5. */
+html body.admin main .adm-crumb-sep { color: #5d6f86; }
+html body.admin main .adm-crumb-cur { color: #16233a; font-weight: 600; }
+
+html body.admin main .adm-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------------------
+   6. THE OLD HERO CARD, UNWRAPPED
+
+   .dashboard-welcome was a centred card with its own surface and padding.
+   Rather than move every page's <h1> out of it - 19 different structures, and
+   markup churn for no visual gain - the card itself is flattened here and the
+   heading inside it takes the title style. The result is the same left-aligned
+   title under the breadcrumb, with the markup left alone.
+   ------------------------------------------------------------------------ */
+html body.admin main .dashboard-welcome {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 0 0 18px;
+    text-align: left;
+}
+html body.admin main .dashboard-welcome h1,
+html body.admin main .adm-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #16233a;
+    text-align: left;
+}
+html body.admin main .dashboard-welcome p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: #5d6f86;
+    text-align: left;
+}
+
+
+/* ---------------------------------------------------------------------------
+   7. CLEARANCE FOR THE FIXED RAIL
+
+   .admin-sidebar is position:fixed at left:12px, 72px wide, so it covers
+   x = 12..84 of the viewport. Nothing ever reserved that space: .container
+   just centres itself, and at 1280px it starts at x~26 - which is why the
+   first KPI tile was already being clipped before this restyle (visible in
+   the pre-change screenshots). Centred hero text hid it; a left-aligned
+   breadcrumb and title do not.
+
+   The offset goes on <body> so the footer line clears the rail too, and sits
+   inside the same hover/pointer query that creates the rail in the first
+   place (admin.css:668) - on touch, the sidebar is an off-canvas drawer that
+   overlays rather than occupies, and must not reserve any width.
+
+   The sidebar is position:fixed, so this cannot move it.
+   ------------------------------------------------------------------------ */
+@media (hover: hover) and (pointer: fine) {
+    html body.admin { padding-left: 96px; }
+}
+
+
+/* ===========================================================================
+   BATCH 3 - the literal shadows the variable override could not reach.
+   ======================================================================== */
+
+/* ---------------------------------------------------------------------------
+   8. CARDS
+
+   Section 2 only reaches rules written as `box-shadow: var(--neu-*)`. These
+   card classes get a hard-coded shadow from style.css:3387-3403 instead - a
+   twelve-selector block ending in
+
+           background: #ffffff !important;
+           border: 1px solid #e2e8f0 !important;
+           color: #0f172a !important;
+           box-shadow: 0 4px 20px rgba(0,0,0,.06) !important;
+
+   and followed at :3410 by a .product-card:hover variant with a heavier
+   shadow, also !important.
+
+   main.js forces data-theme="light" on every page, so both are always live.
+   An !important declaration cannot be beaten by specificity alone, so the
+   properties they mark have to be re-marked here. These are the only
+   !important declarations in this file, and each exists solely to outrank
+   those two upstream rules.
+
+   .modal-content is in the upstream list but deliberately absent here - a
+   modal is one of the two things that keeps its shadow (section 10).
+   ------------------------------------------------------------------------ */
+html body.admin main .product-card,
+html body.admin main .category-card,
+html body.admin main .filter-card,
+html body.admin main .checkout-form,
+html body.admin main .summary-card,
+html body.admin main .profile-card,
+html body.admin main .detail-card,
+html body.admin main .stat-card,
+html body.admin main .auth-content,
+html body.admin main .form-section {
+    background: #ffffff !important;              /* beats style.css:3398 */
+    border: 1px solid #e3e9f2 !important;        /* beats style.css:3399 */
+    box-shadow: none !important;                 /* beats style.css:3401 */
+    border-radius: 14px;
+}
+
+html body.admin main .product-card:hover {
+    border-color: #e3e9f2 !important;            /* beats style.css:3412 */
+    box-shadow: none !important;                 /* beats style.css:3413 */
+}
+
+/* The same card look for the admin-only classes, which carry no !important
+   upstream and so need none here. */
+html body.admin main .admin-card,
+html body.admin main .card,
+html body.admin main .admin-dashboard {
+    background: #ffffff;
+    border: 1px solid #e3e9f2;
+    border-radius: 14px;
+    box-shadow: none;
+}
+
+/* ---------------------------------------------------------------------------
+   9. ANYTHING ELSE THAT STILL CASTS A SHADOW INSIDE THE CONTENT
+
+   A backstop for literal box-shadows written into per-page <style> blocks.
+   It is a plain (non-important) rule, so a page that genuinely needs a
+   shadow can still opt out, and the two allowed cases below re-assert
+   themselves by coming later in this file.
+   ------------------------------------------------------------------------ */
+html body.admin main :not(.modal-overlay):not(.modal-content):not(.pickup-modal-panel):not([role="dialog"]):not(.dropdown-menu) {
+    box-shadow: none;
+}
+
+/* ---------------------------------------------------------------------------
+   10. THE TWO ALLOWED SHADOWS, RE-ASSERTED AFTER THE BACKSTOP
+   ------------------------------------------------------------------------ */
+html body.admin main .modal-overlay > .modal-container,
+html body.admin main .modal-content,
+html body.admin main .pickup-modal-panel,
+html body.admin main [role="dialog"] {
+    box-shadow: 0 24px 60px rgba(15, 26, 44, .28) !important;   /* beats style.css:3401 for .modal-content */
+}
+
+html body.admin main .dropdown-menu,
+html body.admin main .admin-dropdown-menu {
+    box-shadow: 0 8px 24px rgba(15, 26, 44, .12);
+}
+
+
+/* ===========================================================================
+   BATCH 4 - the page designs.
+   ======================================================================== */
+
+/* ---------------------------------------------------------------------------
+   11. SHARED TOKENS
+   Declared on the content wrapper so every rule below reads them from one
+   place, and so they cannot leak past <main>.
+   ------------------------------------------------------------------------ */
+html body.admin main {
+    --ad-card: #ffffff;
+    --ad-border: #e3e9f2;
+    --ad-line: #eef2f7;
+    --ad-row-line: #f0f3f8;
+    --ad-ink: #16233a;
+    --ad-body: #2b3a52;
+    --ad-muted: #5d6f86;
+    --ad-primary: #c23a63;
+    --ad-primary-hover: #a8264d;
+    --ad-dark: #16233a;
+    --ad-input-border: #d3dbe6;
+    --ad-focus-ring: 0 0 0 3px rgba(194, 58, 99, .15);
+    --ad-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+/* --- buttons ------------------------------------------------------------ */
+html body.admin main .ad-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    height: 38px; padding: 0 14px;
+    border-radius: 10px; border: 1px solid transparent;
+    font: inherit; font-size: 13px; font-weight: 700; line-height: 1;
+    text-decoration: none; cursor: pointer; white-space: nowrap;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+html body.admin main .ad-btn--primary { background: var(--ad-primary); color: #fff; }
+html body.admin main .ad-btn--primary:hover { background: var(--ad-primary-hover); color: #fff; }
+html body.admin main .ad-btn--dark { background: var(--ad-dark); color: #fff; }
+html body.admin main .ad-btn--dark:hover { background: #0f1a2c; color: #fff; }
+html body.admin main .ad-btn--secondary { background: #fff; border-color: var(--ad-input-border); color: var(--ad-ink); }
+html body.admin main .ad-btn--secondary:hover { background: #f7f9fc; color: var(--ad-ink); }
+html body.admin main .ad-btn:focus-visible { outline: 2px solid var(--ad-primary); outline-offset: 2px; }
+
+/* --- inputs ------------------------------------------------------------- */
+html body.admin main .ad-input,
+html body.admin main .ad-field input[type="text"],
+html body.admin main .ad-field input[type="search"],
+html body.admin main .ad-field input[type="number"],
+html body.admin main .ad-field select,
+html body.admin main .ad-field textarea {
+    height: 42px; width: 100%; box-sizing: border-box;
+    padding: 0 12px;
+    background: #fff; color: var(--ad-body);
+    border: 1px solid var(--ad-input-border); border-radius: 10px;
+    font: inherit; font-size: 13.5px;
+}
+html body.admin main .ad-field textarea { height: auto; padding: 10px 12px; line-height: 1.5; }
+html body.admin main .ad-input:focus,
+html body.admin main .ad-field input:focus,
+html body.admin main .ad-field select:focus,
+html body.admin main .ad-field textarea:focus {
+    outline: none;
+    border-color: var(--ad-primary);
+    box-shadow: var(--ad-focus-ring);
+}
+html body.admin main .ad-label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 700; color: var(--ad-ink); }
+html body.admin main .ad-hint { margin: 6px 0 0; font-size: 12px; color: var(--ad-muted); }
+
+/* --- status chips ------------------------------------------------------- */
+html body.admin main .ad-chip {
+    display: inline-block; padding: 4px 10px;
+    border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.25;
+    white-space: nowrap;
+}
+html body.admin main .ad-chip--out      { background: #fdecf1; color: #a8264d; }
+html body.admin main .ad-chip--oversold { background: #fde2e2; color: #9b1c1c; }
+html body.admin main .ad-chip--reorder  { background: #fff4e0; color: #8a5a00; }
+html body.admin main .ad-chip--active   { background: #e7f6ef; color: #1f7a53; }
+html body.admin main .ad-chip--inactive { background: #eef2f7; color: #46586f; }
+
+/* --- KPI tiles ---------------------------------------------------------- */
+html body.admin main .ad-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0 0 18px; }
+html body.admin main .ad-kpi {
+    background: var(--ad-card); border: 1px solid var(--ad-border); border-radius: 14px;
+    padding: 14px 16px; min-width: 0;
+}
+html body.admin main .ad-kpi-label { font-size: 12px; font-weight: 600; color: var(--ad-muted); }
+html body.admin main .ad-kpi-value {
+    margin-top: 4px; font-size: 24px; font-weight: 800; line-height: 1.15;
+    color: var(--ad-ink); font-variant-numeric: tabular-nums;
+}
+html body.admin main .ad-kpi-value--warn { color: #8a5a00; }
+html body.admin main .ad-kpi-value--danger { color: #a8264d; }
+html body.admin main .ad-kpi-sub { margin-top: 4px; font-size: 12px; color: var(--ad-muted); }
+@media (max-width: 1000px) { html body.admin main .ad-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px)  { html body.admin main .ad-kpis { grid-template-columns: minmax(0, 1fr); } }
+
+/* --- cards and tables --------------------------------------------------- */
+html body.admin main .ad-card {
+    background: var(--ad-card); border: 1px solid var(--ad-border);
+    border-radius: 14px; overflow: hidden; margin: 0 0 18px;
+}
+html body.admin main .ad-card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    padding: 14px 16px; border-bottom: 1px solid var(--ad-line);
+}
+html body.admin main .ad-card-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--ad-ink); }
+html body.admin main .ad-card-note { font-size: 12px; color: var(--ad-muted); font-weight: 400; }
+html body.admin main .ad-card-body { padding: 16px; }
+html body.admin main .ad-table-wrap { overflow-x: auto; }
+html body.admin main .ad-table { width: 100%; border-collapse: collapse; }
+html body.admin main .ad-table th {
+    padding: 10px 14px; text-align: left; white-space: nowrap;
+    background: #f7f9fc;
+    font-family: var(--ad-mono); font-size: 10px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--ad-muted);
+    border-bottom: 1px solid var(--ad-row-line);
+}
+html body.admin main .ad-table td {
+    height: 50px; padding: 8px 14px;
+    font-size: 13.5px; color: var(--ad-body);
+    border-bottom: 1px solid var(--ad-row-line);
+}
+html body.admin main .ad-table tbody tr:last-child td { border-bottom: 0; }
+html body.admin main .ad-table tbody tr:hover { background: #f9fbfd; }
+html body.admin main .ad-num { text-align: right; font-variant-numeric: tabular-nums; }
+html body.admin main .ad-neg { font-weight: 700; color: #9b1c1c; }
+html body.admin main .ad-table-empty { text-align: center; color: var(--ad-muted); padding: 28px 14px; }
+
+/* --- segmented tabs ----------------------------------------------------- */
+html body.admin main .ad-tabs {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 3px; background: #f2f5fa; border-radius: 10px;
+}
+html body.admin main .ad-tab {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; color: var(--ad-muted);
+    text-decoration: none; white-space: nowrap;
+}
+html body.admin main .ad-tab:hover { color: var(--ad-ink); }
+html body.admin main .ad-tab.is-on {
+    background: #fff; color: var(--ad-ink); font-weight: 700;
+    box-shadow: 0 1px 3px rgba(20, 50, 95, .12);
+}
+html body.admin main .ad-tab-n { font-family: var(--ad-mono); font-size: 11px; font-weight: 700; }
+
+/* --- search in a toolbar ------------------------------------------------ */
+html body.admin main .ad-search { position: relative; display: flex; align-items: center; }
+html body.admin main .ad-search input {
+    height: 36px; width: 260px; max-width: 100%; box-sizing: border-box;
+    padding: 0 12px;
+    background: #fff; color: var(--ad-body);
+    border: 1px solid var(--ad-input-border); border-radius: 10px;
+    font: inherit; font-size: 13px;
+}
+html body.admin main .ad-search input:focus { outline: none; border-color: var(--ad-primary); box-shadow: var(--ad-focus-ring); }
+
+/* --- alert strip -------------------------------------------------------- */
+html body.admin main .ad-alert {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 11px 14px; margin: 0 0 18px;
+    background: #fdecf1; border: 1px solid #f3c3d1; border-radius: 12px;
+    font-size: 13px; color: var(--ad-ink);
+}
+html body.admin main .ad-alert-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--ad-primary); }
+html body.admin main .ad-alert a { color: var(--ad-primary-hover); font-weight: 700; }
+
+/* --- empty state -------------------------------------------------------- */
+html body.admin main .ad-empty { padding: 44px 20px; text-align: center; }
+html body.admin main .ad-empty-icon {
+    width: 56px; height: 56px; margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 16px; background: #e7f6ef; color: #1f7a53; font-size: 24px;
+}
+html body.admin main .ad-empty h3 { margin: 0 0 6px; font-size: 18px; font-weight: 800; color: var(--ad-ink); }
+html body.admin main .ad-empty p { margin: 0; font-size: 14px; color: var(--ad-muted); }
+html body.admin main .ad-empty-link { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--ad-primary-hover); }
+
+/* --- visually hidden, still focusable and still submitted --------------- */
+html body.admin main .ad-sr {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+
+/* ---------------------------------------------------------------------------
+   12. inventory_control.php (design 1a)
+   ------------------------------------------------------------------------ */
+
+/* The lede that used to sit inside the .dashboard-welcome card. */
+html body.admin main .adm-lede { margin: -8px 0 18px; font-size: 13px; color: var(--ad-muted); }
+
+/* "N defective" inside the Stock value sub-line. Still the <button
+   id="invDefectCard"> the by-brand modal is bound to, so it has to shed the
+   browser's button chrome to read as the link it now looks like. */
+html body.admin main .inv-defect-link {
+    padding: 0; border: 0; background: none;
+    font: inherit; font-size: 12px; color: var(--ad-primary-hover);
+    text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+html body.admin main .inv-defect-link:hover { color: var(--ad-primary); }
+html body.admin main .inv-defect-link:focus-visible { outline: 2px solid var(--ad-primary); outline-offset: 2px; border-radius: 3px; }
+
+/* The four remaining report sections still use .admin-table-wrap +
+   .inv-section-head. Rather than restructure four more blocks of markup,
+   those two classes are re-pointed at the card look. */
+html body.admin main .admin-table-wrap {
+    background: var(--ad-card);
+    border: 1px solid var(--ad-border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+html body.admin main .inv-section-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--ad-line);
+    font-size: 15px; font-weight: 700; color: var(--ad-ink);
+}
+html body.admin main .inv-section-head small { font-size: 12px; font-weight: 400; color: var(--ad-muted); }
+
+/* Those sections' tables get the shared table treatment without needing the
+   class added to each one. */
+html body.admin main .admin-table-wrap table { width: 100%; border-collapse: collapse; }
+html body.admin main .admin-table-wrap th {
+    padding: 10px 14px; text-align: left; white-space: nowrap;
+    background: #f7f9fc;
+    font-family: var(--ad-mono); font-size: 10px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--ad-muted);
+    border-bottom: 1px solid var(--ad-row-line);
+}
+html body.admin main .admin-table-wrap td {
+    height: 50px; padding: 8px 14px;
+    font-size: 13.5px; color: var(--ad-body);
+    border-bottom: 1px solid var(--ad-row-line);
+}
+html body.admin main .admin-table-wrap tbody tr:last-child td { border-bottom: 0; }
+html body.admin main .admin-table-wrap tbody tr:hover { background: #f9fbfd; }
+html body.admin main .inv-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* The status pills in those sections keep their own inline colour, but drop
+   the hard white text that the old dark pill needed. */
+html body.admin main .inv-pill {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; line-height: 1.25; white-space: nowrap;
+}
+
+/* No inner scrollbar until a list is genuinely long - a short list that
+   scrolls inside its own box reads as broken. 12 rows at 50px plus the head.
+   The grid of two cards keeps its own layout. */
+/* 12 rows at ~50px plus the section head. Under that the box just grows, so a
+   short list never shows a scrollbar of its own; past it the cap comes back. */
+html body.admin main .inv-scroll { max-height: 660px; overflow: auto; }
+
+
+/* ---------------------------------------------------------------------------
+   13. THE PICKER POP-UPS (design 1b)
+
+   Products / Orders / Reports. These live in admin/includes/navigation.php,
+   OUTSIDE <main> - the panel is position:fixed with overflow:hidden and would
+   clip them - so they are the one thing in this file scoped to themselves
+   rather than to the content wrapper.
+
+   `html body.admin .admin-nav-modal` cannot reach the sidebar: .admin-nav-modal
+   is a sibling of <aside class="admin-sidebar">, never an ancestor or a
+   descendant of it. Tokens are repeated here as literals rather than read from
+   --ad-* , because those are declared on <main> and do not inherit sideways.
+   ------------------------------------------------------------------------ */
+html body.admin .admin-nav-modal {
+    position: fixed; inset: 0; z-index: 9500;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    /* admin.css gives this a backdrop-filter:blur(4px); the brief asks for a
+       plain scrim with no page blur behind it. */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+html body.admin .admin-nav-modal[hidden] { display: none; }
+
+/* The scrim. No backdrop-filter: the brief asks for no page blur. */
+html body.admin .admin-nav-modal::before {
+    content: ""; position: absolute; inset: 0;
+    background: rgba(15, 26, 44, .38);
+}
+
+html body.admin .admin-nav-modal-dialog {
+    position: relative;
+    width: 480px; max-width: 100%;
+    max-height: calc(100vh - 40px); overflow: auto;
+    box-sizing: border-box;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e3e9f2;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(15, 26, 44, .28);
+}
+
+html body.admin .admin-nav-modal-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+    margin: 0 0 4px;
+}
+html body.admin .admin-nav-modal-head h2 {
+    margin: 0; font-size: 22px; font-weight: 800; line-height: 1.2; color: #16233a;
+}
+html body.admin .admin-nav-modal-close {
+    flex: 0 0 auto;
+    width: 36px; height: 36px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fff; color: #5d6f86;
+    border: 1px solid #e3e9f2; border-radius: 10px;
+    font: inherit; font-size: 14px; line-height: 1; cursor: pointer;
+}
+html body.admin .admin-nav-modal-close:hover { background: #f7f9fc; color: #16233a; }
+html body.admin .admin-nav-modal-close:focus-visible { outline: 2px solid #c23a63; outline-offset: 2px; }
+
+html body.admin .admin-nav-modal-lead {
+    margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: #5d6f86;
+}
+
+html body.admin .admin-nav-modal-choices { display: grid; gap: 10px; }
+
+html body.admin .admin-nav-modal-choice {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid #e3e9f2; border-radius: 14px;
+    text-decoration: none; color: inherit;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+/* The 44px icon tile. The <i> is the flaticon glyph the markup already had. */
+html body.admin .admin-nav-modal-choice > i {
+    flex: 0 0 auto;
+    width: 44px; height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #f4f7fb; color: #c23a63;
+    border-radius: 12px; font-size: 18px; line-height: 1;
+}
+html body.admin .admin-nav-modal-choice > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+html body.admin .admin-nav-modal-choice strong { font-size: 16px; font-weight: 700; color: #16233a; }
+html body.admin .admin-nav-modal-choice small { font-size: 13px; line-height: 1.45; color: #5d6f86; }
+html body.admin .admin-nav-modal-chev { flex: 0 0 auto; font-size: 20px; line-height: 1; color: #9aa8ba; }
+
+/* The first option is the one most people want, so it is pre-highlighted -
+   and hover/focus bring every other option to the same state. */
+html body.admin .admin-nav-modal-choice:first-child,
+html body.admin .admin-nav-modal-choice:hover,
+html body.admin .admin-nav-modal-choice:focus-visible {
+    background: #fdf5f8;
+    border-color: #f0b6c7;
+}
+html body.admin .admin-nav-modal-choice:focus-visible { outline: 2px solid #c23a63; outline-offset: 2px; }
+
+html body.admin .admin-nav-modal-hint {
+    margin: 16px 0 0; text-align: center;
+    font-size: 12px; color: #5d6f86;
+}
+html body.admin .admin-nav-modal-hint kbd {
+    display: inline-block; padding: 1px 6px;
+    background: #f2f5fa; border: 1px solid #d3dbe6; border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px; color: #2b3a52;
+}
+
+
+/* ---------------------------------------------------------------------------
+   14. add_product.php (design 1c)
+   ------------------------------------------------------------------------ */
+html body.admin main .ap-wrap { max-width: 1100px; }
+html body.admin main .ap-grid {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+@media (max-width: 900px) { html body.admin main .ap-grid { grid-template-columns: minmax(0, 1fr); } }
+html body.admin main .ap-col { margin: 0; }
+
+/* The drop zone. The file input is stretched over it at opacity 0 rather than
+   hidden, so the whole zone is clickable, the control still takes focus, and
+   `required` can still show its validation bubble against a real box. */
+html body.admin main .ap-drop {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    height: 260px; padding: 16px; margin: 0 0 12px;
+    background: #f7f9fc;
+    border: 1.5px dashed #c5cfdc; border-radius: 12px;
+    text-align: center; overflow: hidden;
+}
+html body.admin main .ap-drop input[type="file"] {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; cursor: pointer;
+}
+html body.admin main .ap-drop:hover { border-color: var(--ad-primary); background: #fdf5f8; }
+html body.admin main .ap-drop:focus-within { border-color: var(--ad-primary); box-shadow: var(--ad-focus-ring); }
+html body.admin main .ap-drop-text strong { display: block; font-size: 14px; font-weight: 700; color: var(--ad-ink); }
+html body.admin main .ap-drop-text small { display: block; margin-top: 4px; font-size: 12px; color: var(--ad-muted); }
+
+/* The preview is add_product.php's own image element, #imagePreview, whose
+   src the page script sets on file choose. Until then it has no src attribute
+   at all, which is what hides it - and what hides the prompt once it has one. */
+html body.admin main .ap-drop #imagePreview {
+    max-width: 100%; max-height: 100%;
+    object-fit: contain; border-radius: 8px;
+}
+html body.admin main .ap-drop #imagePreview:not([src]) { display: none; }
+html body.admin main .ap-drop:has(#imagePreview[src]) .ap-drop-text { display: none; }
+
+html body.admin main .ap-photo-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+html body.admin main .ap-btn--ai { background: #f4eef9; color: #5b3d8a; border-color: #e3d7f0; }
+html body.admin main .ap-btn--ai:hover { background: #ece0f6; color: #4b3173; }
+
+/* The details card. .ad-field styles the inputs; these are the rows. */
+html body.admin main .ap-row { margin: 0 0 16px; }
+html body.admin main .ap-row:last-child { margin-bottom: 0; }
+html body.admin main .ap-row--3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { html body.admin main .ap-row--3 { grid-template-columns: minmax(0, 1fr); } }
+html body.admin main .ap-desc { height: 120px; resize: vertical; }
+
+/* Price gets a currency mark, Stock a unit - both drawn inside the field so
+   the input itself keeps its own name, type and validation. */
+html body.admin main .ap-prefix { position: relative; display: flex; align-items: center; }
+html body.admin main .ap-prefix > span {
+    position: absolute; left: 12px;
+    font-size: 13.5px; color: var(--ad-muted); pointer-events: none;
+}
+html body.admin main .ap-prefix--suffix > span { left: auto; right: 12px; }
+
+/* The page's own .input/.select/.textarea classes predate the token set, so
+   they are mapped onto it here rather than renamed in the markup. */
+html body.admin main .ap-grid .input,
+html body.admin main .ap-grid .select,
+html body.admin main .ap-grid .textarea {
+    height: 42px; width: 100%; box-sizing: border-box;
+    padding: 0 12px;
+    background: #fff; color: var(--ad-body);
+    border: 1px solid var(--ad-input-border); border-radius: 10px;
+    font: inherit; font-size: 13.5px;
+}
+html body.admin main .ap-grid .textarea { height: 120px; padding: 10px 12px; line-height: 1.5; resize: vertical; }
+html body.admin main .ap-grid .input:focus,
+html body.admin main .ap-grid .select:focus,
+html body.admin main .ap-grid .textarea:focus {
+    outline: none; border-color: var(--ad-primary); box-shadow: var(--ad-focus-ring);
+}
+
+/* After the .input mapping above, which sets the `padding` shorthand and
+   would otherwise reset these longhands and drop the currency mark on top of
+   the placeholder. */
+html body.admin main .ap-grid .ap-prefix > .input { padding-left: 28px; }
+html body.admin main .ap-grid .ap-prefix--suffix > .input { padding-left: 12px; padding-right: 50px; }
+
+/* ---------------------------------------------------------------------------
+   15. Order_Cancel_Request.php (design 1d)
+   ------------------------------------------------------------------------ */
+html body.admin main .ocr-count { background: #e3e9f2; color: #46586f; }
+html body.admin main .ocr-count--ok { background: #e7f6ef; color: #1f7a53; }
+/* A count inside a tab is a counter, not a status, so it sits tighter than a
+   standalone chip. */
+html body.admin main .ad-tab .ad-chip { padding: 2px 7px; font-size: 11px; }
+
+/* ---------------------------------------------------------------------------
+   16. products.php - Product Catalog (design 2a)
+   ------------------------------------------------------------------------ */
+html body.admin main .pc-viewonly {
+    display: inline-block; vertical-align: middle; margin-left: 10px;
+    padding: 3px 9px; border-radius: 999px;
+    background: #eef2f7; color: #46586f;
+    font-family: var(--ad-mono); font-size: 10px; font-weight: 700; letter-spacing: .12em;
+}
+html body.admin main .pc-id { font-family: var(--ad-mono); font-size: 12px; color: var(--ad-muted); }
+html body.admin main .pc-thumb-cell { width: 56px; padding-right: 0; }
+html body.admin main .pc-thumb {
+    display: block; width: 40px; height: 40px;
+    object-fit: cover; border-radius: 8px; border: 1px solid var(--ad-border);
+}
+html body.admin main .pc-thumb--none {
+    display: flex; align-items: center; justify-content: center;
+    background: #f7f9fc; color: var(--ad-muted); font-size: 12px;
+}
+html body.admin main .pc-name {
+    font-weight: 600; color: var(--ad-ink);
+    max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+html body.admin main .pc-stock--out { color: #a8264d; font-weight: 700; }
+html body.admin main .pc-stock--low { color: #8a5a00; font-weight: 700; }
+
+/* ---------------------------------------------------------------------------
+   17. categories.php - Categories & Tags (design 2b)
+   ------------------------------------------------------------------------ */
+html body.admin main .ct-wrap { max-width: 1200px; }
+html body.admin main .ct-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { html body.admin main .ct-forms { grid-template-columns: minmax(0, 1fr); } }
+html body.admin main .ct-row { display: grid; gap: 14px; }
+html body.admin main .ct-row--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html body.admin main .ct-row--3 { grid-template-columns: 1fr 1fr 96px; }
+@media (max-width: 620px) {
+    html body.admin main .ct-row--2,
+    html body.admin main .ct-row--3 { grid-template-columns: minmax(0, 1fr); }
+}
+html body.admin main .ct-actions { margin-top: 14px; }
+html body.admin main .ct-color { padding: 4px; cursor: pointer; }
+html body.admin main .ct-id { font-family: var(--ad-mono); font-size: 12px; color: var(--ad-muted); }
+html body.admin main .ct-desc { font-size: 13px; color: var(--ad-muted); }
+html body.admin main .ct-notags { font-size: 12px; color: var(--ad-muted); }
+/* One line, never wrapping onto two. */
+html body.admin main .ct-manage { height: 32px; padding: 0 12px; font-size: 12px; white-space: nowrap; }
+
+/* The tag chips keep whatever colour the row carries inline; only their shape
+   and text treatment are standardised. */
+html body.admin main .tags-container { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+html body.admin main .tags-container .tag {
+    display: inline-block; padding: 4px 10px;
+    border-radius: 999px; color: #fff;
+    font-size: 12px; font-weight: 700; line-height: 1.25;
+}
+html body.admin main .tags-container .tag--lg { padding: 5px 12px; font-size: 13px; }
+
+/* Page-local .input/.textarea, mapped onto the token set like Add Product's. */
+html body.admin main .ct-form .input,
+html body.admin main .ct-form .textarea {
+    height: 42px; width: 100%; box-sizing: border-box;
+    padding: 0 12px;
+    background: #fff; color: var(--ad-body);
+    border: 1px solid var(--ad-input-border); border-radius: 10px;
+    font: inherit; font-size: 13.5px;
+}
+html body.admin main .ct-form .input:focus,
+html body.admin main .ct-form .textarea:focus {
+    outline: none; border-color: var(--ad-primary); box-shadow: var(--ad-focus-ring);
+}
+/* The category Description stays a <textarea> (it always was, and a text
+   input would quietly stop accepting newlines), sized to sit on the row. */
+html body.admin main .ct-form .ct-desc-input { height: 42px; padding: 10px 12px; line-height: 1.4; resize: vertical; }

@@ -1,0 +1,1443 @@
+/* ============================================================================
+   ai-builder-skin.css — AI Builder, re-skinned to the landing page's dark
+   aesthetic.
+   ----------------------------------------------------------------------------
+   Linked LAST on public/authenticated/customer/ai_builder.php: after
+   style.css, customer-dark.css and the uicons sheets that includes/header.php
+   pulls in, and after that page's own inline <style> blocks — so it wins on
+   source order wherever specificity ties.
+
+   SCOPE: every rule is prefixed `body.aibx`. The class is added by
+   ai-builder-skin.js at the top of the page body, so nothing here can reach
+   another page even if the file were linked by accident.
+
+   TOKENS: copied verbatim from public/shared/assets/css/techworld-anim.css
+   (section 1, `.tw-home`). No new hues. That sheet is not linked on this
+   page, so the values are re-declared here rather than inherited.
+
+   PRESENTATION ONLY. Not one rule changes a field, an option value, an id or
+   the request payload. The native <select>s and checkboxes stay in the DOM;
+   ai-builder-skin.js mirrors them both ways.
+   ========================================================================= */
+
+body.aibx {
+  /* --- landing-page tokens, verbatim from techworld-anim.css -------------- */
+  --tw-bg: #060d18;
+  --tw-bg-2: #0a1424;
+  --tw-bg-3: #16283f;
+  --tw-panel: #0b1626;
+
+  --tw-ink: #e8eef7;
+  --tw-ink-dim: #a9bcd4;
+  --tw-ink-faint: #7f95b3;
+  --tw-ink-mute: #9db1cb;
+
+  --tw-pink: #e0567a;
+  --tw-pink-lt: #ff9ab5;
+  --tw-cyan: #67e8f9;
+  --tw-violet: #7f6ae0;
+  --tw-green-lt: #9df3d0;
+
+  --tw-line: rgba(120, 170, 230, .12);
+
+  --tw-font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --tw-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Code', Menlo, Consolas, monospace;
+  --tw-ease: cubic-bezier(.2, .85, .2, 1);
+
+  /* --- local derivations (the values this redesign was specified in) ------ */
+  --aibx-line: rgba(120, 170, 230, .16);
+  --aibx-line-soft: rgba(120, 170, 230, .1);
+  --aibx-line-hair: rgba(120, 170, 230, .08);
+  --aibx-field-bd: rgba(120, 170, 230, .22);
+  --aibx-field-bg: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .6);
+  --aibx-sunken: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .45);
+  --aibx-grad: linear-gradient(120deg, #e0567a, #7f6ae0);
+  --aibx-max: 1240px;
+}
+
+/* ----------------------------------------------------------------------------
+   1. Page ground — the landing page's layered background
+   ------------------------------------------------------------------------- */
+
+/* The base radial. `!important` is unavoidable here: customer-dark.css
+   (`body:has(.aib-wrap)`) and this page's own inline <style> both set a body
+   background with !important, and an !important declaration can only be beaten
+   by another one. Same gradient techworld-anim.css paints on
+   `body:has(.tw-home)`, so the two pages sit on an identical ground. */
+body.aibx {
+  background: radial-gradient(1200px 700px at 70% -10%, #16283f 0%, #0a1424 45%, #060d18 100%) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  color: var(--tw-ink);
+  font-family: var(--tw-font);
+  animation: none !important;   /* kill style.css's bgDrift */
+}
+
+/* customer-dark.css switches the body pseudo-elements off for this page
+   (`body:has(.aib-wrap)::before,::after { display:none }`) because the page
+   drew no ambient layer of its own. It does now, so they come back. The
+   `:has()` in the selector below is there purely to outrank that rule rather
+   than depend on source order. */
+body.aibx:has(.aib-wrap)::before,
+body.aibx:has(.aib-wrap)::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+
+/* 1a. 120px grid of two 1px lines, drifting 0 -> 120px, 26s linear. */
+body.aibx:has(.aib-wrap)::before {
+  background-image:
+    linear-gradient(to right, rgba(120, 170, 230, .05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 170, 230, .05) 1px, transparent 1px);
+  background-size: 120px 120px;
+  animation: aibx-grid-drift 26s linear infinite;
+  will-change: background-position;
+}
+@keyframes aibx-grid-drift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 120px, 0 120px; }
+}
+
+/* 1b. Two blurred blooms — pink upper right, cyan lower left. */
+body.aibx:has(.aib-wrap)::after {
+  background-image:
+    radial-gradient(42vw 42vw at 82% 6%, rgba(224, 86, 122, .20), rgba(224, 86, 122, 0) 68%),
+    radial-gradient(38vw 38vw at 12% 88%, rgba(56, 189, 248, .13), rgba(56, 189, 248, 0) 68%);
+  background-repeat: no-repeat;
+  filter: blur(30px);
+  animation: aibx-bloom 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes aibx-bloom {
+  from { transform: scale(1); }
+  to   { transform: scale(1.12); }
+}
+
+/* Every wrapper between <body> and the content goes transparent so those two
+   layers are what you see.
+
+   The lift that puts body's children above those layers is NOT repeated here.
+   customer-dark.css already does it with
+     body > *:not(script):not(style) { position: relative; z-index: 1 }
+   at (0,0,1), and that weakness is the point: it loses to the (0,1,0) class
+   rules that pin .customer-sidebar, its backdrop, its toggle and the floating
+   cart button to `position: fixed`. A stronger copy here forced all four back
+   to `position: relative`, which dropped them into normal flow - the sidebar
+   became an in-flow block that pushed the whole page below the fold, and the
+   cart button jumped from bottom-right to top-left. Only the z-index is
+   restated below, which is safe because it changes no positioning. */
+body.aibx .aib-wrap,
+body.aibx .aib-wrap > .container,
+body.aibx .aib-panel,
+body.aibx .aib-intro {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0;
+  box-shadow: none;
+}
+
+/* ----------------------------------------------------------------------------
+   2. Shell / container
+   ------------------------------------------------------------------------- */
+body.aibx .aib-wrap {
+  padding: 0;
+  min-height: 100vh;
+  font-family: var(--tw-font);
+  color: var(--tw-ink);
+}
+body.aibx .aib-wrap .container {
+  max-width: var(--aibx-max);
+  margin: 0 auto;
+  padding: 44px clamp(16px, 3.5vw, 44px) 80px;
+}
+body.aibx .aib-wrap *,
+body.aibx .aib-wrap *::before,
+body.aibx .aib-wrap *::after { box-sizing: border-box; }
+
+/* Keyboard focus stays visible on every control, new ones included. */
+body.aibx .aib-wrap :focus-visible {
+  outline: 2px solid rgba(103, 232, 249, .75);
+  outline-offset: 2px;
+}
+
+/* The native controls the skin mirrors. They keep their ids, values, options
+   and event listeners; they are only taken out of sight and out of the tab
+   order, because the skin buttons are the tab stops. Applied only once the JS
+   has run (`.aibx-jsready`), so with JS off the page still renders its
+   original working controls. */
+body.aibx .aibx-jsready .aibx-native,
+body.aibx .aibx-jsready .aibx-sr {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0 !important;
+}
+
+/* ----------------------------------------------------------------------------
+   3. Page header — two columns, left-aligned, with the step rail
+   ------------------------------------------------------------------------- */
+body.aibx .aib-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  gap: 28px clamp(24px, 4vw, 56px);
+  align-items: start;
+  text-align: left;
+  margin: 0 0 34px;
+}
+@media (max-width: 1000px) {
+  body.aibx .aib-intro { grid-template-columns: minmax(0, 1fr); }
+}
+
+body.aibx .aibx-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--tw-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+  margin: 0 0 16px;
+}
+body.aibx .aibx-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tw-cyan);
+  flex: none;
+  animation: aibx-pulse 2.2s var(--tw-ease) infinite;
+}
+@keyframes aibx-pulse {
+  0%, 100% { opacity: 1;  transform: scale(1); }
+  50%      { opacity: .3; transform: scale(.65); }
+}
+
+body.aibx .aib-intro h1 {
+  display: block;
+  font-family: var(--tw-font);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 800;
+  letter-spacing: -.035em;
+  line-height: 1;
+  color: var(--tw-ink);
+  margin: 0 0 18px;
+  text-wrap: balance;
+}
+body.aibx .aib-intro h1 .aibx-h1-b {
+  display: block;
+  color: var(--tw-pink-lt);
+}
+
+body.aibx .aib-intro p.aibx-lede {
+  font-family: var(--tw-font);
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--tw-ink-dim);
+  max-width: 640px;
+  margin: 0 0 18px;
+  text-wrap: pretty;
+}
+
+body.aibx .aibx-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+/* "View My Saved Builds" keeps its id and its click handler; only the look
+   changes — from an underlined mauve link-button to a mono rule-underlined
+   one, with the saved count beside it. */
+body.aibx .aib-intro .aib-link-btn {
+  font-family: var(--tw-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--tw-pink-lt);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 154, 181, .4);
+  border-radius: 0;
+  padding: 4px 1px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .18s var(--tw-ease), border-color .18s var(--tw-ease);
+}
+body.aibx .aib-intro .aib-link-btn:hover {
+  color: var(--tw-cyan);
+  border-bottom-color: rgba(103, 232, 249, .6);
+}
+body.aibx .aibx-saved-count {
+  font-family: var(--tw-mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+
+/* 3b. Step rail — four stacked pills, state driven from the real fields. */
+body.aibx .aibx-steprail {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+@media (max-width: 1000px) {
+  body.aibx .aibx-steprail { flex-direction: row; flex-wrap: wrap; }
+  body.aibx .aibx-steprail li { flex: 1 1 150px; }
+}
+body.aibx .aibx-steprail li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--aibx-line);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .5);
+  color: var(--tw-ink-soft, #8fa6c4);
+  transition: background .25s var(--tw-ease), border-color .25s var(--tw-ease), color .25s var(--tw-ease);
+}
+body.aibx .aibx-steprail-num {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: rgba(120, 170, 230, .12);
+  font-family: var(--tw-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: inherit;
+}
+body.aibx .aibx-steprail-label {
+  font-family: var(--tw-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+body.aibx .aibx-steprail li[data-state="done"] {
+  background: rgba(52, 211, 153, .1);
+  border-color: rgba(52, 211, 153, .28);
+  color: var(--tw-green-lt);
+}
+body.aibx .aibx-steprail li[data-state="done"] .aibx-steprail-num {
+  background: rgba(52, 211, 153, .18);
+}
+body.aibx .aibx-steprail li[data-state="current"] {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .22), rgba(127, 106, 224, .22));
+  border-color: rgba(224, 86, 122, .4);
+  color: #ffd7e2;
+}
+body.aibx .aibx-steprail li[data-state="current"] .aibx-steprail-num {
+  background: var(--aibx-grad);
+  color: #fff;
+}
+
+/* ----------------------------------------------------------------------------
+   4. The two-column body — form card + sticky rail
+   ------------------------------------------------------------------------- */
+body.aibx .aibx-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  body.aibx .aibx-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* When step 1 is hidden (the loading and result steps) the rail has nothing
+   to summarise, so it goes with it and the results take the full width. */
+body.aibx .aibx-grid:has(> .aib-step[hidden]) { grid-template-columns: minmax(0, 1fr); }
+body.aibx .aibx-grid:has(> .aib-step[hidden]) .aibx-rail { display: none; }
+
+/* 4a. The card surface, shared by the form column and the loading/result
+   steps so the whole page reads as one material. */
+body.aibx .aib-step[data-step="1"],
+body.aibx .aib-step[data-step="2"],
+body.aibx .aib-step[data-step="3"],
+body.aibx .aibx-card {
+  position: relative;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(20, 36, 60, .9), rgba(11, 22, 38, .96));
+  border: 1px solid var(--aibx-line);
+  box-shadow: 0 24px 54px rgba(3, 8, 16, .5);
+  overflow: hidden;
+}
+/* 1px top hairline: pink into cyan, fading at both ends. */
+body.aibx .aib-step[data-step="1"]::before,
+body.aibx .aib-step[data-step="2"]::before,
+body.aibx .aib-step[data-step="3"]::before,
+body.aibx .aibx-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(224, 86, 122, .7), rgba(103, 232, 249, .6), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+body.aibx .aib-step[data-step="2"],
+body.aibx .aib-step[data-step="3"] { padding: 26px clamp(18px, 3vw, 26px); }
+
+/* 4b. Sections inside the form card. */
+body.aibx .aibx-sec {
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--aibx-line-soft);
+}
+body.aibx .aibx-sec:last-of-type { border-bottom: 0; }
+@media (max-width: 560px) {
+  body.aibx .aibx-sec { padding: 20px 16px; }
+}
+
+body.aibx .aibx-sec-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+body.aibx .aibx-sec-head > div { min-width: 0; }
+body.aibx .aibx-sec-cap {
+  font-family: var(--tw-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+  margin: 0 0 7px;
+}
+body.aibx .aibx-sec-q {
+  font-family: var(--tw-font);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -.01em;
+  color: #fff;
+  margin: 0;
+}
+body.aibx .aibx-sec-sub {
+  font-family: var(--tw-font);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--tw-ink-dim);
+  margin: 8px 0 0;
+}
+/* The REQUIRED / OPTIONAL pill. This is the only thing carrying required-ness
+   now — see section 8 for the removal of the red-on-load treatment. */
+body.aibx .aibx-flag {
+  flex: none;
+  margin-top: 2px;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+body.aibx .aibx-flag-req {
+  background: rgba(224, 86, 122, .14);
+  color: var(--tw-danger, #ffc2d3);
+  border: 1px solid rgba(224, 86, 122, .34);
+}
+body.aibx .aibx-flag-opt {
+  background: rgba(120, 170, 230, .1);
+  color: var(--tw-ink-soft, #8fa6c4);
+  border: 1px solid rgba(120, 170, 230, .2);
+}
+
+/* A sub-question label inside a section (e.g. "Performance target"). */
+body.aibx .aibx-sublabel {
+  display: block;
+  font-family: var(--tw-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+  margin: 0 0 10px;
+}
+body.aibx .aib-wrap .aib-field + .aib-field { margin-top: 22px; }
+body.aibx .aib-wrap .aib-field { margin-bottom: 0; }
+body.aibx .aib-wrap .aib-hint {
+  font-family: var(--tw-font);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--tw-ink-soft, #8fa6c4);
+  margin: 10px 0 0;
+}
+/* Field labels: neutral, never red. */
+body.aibx .aib-wrap .aib-field label {
+  display: block;
+  font-family: var(--tw-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tw-ink-bright-2, #cfe0f5);
+  margin-bottom: 9px;
+}
+
+/* ----------------------------------------------------------------------------
+   5. Question 1 — two choice cards and the nested model panel
+   ------------------------------------------------------------------------- */
+body.aibx .aibx-choicecards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+}
+body.aibx .aibx-choicecard {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 15px 46px 15px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--aibx-field-bd);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .55);
+  cursor: pointer;
+  font-family: var(--tw-font);
+  transition: transform .18s var(--tw-ease), border-color .18s var(--tw-ease), background .18s var(--tw-ease);
+}
+body.aibx .aibx-choicecard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(103, 232, 249, .45);
+}
+body.aibx .aibx-choicecard-t {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tw-ink);
+  margin-bottom: 5px;
+}
+body.aibx .aibx-choicecard-n {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tw-ink-soft, #8fa6c4);
+}
+body.aibx .aibx-radio {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(120, 170, 230, .38);
+  background: transparent;
+  transition: background .18s var(--tw-ease), border-color .18s var(--tw-ease), box-shadow .18s var(--tw-ease);
+}
+body.aibx .aibx-choicecard[aria-checked="true"] {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .18), rgba(127, 106, 224, .18));
+  border-color: rgba(224, 86, 122, .45);
+}
+body.aibx .aibx-choicecard[aria-checked="true"] .aibx-radio {
+  background: var(--tw-pink);
+  border-color: var(--tw-pink);
+  box-shadow: 0 0 0 3px rgba(224, 86, 122, .2);
+}
+
+body.aibx .aibx-modelpanel {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--aibx-sunken);
+  border: 1px solid var(--aibx-line-soft);
+}
+body.aibx .aibx-modelpanel-cap {
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+  margin: 0 0 10px;
+}
+body.aibx .aibx-modelrows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+  gap: 8px;
+}
+body.aibx .aibx-modelrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--aibx-field-bd);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .55);
+  cursor: pointer;
+  font-family: var(--tw-font);
+  transition: transform .18s var(--tw-ease), border-color .18s var(--tw-ease), background .18s var(--tw-ease);
+}
+body.aibx .aibx-modelrow:hover {
+  transform: translateY(-2px);
+  border-color: rgba(103, 232, 249, .45);
+}
+body.aibx .aibx-modelrow-n {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--tw-ink-bright-2, #cfe0f5);
+}
+body.aibx .aibx-modelrow-p {
+  font-family: var(--tw-mono);
+  font-size: 10px;
+  color: var(--tw-ink-soft, #8fa6c4);
+  white-space: nowrap;
+}
+body.aibx .aibx-modelrow[aria-checked="true"] {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .2), rgba(127, 106, 224, .2));
+  border-color: rgba(224, 86, 122, .45);
+}
+body.aibx .aibx-modelrow[aria-checked="true"] .aibx-modelrow-n { color: #fff; }
+
+/* ----------------------------------------------------------------------------
+   6. Question 2 — budget pills, then the exact-amount inputs
+   ------------------------------------------------------------------------- */
+body.aibx .aibx-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+body.aibx .aibx-pill {
+  font-family: var(--tw-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 170, 230, .2);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .55);
+  color: var(--tw-ink-mute, #9db1cb);
+  cursor: pointer;
+  transition: transform .16s var(--tw-ease), border-color .16s var(--tw-ease), color .16s var(--tw-ease), background .16s var(--tw-ease);
+}
+body.aibx .aibx-pill:hover {
+  transform: translateY(-2px);
+  border-color: rgba(103, 232, 249, .45);
+  color: var(--tw-ink);
+}
+body.aibx .aibx-pill[aria-pressed="true"] {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .9), rgba(127, 106, 224, .9));
+  border-color: transparent;
+  color: #fff;
+}
+
+/* "OR EXACT" + the Min/Max pair. The pair used to be revealed only by the
+   "Custom amount..." option; it is always visible now, so `[hidden]` is
+   overridden rather than the JS that sets it — that line still runs, it just
+   has no visual effect, and picking "Custom amount..." focuses Min instead. */
+body.aibx .aibx-orexact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+body.aibx .aibx-orexact-lab {
+  flex: none;
+  font-family: var(--tw-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+body.aibx .aib-wrap #aibCustomInputs,
+body.aibx .aib-wrap #aibCustomInputs[hidden] {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;
+  flex: 1 1 320px;
+}
+body.aibx .aib-wrap .aib-custom-inputs span {
+  font-family: var(--tw-font);
+  font-size: 12.5px;
+  color: var(--tw-ink-soft, #8fa6c4);
+}
+
+/* ----------------------------------------------------------------------------
+   7. Questions 3, 4 and 5 — tiles and chips
+   ------------------------------------------------------------------------- */
+
+/* 7a. Performance: four tiles, mono label over the option's own description. */
+body.aibx .aibx-tiles-perf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 9px;
+}
+/* 7b. Intended use: nine tiles, title over a mono hint. */
+body.aibx .aibx-tiles-use {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 9px;
+}
+body.aibx .aibx-tile {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 13px 14px;
+  border-radius: 13px;
+  border: 1px solid var(--aibx-field-bd);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .55);
+  cursor: pointer;
+  font-family: var(--tw-font);
+  transition: transform .18s var(--tw-ease), border-color .18s var(--tw-ease), background .18s var(--tw-ease);
+}
+body.aibx .aibx-tile:hover {
+  transform: translateY(-3px);
+  border-color: rgba(103, 232, 249, .5);
+}
+body.aibx .aibx-tile[aria-pressed="true"] {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .2), rgba(127, 106, 224, .2));
+  border-color: rgba(224, 86, 122, .45);
+}
+body.aibx .aibx-tile-key {
+  display: block;
+  font-family: var(--tw-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--tw-ink-bright-2, #cfe0f5);
+  margin-bottom: 6px;
+}
+body.aibx .aibx-tile-desc {
+  display: block;
+  font-family: var(--tw-font);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--tw-ink-soft, #8fa6c4);
+}
+body.aibx .aibx-tile-title {
+  display: block;
+  font-family: var(--tw-font);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--tw-ink);
+  margin-bottom: 5px;
+}
+body.aibx .aibx-tile-hint {
+  display: block;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--tw-ink-soft, #8fa6c4);
+}
+body.aibx .aibx-tile[aria-pressed="true"] .aibx-tile-key,
+body.aibx .aibx-tile[aria-pressed="true"] .aibx-tile-title { color: #fff; }
+body.aibx .aibx-tile[aria-pressed="true"] .aibx-tile-desc,
+body.aibx .aibx-tile[aria-pressed="true"] .aibx-tile-hint { color: #f2cbd8; }
+
+/* 7c. Requirements: small mono chips. */
+body.aibx .aibx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+body.aibx .aibx-chip {
+  font-family: var(--tw-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 170, 230, .2);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .55);
+  color: var(--tw-ink-mute, #9db1cb);
+  cursor: pointer;
+  transition: transform .16s var(--tw-ease), border-color .16s var(--tw-ease), color .16s var(--tw-ease), background .16s var(--tw-ease);
+}
+body.aibx .aibx-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(103, 232, 249, .45);
+  color: var(--tw-ink);
+}
+body.aibx .aibx-chip[aria-pressed="true"] {
+  background: linear-gradient(120deg, rgba(224, 86, 122, .9), rgba(127, 106, 224, .9));
+  border-color: transparent;
+  color: #fff;
+}
+
+/* Step 04 lays the chips and the brand field side by side. */
+body.aibx .aibx-extras {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  body.aibx .aibx-extras { grid-template-columns: minmax(0, 1fr); }
+}
+body.aibx .aibx-extras .aib-field + .aib-field { margin-top: 0; }
+body.aibx .aibx-sec .aibx-extras + .aib-field { margin-top: 20px; }
+
+/* ----------------------------------------------------------------------------
+   8. Inputs, textarea, and the native dropdown panels
+   ------------------------------------------------------------------------- */
+body.aibx .aib-wrap .aib-field input[type="text"],
+body.aibx .aib-wrap .aib-field input[type="number"],
+body.aibx .aib-wrap .aib-field select,
+body.aibx .aib-wrap .aib-field textarea,
+body.aibx .aib-wrap .aib-custom-inputs input,
+body.aibx .aib-wrap .aib-save-row input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--aibx-field-bd);
+  background: var(--aibx-field-bg);
+  color: #e8eef7;
+  font-family: var(--tw-font);
+  font-size: 13.5px;
+  line-height: 1.5;
+  box-shadow: none;
+  transition: border-color .18s var(--tw-ease), box-shadow .18s var(--tw-ease);
+}
+body.aibx .aib-wrap .aib-field textarea {
+  min-height: 96px;
+  resize: vertical;
+  border-radius: 14px;
+}
+body.aibx .aib-wrap input::placeholder,
+body.aibx .aib-wrap textarea::placeholder { color: var(--tw-ink-faint, #7f95b3); opacity: 1; }
+
+body.aibx .aib-wrap .aib-field input:focus,
+body.aibx .aib-wrap .aib-field select:focus,
+body.aibx .aib-wrap .aib-field textarea:focus,
+body.aibx .aib-wrap .aib-custom-inputs input:focus,
+body.aibx .aib-wrap .aib-save-row input:focus {
+  outline: none;
+  border-color: rgba(103, 232, 249, .55);
+  box-shadow: 0 0 0 3px rgba(103, 232, 249, .12);
+}
+
+/* The native <option> panels. The selects are visually hidden, but they are
+   still what renders if the skin JS ever fails to load, and the result step
+   has its own controls — so the OS panel gets dressed too: dark rows, a pink
+   highlight instead of the bright blue one, and a dark scrollbar instead of
+   the white default. */
+body.aibx .aib-wrap select option,
+body.aibx .aib-wrap select optgroup {
+  background: #0a1424;
+  color: #e8eef7;
+}
+body.aibx .aib-wrap select option:checked,
+body.aibx .aib-wrap select option:hover {
+  background: rgba(224, 86, 122, .25);
+  color: #fff;
+}
+body.aibx .aib-wrap select,
+body.aibx .aib-wrap textarea,
+body.aibx .aib-wrap .aib-dd-panel,
+body.aibx .aib-wrap .aib-replace-panel {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 170, 230, .28) rgba(var(--aibd-sunken-rgb, 8, 16, 29), .6);
+}
+body.aibx .aib-wrap select::-webkit-scrollbar,
+body.aibx .aib-wrap textarea::-webkit-scrollbar,
+body.aibx .aib-wrap .aib-dd-panel::-webkit-scrollbar,
+body.aibx .aib-wrap .aib-replace-panel::-webkit-scrollbar { width: 10px; height: 10px; }
+body.aibx .aib-wrap select::-webkit-scrollbar-track,
+body.aibx .aib-wrap textarea::-webkit-scrollbar-track,
+body.aibx .aib-wrap .aib-dd-panel::-webkit-scrollbar-track,
+body.aibx .aib-wrap .aib-replace-panel::-webkit-scrollbar-track { background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .6); }
+body.aibx .aib-wrap select::-webkit-scrollbar-thumb,
+body.aibx .aib-wrap textarea::-webkit-scrollbar-thumb,
+body.aibx .aib-wrap .aib-dd-panel::-webkit-scrollbar-thumb,
+body.aibx .aib-wrap .aib-replace-panel::-webkit-scrollbar-thumb {
+  background: rgba(120, 170, 230, .28);
+  border-radius: 999px;
+}
+
+/* Required-ness is the header pill's job now. The page's own inline <style>
+   painted `:has(.aib-required)` labels #ff9ab5 and gave those three controls a
+   pink left edge, so Budget / Performance / Intended use rendered as three
+   validation failures before anything had been typed. Both are reverted. */
+body.aibx .aib-wrap .aib-field:has(.aib-required) label { color: var(--tw-ink-bright-2, #cfe0f5); }
+body.aibx .aib-wrap .aib-field:has(.aib-required) > select,
+body.aibx .aib-wrap .aib-field:has(.aib-required) > input[type="text"],
+body.aibx .aib-wrap .aib-field:has(.aib-required) > textarea,
+body.aibx .aib-wrap .aib-field:has(.aib-required) .aib-dd-btn {
+  border-left: 1px solid var(--aibx-field-bd);
+}
+/* The "* Required" legend is kept; only the asterisk's alarm colour goes. */
+body.aibx .aib-wrap .aib-required { color: var(--tw-ink-soft, #8fa6c4); font-weight: 600; }
+body.aibx .aibx-legend {
+  margin: 0;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+
+/* Real error styling, set by the skin JS only after the page itself rejected
+   a submit — never on load. */
+body.aibx .aibx-sec[data-aibx-error="1"] .aibx-flag-req {
+  background: rgba(224, 86, 122, .3);
+  border-color: rgba(224, 86, 122, .7);
+  color: #fff;
+}
+body.aibx .aibx-sec[data-aibx-error="1"] .aibx-pill,
+body.aibx .aibx-sec[data-aibx-error="1"] .aibx-tile,
+body.aibx .aibx-sec[data-aibx-error="1"] .aib-custom-inputs input {
+  border-color: rgba(224, 86, 122, .55);
+}
+
+/* ----------------------------------------------------------------------------
+   9. The sticky rail — "Your brief" and "How it picks"
+   ------------------------------------------------------------------------- */
+body.aibx .aibx-rail {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (max-width: 1000px) {
+  body.aibx .aibx-rail { position: static; }
+}
+body.aibx .aibx-card { padding: 18px 18px 20px; }
+body.aibx .aibx-card-cap {
+  margin: 0 0 12px;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+
+/* 9a. The brief rows, read straight off the real inputs. */
+body.aibx .aibx-brief-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--aibx-line-hair);
+}
+body.aibx .aibx-brief-row:last-of-type { border-bottom: 0; }
+body.aibx .aibx-brief-k {
+  flex: none;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+body.aibx .aibx-brief-v {
+  min-width: 0;
+  font-family: var(--tw-font);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
+  color: var(--tw-ink);
+}
+body.aibx .aibx-brief-v[data-empty="1"] { color: var(--tw-ink-faint, #7f95b3); font-weight: 400; }
+body.aibx .aibx-brief-row[data-k="budget"] .aibx-brief-v:not([data-empty="1"]) {
+  font-family: var(--tw-mono);
+  font-size: 11.5px;
+  color: var(--tw-pink-lt);
+}
+
+body.aibx .aibx-ready {
+  margin: 16px 0 8px;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+}
+body.aibx .aibx-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(120, 170, 230, .14);
+  overflow: hidden;
+}
+/* Driven by transform, not width: this repaints on every keystroke in the
+   brief, and animating width would relayout the card each time. scaleX from a
+   left origin is composited instead. The gradient is painted at full width and
+   squashed, so its pink->violet ramp compresses rather than sliding - which is
+   what the design wants anyway (the bar reads as a filling meter, not a
+   travelling band). */
+body.aibx .aibx-bar-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e0567a, #7f6ae0);
+  transition: transform .4s var(--tw-ease);
+}
+
+/* 9b. The scan sweep, clipped by the card (overflow:hidden, section 4a). */
+body.aibx .aibx-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 46px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(103, 232, 249, .09), transparent);
+  animation: aibx-scan 4.5s linear infinite;
+}
+@keyframes aibx-scan {
+  from { transform: translateY(-46px); }
+  to   { transform: translateY(100%); }
+}
+
+/* 9c. The CTA. Same element, same id, same handler — moved into the rail. */
+body.aibx .aib-wrap .aib-btn-primary#aibGenerate {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #e0567a, #7f6ae0) !important;
+  color: #fff;
+  font-family: var(--tw-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: none;
+  transition: transform .18s var(--tw-ease), box-shadow .18s var(--tw-ease), opacity .18s var(--tw-ease);
+}
+body.aibx .aib-wrap .aib-btn-primary#aibGenerate:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(224, 86, 122, .45) !important;
+}
+/* It genuinely is disabled until Budget, Performance and Intended use are set
+   (aibRequiredFieldsFilled() in the page), so the disabled state says so
+   properly rather than just looking muted — see .aibx-cta-missing. */
+body.aibx .aib-wrap .aib-btn-primary#aibGenerate:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none !important;
+}
+body.aibx .aibx-cta-note {
+  margin: 10px 0 0;
+  font-family: var(--tw-mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--tw-ink-faint);
+}
+body.aibx .aibx-cta-missing {
+  margin: 9px 0 0;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  line-height: 1.5;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--tw-danger, #ffc2d3);
+}
+body.aibx .aibx-cta-missing[hidden] { display: none; }
+
+/* The old nav row holds only the "* Required" legend now. */
+body.aibx .aib-wrap .aib-nav {
+  margin: 0;
+  padding: 16px 24px 20px;
+  justify-content: flex-start;
+}
+
+/* 9d. "How it picks". */
+body.aibx .aibx-how {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+body.aibx .aibx-how li {
+  position: relative;
+  padding-left: 16px;
+  font-family: var(--tw-font);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--tw-ink-dim);
+}
+body.aibx .aibx-how li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--tw-green-lt);
+}
+
+/* ----------------------------------------------------------------------------
+   10. Loading / result steps and the saved-builds panel, brought onto the
+       same ground. Structure and behaviour untouched; colour only.
+   ------------------------------------------------------------------------- */
+body.aibx .aib-wrap .aib-saved-panel {
+  margin-bottom: 20px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(20, 36, 60, .9), rgba(11, 22, 38, .96)) !important;
+  border: 1px solid var(--aibx-line) !important;
+  box-shadow: 0 24px 54px rgba(3, 8, 16, .5) !important;
+}
+body.aibx .aib-wrap .aib-saved-head h3 {
+  font-family: var(--tw-font);
+  font-size: 15px;
+  color: var(--tw-ink);
+}
+body.aibx .aib-wrap .aib-saved-item {
+  border: 1px solid var(--aibx-line-soft);
+  background: var(--aibx-sunken);
+  border-radius: 12px;
+}
+body.aibx .aib-wrap .aib-saved-item-info b { color: var(--tw-ink); }
+body.aibx .aib-wrap .aib-saved-item-info span,
+body.aibx .aib-wrap .aib-muted,
+body.aibx .aib-wrap .aib-close-btn { color: var(--tw-ink-soft, #8fa6c4); }
+
+body.aibx .aib-wrap .aib-btn-secondary,
+body.aibx .aib-wrap .aib-change-btn {
+  border: 1px solid var(--aibx-field-bd);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .55);
+  color: var(--tw-ink-bright-2, #cfe0f5);
+  border-radius: 11px;
+  font-family: var(--tw-font);
+}
+body.aibx .aib-wrap .aib-btn-secondary:hover,
+body.aibx .aib-wrap .aib-change-btn:hover {
+  border-color: rgba(103, 232, 249, .5);
+  color: var(--tw-ink);
+}
+body.aibx .aib-wrap .aib-component,
+body.aibx .aib-wrap .aib-budget-box,
+body.aibx .aib-wrap .aib-suggested-card {
+  background: var(--aibx-sunken);
+  border-color: var(--aibx-line-soft);
+  border-radius: 14px;
+}
+body.aibx .aib-wrap .aib-component-role {
+  font-family: var(--tw-mono);
+  /* 9px was below the point where a mono face with .18em tracking stays
+     legible - it is the label naming the part ("CPU", "RAM"), so it has to be
+     readable at a glance rather than act as fine print. Tracking eased off a
+     little with the size, since wide tracking costs more at a larger size. */
+  font-size: 13.5px;
+  letter-spacing: .11em;
+  color: var(--tw-pink-lt);
+}
+body.aibx .aib-wrap .aib-budget-box span {
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  letter-spacing: .18em;
+  color: var(--tw-ink-faint);
+}
+body.aibx .aib-wrap .aib-budget-box b,
+body.aibx .aib-wrap .aib-component-price,
+body.aibx .aib-wrap .aib-suggested-price { font-family: var(--tw-mono); }
+body.aibx .aib-wrap .aib-dd-panel,
+body.aibx .aib-wrap .aib-replace-panel {
+  background: #0a1424 !important;
+  border: 1px solid var(--aibx-line) !important;
+  border-radius: 12px;
+}
+body.aibx .aib-wrap .aib-spinner { border-top-color: var(--tw-pink); }
+body.aibx .aib-wrap .aib-loading p { color: var(--tw-ink-dim); }
+
+/* ----------------------------------------------------------------------------
+   11. The footer — dark, not cream
+   ----------------------------------------------------------------------------
+   customer-dark.css paints a #fff4ef footer for every page in its
+   `body:has(..., .aib-wrap)` list, and this page's own inline <style>
+   re-points the footer's tokens to that light palette. Under a dark page it
+   reads as a different site. Each of those selectors is countered below at a
+   higher specificity (`body.aibx:has(.aib-wrap)` adds a class over their
+   `body:has(.aib-wrap)`), plus `!important` for the one they set that way.
+   ------------------------------------------------------------------------- */
+body.aibx:has(.aib-wrap) .main-footer {
+  background: rgba(6, 13, 24, .85);
+  color: var(--tw-ink-soft, #8fa6c4);
+  border-top: 1px solid rgba(120, 170, 230, .16);
+  font-family: var(--tw-font);
+  /* The tokens the inline <style> re-pointed at the light palette. */
+  --bg-secondary: rgba(6, 13, 24, .85);
+  --text-primary: #cfe0f5;
+  --text-secondary: #8fa6c4;
+  --text-muted: #7f95b3;
+  --border-color: rgba(120, 170, 230, .16);
+  --accent-cyan: #ff9ab5;
+}
+body.aibx:has(.aib-wrap) .footer-content { border-bottom-color: rgba(120, 170, 230, .16); }
+body.aibx:has(.aib-wrap) .footer-column h3 { color: var(--tw-ink-bright-2, #cfe0f5); }
+body.aibx:has(.aib-wrap) .footer-column p,
+body.aibx:has(.aib-wrap) .footer-column ul li a,
+body.aibx:has(.aib-wrap) .contact-list span,
+body.aibx:has(.aib-wrap) .contact-list a.social-link { color: var(--tw-ink-soft, #8fa6c4); }
+body.aibx:has(.aib-wrap) .footer-column ul li a,
+body.aibx:has(.aib-wrap) .contact-list a.social-link {
+  color: #ff9ab5;
+  transition: color .18s var(--tw-ease);
+}
+body.aibx:has(.aib-wrap) .footer-column ul li a:hover,
+body.aibx:has(.aib-wrap) .contact-list a.social-link:hover { color: #67e8f9; }
+body.aibx:has(.aib-wrap) .footer-bottom p,
+body.aibx:has(.aib-wrap) .footer-bottom .footer-address,
+body.aibx:has(.aib-wrap) .made-with { color: var(--tw-ink-soft, #8fa6c4); }
+/* Their rule for these two sets the colour with !important, so this must. */
+body.aibx:has(.aib-wrap) .footer-bottom .contact-list i,
+body.aibx:has(.aib-wrap) .footer-column .contact-list i[style*="6b7280"] { color: var(--tw-ink-soft, #8fa6c4) !important; }
+/* Mono must not leak into the footer (spec 9) — it stays Figtree throughout. */
+body.aibx:has(.aib-wrap) .main-footer,
+body.aibx:has(.aib-wrap) .main-footer * { font-family: var(--tw-font); }
+
+/* ----------------------------------------------------------------------------
+   Y. Page entrance — one scan sweep while the page assembles top to bottom.
+      Every page load is a fresh document, so this covers both a reload and
+      arriving from the landing page's "Build mine with AI" button.
+
+      .aibx-entering is added by an inline script in ai_builder.php and removed
+      once the entrance is over. The scope matters: wizard cards go from hidden
+      to shown on every Next, and that restarts any animation applied to them.
+
+      The hidden state lives only in the keyframes, so content still renders if
+      animations never run. The fill is `backwards`, not `both`: a held transform
+      would keep a stacking context on the card and trap its dropdown panels.
+   ------------------------------------------------------------------------- */
+@keyframes aibx-enter-up {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+}
+@keyframes aibx-enter-card {
+  from { opacity: 0; transform: translate3d(0, 20px, 0) scale(.98); }
+}
+@keyframes aibx-enter-step {
+  from { opacity: 0; transform: translate3d(12px, 0, 0); }
+}
+@keyframes aibx-bootscan-sweep {
+  0%   { opacity: 1; transform: translate3d(0, -140px, 0); }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(0, 100vh, 0); }
+}
+
+body.aibx .aibx-bootscan { display: none; }
+body.aibx.aibx-entering .aibx-bootscan {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  z-index: 50;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, #e0567a 30%, #67e8f9 70%, transparent) bottom / 100% 2px no-repeat,
+    linear-gradient(180deg, transparent, rgba(103, 232, 249, .1));
+  animation: aibx-bootscan-sweep 1s cubic-bezier(.77, 0, .175, 1) both;
+}
+
+body.aibx.aibx-entering .aibx-head-main > *,
+body.aibx.aibx-entering .aibx-steprail li,
+body.aibx.aibx-entering .aibx-wiz-card,
+body.aibx.aibx-entering .aibx-rail {
+  animation: aibx-enter-up .5s var(--tw-ease) backwards;
+}
+body.aibx.aibx-entering .aibx-head-main > :nth-child(2) { animation-delay: 60ms; }
+body.aibx.aibx-entering .aibx-head-main > :nth-child(3) { animation-delay: 120ms; }
+body.aibx.aibx-entering .aibx-head-main > :nth-child(4) { animation-delay: 180ms; }
+
+body.aibx.aibx-entering .aibx-steprail li { animation-name: aibx-enter-step; }
+body.aibx.aibx-entering .aibx-steprail li:nth-child(1) { animation-delay: 160ms; }
+body.aibx.aibx-entering .aibx-steprail li:nth-child(2) { animation-delay: 220ms; }
+body.aibx.aibx-entering .aibx-steprail li:nth-child(3) { animation-delay: 280ms; }
+body.aibx.aibx-entering .aibx-steprail li:nth-child(4) { animation-delay: 340ms; }
+
+body.aibx.aibx-entering .aibx-wiz-card {
+  animation-name: aibx-enter-card;
+  animation-delay: 300ms;
+}
+body.aibx.aibx-entering .aibx-rail {
+  animation-name: aibx-enter-card;
+  animation-delay: 400ms;
+}
+
+/* ----------------------------------------------------------------------------
+   Z. Reduced motion — kills every loop, resets to the visible end state.
+      Kept last so it overrides everything above.
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  body.aibx.aibx-entering .aibx-bootscan { display: none; }
+  body.aibx::before,
+  body.aibx::after,
+  body.aibx:has(.aib-wrap)::before,
+  body.aibx:has(.aib-wrap)::after,
+  body.aibx .aib-wrap *,
+  body.aibx .aib-wrap *::before,
+  body.aibx .aib-wrap *::after {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  body.aibx .aibx-scan { display: none; }
+  body.aibx .aibx-dot { opacity: 1; transform: none; }
+  body.aibx .aibx-tile:hover,
+  body.aibx .aibx-pill:hover,
+  body.aibx .aibx-chip:hover,
+  body.aibx .aibx-choicecard:hover,
+  body.aibx .aibx-modelrow:hover,
+  body.aibx .aib-wrap .aib-btn-primary#aibGenerate:not(:disabled):hover { transform: none; }
+}
+
+/* --- Wizard gating ------------------------------------------------------
+   Next is disabled until the step it sits on is answered. The rule for
+   "answered" lives in ai-builder-skin.js's stepDone array and is published
+   on .aib-wrap - the nav reads it rather than re-deriving it. */
+body.aibx .aibx-wiz-next[disabled] {
+  opacity: .45;
+  cursor: not-allowed;
+  filter: grayscale(.35);
+}
+body.aibx .aibx-wiz-why {
+  font-family: var(--tw-mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tw-ink-faint);
+  /* Its own line under the buttons. Beside them, the extra width wrapped the
+     whole button group below the step count. */
+  flex-basis: 100%;
+  margin-top: -4px;
+  text-align: right;
+}
+/* One short nudge when a blocked Next is pressed - enough to say "look here",
+   not an animation anyone has to wait through. */
+@keyframes aibx-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-5px); }
+  75%      { transform: translateX(5px); }
+}
+body.aibx .aibx-shake { animation: aibx-shake .22s ease-in-out 1; }
+@media (prefers-reduced-motion: reduce) {
+  body.aibx .aibx-shake { animation: none; }
+}
+
+/* --- Option filtering: the locked look ----------------------------------
+   An option the current budget cannot reach is greyed out and unclickable,
+   never removed - the customer can still see that High-End exists and read
+   what it would take.
+
+   The treatment is the one this page already uses for a blocked control
+   (`.aibx-wiz-next[disabled]`: opacity .45, grayscale .35, not-allowed), so
+   locked reads as the same kind of "not yet" everywhere. It is built from
+   opacity, grayscale and the existing --tw-ink-* / --text-muted tokens and
+   adds no new hue, which is what makes it hold up under the light theme as
+   well as the dark one: whatever the tile's own colours are, locked is those
+   colours muted.
+   ------------------------------------------------------------------------ */
+body.aibx .aibx-tile.is-locked,
+body.aibx .aibx-tile[disabled],
+body.aibx .aibx-chip.is-locked,
+body.aibx .aibx-chip[disabled] {
+  opacity: .45;
+  filter: grayscale(.35);
+  cursor: not-allowed;
+}
+/* No lift, no border glow, no pressed gradient on something that cannot be
+   pressed - hover must not imply it is still available. */
+body.aibx .aibx-tile.is-locked:hover,
+body.aibx .aibx-tile[disabled]:hover,
+body.aibx .aibx-chip.is-locked:hover,
+body.aibx .aibx-chip[disabled]:hover {
+  transform: none;
+  border-color: var(--aibx-field-bd);
+  background: rgba(var(--aibd-sunken-rgb, 8, 16, 29), .55);
+}
+
+/* The reason, on the tile itself: "NEEDS ₱13,595+". Same mono micro-type as
+   .aibx-tile-hint so it sits in the existing type system rather than looking
+   like an error that got pasted in. */
+body.aibx .aibx-tile-why {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--tw-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--tw-ink-faint);
+}
+
+/* The native checkbox rows under the skin (and the whole control for anyone
+   the skin never painted) get the same muted state and the same note. */
+body.aibx .aib-dd-item.is-locked,
+.aib-wrap .aib-dd-item.is-locked {
+  opacity: .5;
+  cursor: not-allowed;
+}
+body.aibx .aib-dd-item.is-locked input,
+.aib-wrap .aib-dd-item.is-locked input { cursor: not-allowed; }
+body.aibx .aib-dd-why,
+.aib-wrap .aib-dd-why {
+  margin-left: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted, #7f95b3);
+}
+/* Greyed-out entries in the real <select>, for the same reason. Browsers
+   style option:disabled themselves; this only keeps it legible on the dark
+   field instead of near-invisible. */
+body.aibx .aib-wrap select option:disabled,
+.aib-wrap select option:disabled { color: var(--text-muted, #7f95b3); }
+
+/* The explanation under each filtered step. .aib-hint already carries the
+   muted colour and size; this only gives the locked variant a little room
+   and a touch more contrast, since it is the sentence that explains why an
+   option cannot be picked. */
+body.aibx .aib-wrap .aib-locked-note,
+.aib-wrap .aib-locked-note {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+body.aibx .aib-wrap .aib-locked-note { color: var(--tw-ink-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  body.aibx .aibx-tile.is-locked,
+  body.aibx .aibx-tile[disabled] { transition: none; }
+}
